@@ -29,7 +29,7 @@ ABBA Collective is a production-ready luxury faith-driven lifestyle e-commerce p
 
 ## Key Features
 
-- **Shop Catalog & Garment Filters**: Filter by Category, Collection, Price sorting, and Real-time Search.
+- **Shop & Garment Filters**: Filter by Category, Collection, Price sorting, and Real-time Search.
 - **Product Storytelling Accordions**: Story, Details & Fit, and Biblical Scripture Anchor tabs.
 - **Client Bag & Cart Drawer**: Slide-out cart drawer with local storage persistence and free shipping progress tracker.
 - **Customer Auth & Portal**: Signup, Sign-in, Password Reset, Address Book, Order History, and Rewards Ledger.

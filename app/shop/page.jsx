@@ -71,7 +71,7 @@ export default function ShopPage() {
         {/* Page Header */}
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <span className="text-gold text-xs uppercase tracking-luxurious font-semibold block">
-            ✦ Complete Catalog ✦
+            ✦ Complete Shop ✦
           </span>
           <h1 className="font-serif-luxury text-4xl sm:text-5xl font-bold text-charcoal">
             The ABBA Collection

@@ -26,7 +26,7 @@ export default function Navbar() {
   }, []);
 
   const navLinks = [
-    { name: 'Shop Catalog', href: '/shop' },
+    { name: 'Shop', href: '/shop' },
     { name: 'Collections', href: '/collections' },
     { name: 'Our Story', href: '/about' },
     { name: 'Statement of Faith', href: '/faith' },
@@ -124,7 +124,7 @@ export default function Navbar() {
                 <Link
                   href="/shop"
                   className="p-1.5 text-charcoal hover:text-gold transition-colors hidden sm:block"
-                  title="Search Catalog"
+                  title="Search Shop"
                 >
                   <Search size={19} />
                 </Link>

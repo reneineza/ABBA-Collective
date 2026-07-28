@@ -95,7 +95,7 @@ export default function HomePage() {
 
           <div className="text-center pt-6">
             <Button href="/shop" variant="primary" size="lg">
-              Explore Full Catalog
+              Explore Full Shop
             </Button>
           </div>
         </div>

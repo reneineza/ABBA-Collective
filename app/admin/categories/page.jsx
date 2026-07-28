@@ -42,7 +42,7 @@ export default function AdminCategoriesPage() {
             Categories & Taxonomies
           </h2>
           <p className="text-xs text-ivory/60 font-light">
-            Manage garment types and catalog structure.
+            Manage garment types and shop structure.
           </p>
         </div>
       </div>

@@ -102,7 +102,7 @@ export default function AccountPage() {
                 <Package size={32} className="mx-auto text-gold" />
                 <h3 className="font-serif-luxury text-2xl font-bold text-charcoal">No Past Orders Found</h3>
                 <p className="text-xs text-charcoal/60">Discover garments crafted with eternal purpose and quiet luxury.</p>
-                <Button href="/shop" variant="primary" size="md">Explore Catalog</Button>
+                <Button href="/shop" variant="primary" size="md">Explore Shop</Button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

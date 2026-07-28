@@ -30,7 +30,7 @@ export default function CheckoutPage() {
             <ShoppingBag size={32} className="mx-auto text-gold" />
             <h3 className="font-serif-luxury text-2xl font-bold text-charcoal">Your Bag is Empty</h3>
             <p className="text-xs text-charcoal/60">Please add items to your shopping bag before proceeding to checkout.</p>
-            <Button href="/shop" variant="primary" size="md">Explore Catalog</Button>
+            <Button href="/shop" variant="primary" size="md">Explore Shop</Button>
           </div>
         ) : (
           <CheckoutForm />

@@ -49,8 +49,8 @@ export default function WishlistPage() {
           <div className="bg-ivory-light border border-charcoal/10 p-12 text-center space-y-4 max-w-md mx-auto">
             <Heart size={32} className="mx-auto text-gold" />
             <h3 className="font-serif-luxury text-2xl font-bold text-charcoal">Your Wishlist is Empty</h3>
-            <p className="text-xs text-charcoal/60">Explore our catalog and click the heart icon on any garment to save it.</p>
-            <Button href="/shop" variant="primary" size="md">Explore Catalog</Button>
+            <p className="text-xs text-charcoal/60">Explore our shop and click the heart icon on any garment to save it.</p>
+            <Button href="/shop" variant="primary" size="md">Explore Shop</Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

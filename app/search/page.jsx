@@ -32,7 +32,7 @@ export default function AdvancedSearchPage({ searchParams }) {
         <div className="max-w-2xl mx-auto text-center space-y-6">
           <div className="space-y-2">
             <span className="text-gold text-xs uppercase tracking-luxurious font-semibold block">
-              ✦ Search Catalog ✦
+              ✦ Search Shop ✦
             </span>
             <h1 className="font-serif-luxury text-4xl sm:text-5xl font-bold text-charcoal">
               Find Garments & Stories

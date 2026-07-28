@@ -161,7 +161,7 @@ export default function AboutPage() {
         </p>
         <div className="flex justify-center gap-4">
           <Button href="/shop" variant="primary" size="lg">
-            Shop Catalog
+            Explore Shop
           </Button>
           <Button href="/faith" variant="secondary" size="lg">
             Statement of Faith
