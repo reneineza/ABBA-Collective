@@ -1,16 +1,29 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ProductCard from '@/components/ProductCard';
 import BrandDropdown from '@/components/BrandDropdown';
 import { SAMPLE_PRODUCTS, SAMPLE_COLLECTIONS, SAMPLE_CATEGORIES } from '@/lib/data/sampleData';
+import { safeJsonParse } from '@/lib/utils/json';
 import { Filter, SlidersHorizontal, Search, RotateCcw } from 'lucide-react';
 
 export default function ShopPage() {
+  const [products, setProducts] = useState(SAMPLE_PRODUCTS);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedCollection, setSelectedCollection] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('featured');
+
+  useEffect(() => {
+    try {
+      const stored = safeJsonParse(localStorage.getItem('abba_products'), []);
+      if (Array.isArray(stored) && stored.length > 0) {
+        setProducts(stored);
+      }
+    } catch (e) {
+      // fallback to SAMPLE_PRODUCTS
+    }
+  }, []);
 
   const categoryOptions = [
     { label: 'All Categories', value: 'all' },
@@ -29,7 +42,7 @@ export default function ShopPage() {
   ];
 
   const filteredProducts = useMemo(() => {
-    return SAMPLE_PRODUCTS.filter((product) => {
+    return products.filter((product) => {
       // Category Filter
       const matchCategory =
         selectedCategory === 'all' ||
@@ -56,7 +69,7 @@ export default function ShopPage() {
       if (sortBy === 'featured') return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
       return 0;
     });
-  }, [selectedCategory, selectedCollection, searchQuery, sortBy]);
+  }, [products, selectedCategory, selectedCollection, searchQuery, sortBy]);
 
   const handleResetFilters = () => {
     setSelectedCategory('all');

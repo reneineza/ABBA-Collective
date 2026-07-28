@@ -1,30 +1,52 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ProductGallery from '@/components/ProductGallery';
 import ProductReviews from '@/components/ProductReviews';
 import ProductRecommendations from '@/components/ProductRecommendations';
 import SocialShareButtons from '@/components/SocialShareButtons';
 import Button from '@/components/Button';
 import { SAMPLE_PRODUCTS } from '@/lib/data/sampleData';
+import { safeJsonParse } from '@/lib/utils/json';
 import { useCart } from '@/lib/context/CartContext';
 import { getProductSchema } from '@/lib/seo/structuredData';
 import { trackProductView } from '@/lib/analytics/analyticsService';
 import { formatPrice } from '@/lib/utils/formatCurrency';
-import { ShoppingBag, Heart, ShieldCheck, Truck, RotateCcw } from 'lucide-react';
+import { ShoppingBag, Heart, ShieldCheck, Truck, RotateCcw, PackageX } from 'lucide-react';
 
 export default function ProductDetailPage({ params }) {
   const resolvedParams = params && typeof params.then === 'function' ? React.use(params) : params;
   const slug = resolvedParams?.slug || '';
 
-  const product = SAMPLE_PRODUCTS.find((p) => p.slug === slug) || SAMPLE_PRODUCTS[0];
+  const [product, setProduct] = useState(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = safeJsonParse(localStorage.getItem('abba_products'), []);
+      const allProducts = Array.isArray(stored) && stored.length > 0 ? stored : SAMPLE_PRODUCTS;
+      const found = allProducts.find((p) => p.slug === slug || p.id === slug);
+      setProduct(found || null);
+    } catch (e) {
+      setProduct(SAMPLE_PRODUCTS.find((p) => p.slug === slug || p.id === slug) || null);
+    } finally {
+      setIsLoaded(true);
+    }
+  }, [slug]);
 
   const { addItem } = useCart();
-  const [selectedColor, setSelectedColor] = useState(product?.colors?.[0] || 'Charcoal');
-  const [selectedSize, setSelectedSize] = useState(product?.sizes?.[0] || 'M');
+  const [selectedColor, setSelectedColor] = useState('Charcoal');
+  const [selectedSize, setSelectedSize] = useState('M');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('story');
   const [isWishlisted, setIsWishlisted] = useState(false);
+
+  useEffect(() => {
+    if (product) {
+      if (product.colors && product.colors.length > 0) setSelectedColor(product.colors[0]);
+      if (product.sizes && product.sizes.length > 0) setSelectedSize(product.sizes[0]);
+    }
+  }, [product]);
 
   // Track Product View Analytics
   React.useEffect(() => {
@@ -47,6 +69,32 @@ export default function ProductDetailPage({ params }) {
       addItem(product, selectedSize, selectedColor, quantity);
     }
   };
+
+  if (isLoaded && !product) {
+    return (
+      <div className="bg-ivory text-charcoal py-24 sm:py-32">
+        <div className="max-w-md mx-auto px-4 text-center space-y-6">
+          <div className="w-16 h-16 rounded-full bg-gold/10 text-gold flex items-center justify-center mx-auto border border-gold/30">
+            <PackageX size={32} />
+          </div>
+          <div className="space-y-2">
+            <span className="text-gold text-xs uppercase tracking-luxurious font-semibold block">
+              ✦ Garment Not Found ✦
+            </span>
+            <h1 className="font-serif-luxury text-3xl font-bold text-charcoal">
+              Garment Unavailable
+            </h1>
+            <p className="text-xs text-charcoal/70 font-light leading-relaxed">
+              The requested garment ("{slug}") could not be found in our active collection roster.
+            </p>
+          </div>
+          <Button href="/shop" variant="primary" size="md">
+            Explore Full Shop
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!product) return null;
 

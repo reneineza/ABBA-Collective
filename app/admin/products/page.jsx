@@ -1,31 +1,46 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DataTable from '@/components/admin/DataTable';
 import ProductForm from '@/components/admin/ProductForm';
 import { SAMPLE_PRODUCTS } from '@/lib/data/sampleData';
+import { safeJsonParse } from '@/lib/utils/json';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState(SAMPLE_PRODUCTS);
+  const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  const handleSaveProduct = (productData) => {
-    if (editingProduct) {
-      setProducts(products.map((p) => (p.id === productData.id ? productData : p)));
-    } else {
-      setProducts([productData, ...products]);
+  useEffect(() => {
+    try {
+      const saved = safeJsonParse(localStorage.getItem('abba_products'), []);
+      setProducts(Array.isArray(saved) && saved.length > 0 ? saved : SAMPLE_PRODUCTS);
+    } catch (e) {
+      setProducts(SAMPLE_PRODUCTS);
     }
+  }, []);
+
+  const handleSaveProduct = (productData) => {
+    let updated;
+    if (editingProduct) {
+      updated = products.map((p) => (p.id === productData.id ? productData : p));
+    } else {
+      updated = [productData, ...products];
+    }
+    setProducts(updated);
+    localStorage.setItem('abba_products', JSON.stringify(updated));
     setEditingProduct(null);
     setIsCreating(false);
   };
 
   const handleDeleteProduct = (id) => {
     if (confirm('Are you sure you want to delete this product?')) {
-      setProducts(products.filter((p) => p.id !== id));
+      const updated = products.filter((p) => p.id !== id);
+      setProducts(updated);
+      localStorage.setItem('abba_products', JSON.stringify(updated));
     }
   };
 
