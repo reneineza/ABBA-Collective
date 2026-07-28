@@ -5,11 +5,11 @@ import React from 'react';
 export default function OrderStatusBadge({ status = 'Pending', onChange }) {
   const statusStyles = {
     Pending: 'bg-gold/20 text-gold border-gold/40',
-    Confirmed: 'bg-blue-500/20 text-blue-300 border-blue-400/40',
-    Processing: 'bg-purple-500/20 text-purple-300 border-purple-400/40',
-    Shipped: 'bg-forest/30 text-emerald-300 border-emerald-400/40',
-    Delivered: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40',
-    Cancelled: 'bg-red-500/20 text-red-400 border-red-400/40',
+    Confirmed: 'bg-gold/30 text-gold-light border-gold/50',
+    Processing: 'bg-charcoal-muted/30 text-ivory border-charcoal-muted/50',
+    Shipped: 'bg-forest/30 text-forest-light border-forest/40',
+    Delivered: 'bg-forest/50 text-ivory border-forest/50',
+    Cancelled: 'bg-charcoal-light/30 text-charcoal-muted border-charcoal-light/50',
   };
 
   if (!onChange) {

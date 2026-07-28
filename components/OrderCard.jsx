@@ -8,12 +8,12 @@ import { Package, ArrowRight, CheckCircle2, Clock, Truck } from 'lucide-react';
 
 export default function OrderCard({ order }) {
   const statusColors = {
-    Pending: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    Confirmed: 'bg-blue-100 text-blue-800 border-blue-300',
-    Processing: 'bg-purple-100 text-purple-800 border-purple-300',
+    Pending: 'bg-gold/10 text-gold-dark border-gold/30',
+    Confirmed: 'bg-gold/20 text-gold-dark border-gold/40',
+    Processing: 'bg-charcoal/10 text-charcoal border-charcoal/30',
     Shipped: 'bg-forest/10 text-forest border-forest/30',
-    Delivered: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-    Cancelled: 'bg-red-100 text-red-800 border-red-300',
+    Delivered: 'bg-forest/20 text-forest-dark border-forest/40',
+    Cancelled: 'bg-charcoal-muted/10 text-charcoal-muted border-charcoal-muted/30',
   };
 
   return (
