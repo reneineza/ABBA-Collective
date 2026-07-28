@@ -5,6 +5,7 @@ import DataTable from '@/components/admin/DataTable';
 import OrderStatusBadge from '@/components/admin/OrderStatusBadge';
 import { safeJsonParse } from '@/lib/utils/json';
 import { sendShippingUpdate } from '@/lib/email/emailService';
+import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { ShoppingBag, Eye, Search } from 'lucide-react';
 import Link from 'next/link';
 
@@ -22,7 +23,7 @@ export default function AdminOrdersPage() {
           status: 'Confirmed',
           total_amount: 270.00,
           payment_provider: 'Card',
-          shipping_address: { first_name: 'Grace', last_name: 'Heirs', email: 'grace@example.com', city: 'New York' },
+          shipping_address: { first_name: 'Grace', last_name: 'Heirs', email: 'grace@example.com', city: 'Kigali' },
           items: [{ name: 'Adoption Hoodie', quantity: 1 }, { name: 'ABBA Signature Tee', quantity: 1 }]
         },
         {
@@ -89,7 +90,7 @@ export default function AdminOrdersPage() {
     },
     {
       header: 'Amount',
-      accessor: (row) => <span className="font-bold text-gold">${Number(row.total_amount).toFixed(2)}</span>,
+      accessor: (row) => <span className="font-bold text-gold">{formatCurrency(row.total_amount)}</span>,
     },
     {
       header: 'Fulfillment Status',

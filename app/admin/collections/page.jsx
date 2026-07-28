@@ -8,24 +8,45 @@ import { Plus, Edit, Trash2 } from 'lucide-react';
 export default function AdminCollectionsPage() {
   const [collections, setCollections] = useState(SAMPLE_COLLECTIONS);
   const [showModal, setShowModal] = useState(false);
+  const [editingCollection, setEditingCollection] = useState(null);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
 
-  const handleCreate = (e) => {
-    e.preventDefault();
-    const newCol = {
-      id: 'col_' + Date.now(),
-      name,
-      slug: slug || name.toLowerCase().replace(/ /g, '-'),
-      description,
-      image_url: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200',
-    };
-    setCollections([...collections, newCol]);
-    setShowModal(false);
+  const openCreate = () => {
+    setEditingCollection(null);
     setName('');
     setSlug('');
     setDescription('');
+    setShowModal(true);
+  };
+
+  const openEdit = (col) => {
+    setEditingCollection(col);
+    setName(col.name);
+    setSlug(col.slug);
+    setDescription(col.description || '');
+    setShowModal(true);
+  };
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    if (editingCollection) {
+      setCollections(collections.map((c) =>
+        c.id === editingCollection.id ? { ...c, name, slug, description } : c
+      ));
+    } else {
+      const newCol = {
+        id: 'col_' + Date.now(),
+        name,
+        slug: slug || name.toLowerCase().replace(/ /g, '-'),
+        description,
+        image_url: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200',
+      };
+      setCollections([...collections, newCol]);
+    }
+    setShowModal(false);
+    setEditingCollection(null);
   };
 
   const columns = [
@@ -51,10 +72,10 @@ export default function AdminCollectionsPage() {
       header: 'Actions',
       cell: (row) => (
         <div className="flex items-center space-x-2">
-          <button onClick={() => alert('Edit feature active')} className="p-1.5 text-ivory/60 hover:text-gold">
+          <button onClick={() => openEdit(row)} className="p-1.5 text-ivory/60 hover:text-gold">
             <Edit size={15} />
           </button>
-          <button onClick={() => setCollections(collections.filter(c => c.id !== row.id))} className="p-1.5 text-red-400 hover:text-red-300">
+          <button onClick={() => { if (confirm('Delete this collection?')) setCollections(collections.filter(c => c.id !== row.id)); }} className="p-1.5 text-red-400 hover:text-red-300">
             <Trash2 size={15} />
           </button>
         </div>
@@ -74,7 +95,7 @@ export default function AdminCollectionsPage() {
           </p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={openCreate}
           className="px-5 py-2.5 bg-gold text-charcoal hover:bg-gold-light transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-1.5"
         >
           <Plus size={16} /> Create Collection
@@ -82,8 +103,8 @@ export default function AdminCollectionsPage() {
       </div>
 
       {showModal && (
-        <form onSubmit={handleCreate} className="bg-charcoal border border-gold/30 p-6 rounded-sm space-y-4 max-w-xl">
-          <h3 className="font-serif-luxury text-xl font-bold text-ivory">New Collection</h3>
+        <form onSubmit={handleSave} className="bg-charcoal border border-gold/30 p-6 rounded-sm space-y-4 max-w-xl">
+          <h3 className="font-serif-luxury text-xl font-bold text-ivory">{editingCollection ? 'Edit Collection' : 'New Collection'}</h3>
           <div>
             <label className="text-[10px] uppercase text-gold font-semibold block mb-1">Title</label>
             <input

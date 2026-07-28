@@ -122,7 +122,7 @@ export default function AddressForm({ initialAddress, onSave }) {
             required
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            placeholder="New York"
+            placeholder="Kigali"
             className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
           />
         </div>

@@ -170,3 +170,63 @@ CREATE POLICY "Users can create reviews" ON public.reviews FOR INSERT WITH CHECK
 CREATE POLICY "Admins can manage all reviews" ON public.reviews FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
 );
+
+-- 16. STORAGE BUCKETS & POLICIES
+-- Create buckets for media
+INSERT INTO storage.buckets (id, name, public) VALUES ('products', 'products', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO storage.buckets (id, name, public) VALUES ('brand-assets', 'brand-assets', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', true) ON CONFLICT (id) DO NOTHING;
+
+-- Enable RLS for storage.objects if not already enabled (this is usually enabled by default in Supabase, but good practice)
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+
+-- Storage Policies: Public Read Access
+CREATE POLICY "Public Read Access" ON storage.objects FOR SELECT USING (bucket_id IN ('products', 'brand-assets', 'avatars'));
+
+-- Storage Policies: Admin Write Access for Products & Brand Assets
+CREATE POLICY "Admin Insert Media" ON storage.objects FOR INSERT WITH CHECK (
+  bucket_id IN ('products', 'brand-assets') AND
+  EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
+);
+CREATE POLICY "Admin Update Media" ON storage.objects FOR UPDATE USING (
+  bucket_id IN ('products', 'brand-assets') AND
+  EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
+);
+CREATE POLICY "Admin Delete Media" ON storage.objects FOR DELETE USING (
+  bucket_id IN ('products', 'brand-assets') AND
+  EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
+);
+
+-- Storage Policies: User Avatar Access
+CREATE POLICY "Users can upload their own avatar" ON storage.objects FOR INSERT WITH CHECK (
+  bucket_id = 'avatars' AND auth.uid() = owner
+);
+CREATE POLICY "Users can update their own avatar" ON storage.objects FOR UPDATE USING (
+  bucket_id = 'avatars' AND auth.uid() = owner
+);
+CREATE POLICY "Users can delete their own avatar" ON storage.objects FOR DELETE USING (
+  bucket_id = 'avatars' AND auth.uid() = owner
+);
+
+-- 17. NEWSLETTER SUBSCRIBERS TABLE
+CREATE TABLE IF NOT EXISTS public.newsletter_subscribers (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RLS for newsletter_subscribers
+ALTER TABLE public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can subscribe (insert their email)
+CREATE POLICY "Anyone can subscribe to newsletter" ON public.newsletter_subscribers FOR INSERT WITH CHECK (true);
+
+-- Admins can view all subscribers
+CREATE POLICY "Admins can view newsletter subscribers" ON public.newsletter_subscribers FOR SELECT USING (
+  EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
+);
+
+-- Admins can manage subscribers
+CREATE POLICY "Admins can manage newsletter subscribers" ON public.newsletter_subscribers FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
+);

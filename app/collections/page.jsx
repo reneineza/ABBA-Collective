@@ -1,6 +1,6 @@
 import React from 'react';
 import CollectionCard from '@/components/CollectionCard';
-import { MOCK_COLLECTIONS } from '@/lib/data/mockData';
+import { SAMPLE_COLLECTIONS } from '@/lib/data/sampleData';
 
 export const metadata = {
   title: 'Collections | ABBA Collective',
@@ -19,12 +19,12 @@ export default function CollectionsPage() {
             Collections
           </h1>
           <p className="text-xs sm:text-sm text-charcoal/70 font-light">
-            Each collection explores a distinct spiritual pillar—from adoption and sonship to the unmerited covering of grace.
+            Garments organized into spiritual narrative chapters.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {MOCK_COLLECTIONS.map((col) => (
+          {SAMPLE_COLLECTIONS.map((col) => (
             <CollectionCard key={col.id} collection={col} />
           ))}
         </div>

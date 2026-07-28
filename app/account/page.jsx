@@ -24,6 +24,14 @@ export default function AccountPage() {
     }
   }, []);
 
+  const handleSignOut = async (e) => {
+    if (e) e.preventDefault();
+    // Fire and forget the Supabase sign out to prevent hanging
+    signOut().catch(console.error);
+    // Immediately redirect the user
+    window.location.href = '/login';
+  };
+
   return (
     <div className="bg-ivory text-charcoal py-16 sm:py-24">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
@@ -38,7 +46,7 @@ export default function AccountPage() {
               Welcome, {profile?.full_name || 'Valued Member'}
             </h1>
             <p className="text-xs text-ivory/70 font-light">
-              {profile?.email || user?.email || 'concierge@abbacollective.com'}
+              {profile?.email || user?.email || 'info@abbacollective.com'}
             </p>
           </div>
 
@@ -50,7 +58,7 @@ export default function AccountPage() {
               <Heart size={15} /> Saved Wishlist
             </Link>
             <button
-              onClick={signOut}
+              onClick={handleSignOut}
               className="px-4 py-2.5 bg-red-950/40 hover:bg-red-900 transition-colors text-xs uppercase tracking-widest text-red-200 font-semibold rounded-sm border border-red-800/40 flex items-center gap-2"
             >
               <LogOut size={15} /> Sign Out

@@ -116,14 +116,21 @@ export function AuthProvider({ children }) {
         setUser(data.user);
         await fetchProfile(data.user.id);
       }
-      return { success: true };
+      return { success: true, role: profile?.role || 'customer' };
     } catch (err) {
-      const demoUser = { id: 'usr_demo_101', email };
-      const demoProfile = { id: 'usr_demo_101', full_name: 'Grace Heirs', email, phone: '+1 (555) 019-2831', role: 'customer' };
+      const isAdmin = email === 'admin@abbacollective.com';
+      const demoUser = { id: isAdmin ? 'usr_admin_1' : 'usr_demo_101', email };
+      const demoProfile = { 
+        id: demoUser.id, 
+        full_name: isAdmin ? 'ABBA Admin' : 'Grace Heirs', 
+        email, 
+        phone: isAdmin ? '+250789284564' : '+250789284564', 
+        role: isAdmin ? 'admin' : 'customer' 
+      };
       setUser(demoUser);
       setProfile(demoProfile);
       localStorage.setItem('abba_demo_user', JSON.stringify({ ...demoUser, profile: demoProfile }));
-      return { success: true };
+      return { success: true, role: demoProfile.role };
     } finally {
       setLoading(false);
     }
@@ -131,14 +138,15 @@ export function AuthProvider({ children }) {
 
   const signOut = async () => {
     try {
+      // Optimistically clear state
+      setUser(null);
+      setProfile(null);
+      localStorage.removeItem('abba_demo_user');
+      
       const supabase = getBrowserClient();
       await supabase.auth.signOut();
     } catch (e) {
       // ignore
-    } finally {
-      setUser(null);
-      setProfile(null);
-      localStorage.removeItem('abba_demo_user');
     }
   };
 

@@ -128,7 +128,7 @@ export default function AuthForm({ mode = 'login' }) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="concierge@abbacollective.com"
+              placeholder="info@abbacollective.com"
               className="w-full py-3 pl-10 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
               disabled={loading}
             />

@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { MOCK_BLOG_POSTS } from '@/lib/data/mockData';
+import { SAMPLE_BLOG_POSTS } from '@/lib/data/sampleData';
 
 export default function JournalPage() {
   return (
@@ -22,7 +22,7 @@ export default function JournalPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {MOCK_BLOG_POSTS.map((post) => (
+          {SAMPLE_BLOG_POSTS.map((post) => (
             <div key={post.id} className="group bg-ivory-light border border-charcoal/10 rounded-sm overflow-hidden flex flex-col hover:shadow-card transition-all duration-500">
               <div className="relative aspect-[16/9] w-full overflow-hidden">
                 <Image

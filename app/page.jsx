@@ -6,7 +6,7 @@ import ProductCard from '@/components/ProductCard';
 import CollectionCard from '@/components/CollectionCard';
 import StorySection from '@/components/StorySection';
 import Button from '@/components/Button';
-import { MOCK_COLLECTIONS, MOCK_PRODUCTS, MOCK_BLOG_POSTS } from '@/lib/data/mockData';
+import { SAMPLE_COLLECTIONS, SAMPLE_PRODUCTS, SAMPLE_BLOG_POSTS } from '@/lib/data/sampleData';
 import { ArrowRight, ShieldCheck, Sparkles, HeartHandshake } from 'lucide-react';
 
 export default function HomePage() {
@@ -65,7 +65,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {MOCK_COLLECTIONS.map((col) => (
+            {SAMPLE_COLLECTIONS.map((col) => (
               <CollectionCard key={col.id} collection={col} />
             ))}
           </div>
@@ -88,7 +88,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {MOCK_PRODUCTS.map((prod) => (
+            {SAMPLE_PRODUCTS.map((prod) => (
               <ProductCard key={prod.id} product={prod} />
             ))}
           </div>
@@ -145,7 +145,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {MOCK_BLOG_POSTS.map((post) => (
+            {SAMPLE_BLOG_POSTS.map((post) => (
               <div key={post.id} className="group bg-ivory-light border border-charcoal/10 rounded-sm overflow-hidden flex flex-col md:flex-row hover:shadow-card transition-all duration-500">
                 <div className="relative aspect-[4/3] md:w-1/2 overflow-hidden">
                   <Image

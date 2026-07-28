@@ -6,7 +6,7 @@ import { Download, Mail, CheckCircle2 } from 'lucide-react';
 
 export default function AdminNewsletterPage() {
   const [subscribers, setSubscribers] = useState([
-    { id: 'sub_1', email: 'concierge@abbacollective.com', created_at: '2026-07-28' },
+    { id: 'sub_1', email: 'info@abbacollective.com', created_at: '2026-07-28' },
     { id: 'sub_2', email: 'grace@kingdomheirs.org', created_at: '2026-07-27' },
     { id: 'sub_3', email: 'david@covenantatelier.com', created_at: '2026-07-25' },
     { id: 'sub_4', email: 'elizabeth@royalidentity.com', created_at: '2026-07-20' },

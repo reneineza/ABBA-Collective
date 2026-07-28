@@ -2,32 +2,54 @@
 
 import React, { useState } from 'react';
 import DataTable from '@/components/admin/DataTable';
-import { MOCK_BLOG_POSTS } from '@/lib/data/mockData';
+import { SAMPLE_BLOG_POSTS } from '@/lib/data/sampleData';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 
 export default function AdminBlogPage() {
-  const [posts, setPosts] = useState(MOCK_BLOG_POSTS);
+  const [posts, setPosts] = useState(SAMPLE_BLOG_POSTS);
   const [showModal, setShowModal] = useState(false);
+  const [editingPost, setEditingPost] = useState(null);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Theological Identity');
   const [excerpt, setExcerpt] = useState('');
 
-  const handleCreate = (e) => {
-    e.preventDefault();
-    const newPost = {
-      id: 'blog_' + Date.now(),
-      title,
-      slug: title.toLowerCase().replace(/ /g, '-'),
-      category,
-      readTime: '5 min read',
-      date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-      excerpt,
-      image_url: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=800',
-    };
-    setPosts([newPost, ...posts]);
-    setShowModal(false);
+  const openCreate = () => {
+    setEditingPost(null);
     setTitle('');
+    setCategory('Theological Identity');
     setExcerpt('');
+    setShowModal(true);
+  };
+
+  const openEdit = (post) => {
+    setEditingPost(post);
+    setTitle(post.title);
+    setCategory(post.category || 'Theological Identity');
+    setExcerpt(post.excerpt || '');
+    setShowModal(true);
+  };
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    if (editingPost) {
+      setPosts(posts.map((p) =>
+        p.id === editingPost.id ? { ...p, title, category, excerpt, slug: title.toLowerCase().replace(/ /g, '-') } : p
+      ));
+    } else {
+      const newPost = {
+        id: 'blog_' + Date.now(),
+        title,
+        slug: title.toLowerCase().replace(/ /g, '-'),
+        category,
+        readTime: '5 min read',
+        date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        excerpt,
+        image_url: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=800',
+      };
+      setPosts([newPost, ...posts]);
+    }
+    setShowModal(false);
+    setEditingPost(null);
   };
 
   const columns = [
@@ -62,7 +84,10 @@ export default function AdminBlogPage() {
       header: 'Actions',
       cell: (row) => (
         <div className="flex items-center space-x-2">
-          <button onClick={() => setPosts(posts.filter(p => p.id !== row.id))} className="p-1.5 text-red-400 hover:text-red-300">
+          <button onClick={() => openEdit(row)} className="p-1.5 text-ivory/60 hover:text-gold">
+            <Edit size={15} />
+          </button>
+          <button onClick={() => { if (confirm('Delete this article?')) setPosts(posts.filter(p => p.id !== row.id)); }} className="p-1.5 text-red-400 hover:text-red-300">
             <Trash2 size={15} />
           </button>
         </div>
@@ -82,7 +107,7 @@ export default function AdminBlogPage() {
           </p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={openCreate}
           className="px-5 py-2.5 bg-gold text-charcoal hover:bg-gold-light transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-1.5"
         >
           <Plus size={16} /> New Article
@@ -90,8 +115,8 @@ export default function AdminBlogPage() {
       </div>
 
       {showModal && (
-        <form onSubmit={handleCreate} className="bg-charcoal border border-gold/30 p-6 rounded-sm space-y-4 max-w-xl">
-          <h3 className="font-serif-luxury text-xl font-bold text-ivory">Publish New Journal Entry</h3>
+        <form onSubmit={handleSave} className="bg-charcoal border border-gold/30 p-6 rounded-sm space-y-4 max-w-xl">
+          <h3 className="font-serif-luxury text-xl font-bold text-ivory">{editingPost ? 'Edit Article' : 'Publish New Journal Entry'}</h3>
           <div>
             <label className="text-[10px] uppercase text-gold font-semibold block mb-1">Title</label>
             <input

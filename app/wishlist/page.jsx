@@ -17,12 +17,12 @@ export default function WishlistPage() {
       const savedWishlistIds = safeJsonParse(localStorage.getItem('abba_wishlist'), []);
       if (Array.isArray(savedWishlistIds) && savedWishlistIds.length > 0) {
         const filtered = SAMPLE_PRODUCTS.filter((p) => savedWishlistIds.includes(p.id));
-        setWishlistProducts(filtered.length > 0 ? filtered : SAMPLE_PRODUCTS.slice(0, 2));
+        setWishlistProducts(filtered);
       } else {
-        setWishlistProducts(SAMPLE_PRODUCTS.slice(0, 2));
+        setWishlistProducts([]);
       }
     } catch (e) {
-      setWishlistProducts(SAMPLE_PRODUCTS.slice(0, 2));
+      setWishlistProducts([]);
     }
   }, []);
 

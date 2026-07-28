@@ -124,7 +124,7 @@ export default function AmbassadorPage() {
                     required
                     value={applicantEmail}
                     onChange={(e) => setApplicantEmail(e.target.value)}
-                    placeholder="concierge@abbacollective.com"
+                    placeholder="info@abbacollective.com"
                     className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
                   />
                 </div>

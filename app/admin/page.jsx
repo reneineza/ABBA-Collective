@@ -19,7 +19,7 @@ export default function AdminDashboardPage() {
           created_at: new Date().toISOString(),
           status: 'Confirmed',
           total_amount: 270.00,
-          shipping_address: { first_name: 'Grace', last_name: 'Heirs', city: 'New York' },
+          shipping_address: { first_name: 'Grace', last_name: 'Heirs', city: 'Kigali' },
           items: [{ name: 'Adoption Hoodie', quantity: 1, price: 185 }, { name: 'ABBA Signature Tee', quantity: 1, price: 85 }]
         },
         {
@@ -36,8 +36,8 @@ export default function AdminDashboardPage() {
     }
   }, []);
 
-  const totalSales = orders.reduce((sum, o) => sum + Number(o.total_amount || 0), 2845.00);
-  const avgOrderValue = orders.length > 0 ? totalSales / (orders.length + 8) : 237.08;
+  const totalSales = orders.reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
+  const avgOrderValue = orders.length > 0 ? totalSales / orders.length : 0;
 
   return (
     <div className="space-y-8">
@@ -45,14 +45,14 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Gross Revenue"
-          value={`$${totalSales.toFixed(2)}`}
-          change="+18.4% vs previous month"
+          value={totalSales > 0 ? `$${totalSales.toFixed(2)}` : '—'}
+          change={totalSales > 0 ? 'Based on all tracked orders' : 'No orders yet'}
           icon={DollarSign}
         />
         <StatCard
           title="Total Orders Executed"
-          value={`${orders.length + 8} Orders`}
-          change={`Average Order Value: $${avgOrderValue.toFixed(2)}`}
+          value={`${orders.length} Orders`}
+          change={orders.length > 0 ? `Avg. Value: $${avgOrderValue.toFixed(2)}` : 'No orders yet'}
           icon={ShoppingBag}
         />
         <StatCard

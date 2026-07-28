@@ -6,10 +6,16 @@ import CartItem from './CartItem';
 import Button from './Button';
 import { useCart } from '@/lib/context/CartContext';
 import { formatPrice } from '@/lib/utils/formatCurrency';
+import { usePathname } from 'next/navigation';
 import { X, ShoppingBag, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export default function CartDrawer() {
+  const pathname = usePathname();
   const { cart, isOpen, closeCart, cartTotal, totalItems, clearCart } = useCart();
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   if (!isOpen) return null;
 

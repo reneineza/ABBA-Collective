@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import DataTable from '@/components/admin/DataTable';
+import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { Users, Mail, Phone } from 'lucide-react';
 
 export default function AdminCustomersPage() {
@@ -69,7 +70,7 @@ export default function AdminCustomersPage() {
     },
     {
       header: 'Lifetime Value (LTV)',
-      cell: (row) => <span className="font-bold text-emerald-400 text-sm">${row.total_spending.toFixed(2)}</span>,
+      cell: (row) => <span className="font-bold text-emerald-400 text-sm">{formatCurrency(row.total_spending)}</span>,
     },
   ];
 

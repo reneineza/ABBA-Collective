@@ -6,6 +6,7 @@ import ProductForm from '@/components/admin/ProductForm';
 import { SAMPLE_PRODUCTS } from '@/lib/data/sampleData';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import Link from 'next/link';
+import { formatCurrency } from '@/lib/utils/formatCurrency';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState(SAMPLE_PRODUCTS);
@@ -58,7 +59,7 @@ export default function AdminProductsPage() {
     },
     {
       header: 'Price',
-      cell: (row) => <span className="font-bold text-gold">${Number(row.price).toFixed(2)}</span>,
+      cell: (row) => <span className="font-bold text-gold">{formatCurrency(row.price)}</span>,
     },
     {
       header: 'Variants & Stock',

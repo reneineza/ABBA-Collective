@@ -8,6 +8,7 @@ import { createPayment } from '@/lib/payments/paymentService';
 import { sendOrderConfirmation } from '@/lib/email/emailService';
 import { trackCheckoutStarted, trackPurchase } from '@/lib/analytics/analyticsService';
 import { safeJsonParse } from '@/lib/utils/json';
+import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { Lock, ArrowRight, ArrowLeft, CreditCard, Smartphone, Wallet, Loader2 } from 'lucide-react';
 import AddressForm from './AddressForm';
 
@@ -24,13 +25,13 @@ export default function CheckoutForm() {
   const [phone, setPhone] = useState(profile?.phone || '');
 
   const [shippingAddress, setShippingAddress] = useState({
-    first_name: profile?.full_name ? profile.full_name.split(' ')[0] : 'John',
-    last_name: profile?.full_name ? profile.full_name.split(' ')[1] || 'Doe' : 'Doe',
-    phone: profile?.phone || '+1 (555) 019-2831',
-    country: 'United States',
-    city: 'New York',
-    address_line: '742 Evergreen Terrace, Suite 400',
-    postal_code: '10001',
+    first_name: profile?.full_name ? profile.full_name.split(' ')[0] : '',
+    last_name: profile?.full_name ? profile.full_name.split(' ')[1] || '' : '',
+    phone: profile?.phone || '',
+    country: 'Rwanda',
+    city: 'Kigali',
+    address_line: '',
+    postal_code: '',
   });
 
   const [paymentProvider, setPaymentProvider] = useState('Card');
@@ -131,7 +132,7 @@ export default function CheckoutForm() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="concierge@abbacollective.com"
+                  placeholder="info@abbacollective.com"
                   className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
                 />
               </div>
@@ -302,7 +303,7 @@ export default function CheckoutForm() {
                   <Loader2 size={16} className="animate-spin" />
                 ) : (
                   <>
-                    <Lock size={15} /> Complete & Place Order (${grandTotal.toFixed(2)})
+                    <Lock size={15} /> Complete & Place Order ({formatCurrency(grandTotal)})
                   </>
                 )}
               </button>
@@ -338,7 +339,7 @@ export default function CheckoutForm() {
                   </p>
                 </div>
               </div>
-              <p className="font-semibold text-gold">${(item.price * item.quantity).toFixed(2)}</p>
+              <p className="font-semibold text-gold">{formatCurrency(item.price * item.quantity)}</p>
             </div>
           ))}
         </div>
@@ -347,15 +348,15 @@ export default function CheckoutForm() {
         <div className="space-y-2 text-xs border-t border-ivory/10 pt-4">
           <div className="flex justify-between text-ivory/80">
             <span>Subtotal</span>
-            <span>${cartTotal.toFixed(2)}</span>
+            <span>{formatCurrency(cartTotal)}</span>
           </div>
           <div className="flex justify-between text-ivory/80">
             <span>Insured Shipping</span>
-            <span>{shippingCost === 0 ? 'Complimentary' : `$${shippingCost.toFixed(2)}`}</span>
+            <span>{shippingCost === 0 ? 'Complimentary' : formatCurrency(shippingCost)}</span>
           </div>
           <div className="flex justify-between text-base font-bold text-gold border-t border-ivory/10 pt-3">
             <span>Total</span>
-            <span>${grandTotal.toFixed(2)}</span>
+            <span>{formatCurrency(grandTotal)}</span>
           </div>
         </div>
 

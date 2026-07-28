@@ -27,7 +27,7 @@ export default function AdminCategoriesPage() {
     {
       header: 'Actions',
       cell: (row) => (
-        <button onClick={() => setCategories(categories.filter(c => c.id !== row.id))} className="text-red-400 hover:text-red-300">
+        <button onClick={() => { if (confirm('Delete this category?')) setCategories(categories.filter(c => c.id !== row.id)); }} className="text-red-400 hover:text-red-300">
           <Trash2 size={15} />
         </button>
       ),

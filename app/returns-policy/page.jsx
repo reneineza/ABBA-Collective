@@ -29,7 +29,7 @@ export default function ReturnsPolicyPage() {
           <section className="space-y-2">
             <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">2. Initiating a Return</h2>
             <p>
-              To request a return shipping label, contact our Atelier Client Concierge at <strong>concierge@abbacollective.com</strong> with your order reference number.
+              To request a return shipping label, contact our Atelier Client Concierge at <strong>info@abbacollective.com</strong> with your order reference number.
             </p>
           </section>
         </div>

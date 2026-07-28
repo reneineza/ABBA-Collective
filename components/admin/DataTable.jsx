@@ -56,7 +56,7 @@ export default function DataTable({ columns = [], data = [], searchPlaceholder =
                 <tr key={row.id || rowIdx} className="hover:bg-ivory/5 transition-colors">
                   {columns.map((col, colIdx) => (
                     <td key={colIdx} className="p-4 align-middle">
-                      {col.cell ? col.cell(row) : row[col.accessor]}
+                      {col.cell ? col.cell(row) : col.accessor ? col.accessor(row) : row[col.key]}
                     </td>
                   ))}
                 </tr>

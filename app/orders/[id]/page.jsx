@@ -29,9 +29,9 @@ export default function OrderDetailPage({ params }) {
           shipping_address: {
             first_name: 'Grace',
             last_name: 'Heirs',
-            phone: '+1 (555) 019-2831',
-            country: 'United States',
-            city: 'New York',
+            phone: '+250789284564',
+            country: 'Rwanda',
+            city: 'Kigali',
             address_line: '742 Evergreen Terrace, Suite 400',
             postal_code: '10001',
           },

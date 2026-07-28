@@ -3,10 +3,18 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, Layers, Tag, ShoppingBag, Users, FileText, Mail, Star, Megaphone, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, Package, Layers, Tag, ShoppingBag, Users, FileText, Mail, Star, Megaphone, ExternalLink, LogOut } from 'lucide-react';
+import { useAuth } from '@/lib/context/AuthContext';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const { signOut } = useAuth();
+
+  const handleSignOut = async (e) => {
+    if (e) e.preventDefault();
+    signOut().catch(console.error);
+    window.location.href = '/admin/login';
+  };
 
   const navItems = [
     { name: 'Overview', href: '/admin', icon: LayoutDashboard },
@@ -59,8 +67,8 @@ export default function AdminSidebar() {
         </nav>
       </div>
 
-      {/* Return to Client Store Link */}
-      <div className="p-4 border-t border-gold/20">
+      {/* Return to Client Store Link & Logout */}
+      <div className="p-4 border-t border-gold/20 space-y-3">
         <Link
           href="/"
           target="_blank"
@@ -69,6 +77,13 @@ export default function AdminSidebar() {
           <span>View Public Store</span>
           <ExternalLink size={14} />
         </Link>
+        <button
+          onClick={handleSignOut}
+          className="w-full flex items-center justify-between px-4 py-3 text-xs uppercase tracking-widest font-semibold text-red-300 hover:text-ivory hover:bg-red-900 transition-colors bg-red-950/40 border border-red-800/40 rounded-sm"
+        >
+          <span>Sign Out</span>
+          <LogOut size={14} />
+        </button>
       </div>
     </aside>
   );

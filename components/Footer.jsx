@@ -2,9 +2,16 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import NewsletterForm from './NewsletterForm';
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
+
   return (
     <footer className="bg-charcoal text-ivory pt-16 pb-12 border-t border-gold/20">
       {/* Scripture Anchor Section */}

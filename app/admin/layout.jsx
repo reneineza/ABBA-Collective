@@ -11,7 +11,34 @@ export default function AdminLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, profile, loading } = useAuth();
-  const [isAdminAuthorized, setIsAdminAuthorized] = useState(true); // Allow demo access
+  const [isAdminAuthorized, setIsAdminAuthorized] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    if (pathname?.startsWith('/admin/login')) {
+      setCheckingAuth(false);
+      return;
+    }
+
+    if (!loading) {
+      if (!user || profile?.role !== 'admin') {
+        // Force a hard redirect to bypass any Next.js navigation aborts
+        window.location.href = '/admin/login';
+      } else {
+        setIsAdminAuthorized(true);
+        setCheckingAuth(false);
+      }
+    }
+
+    // Safety timeout — if loading hangs for > 3s, try to resolve
+    const timeout = setTimeout(() => {
+      if (loading) {
+        setCheckingAuth(false);
+      }
+    }, 3000);
+
+    return () => clearTimeout(timeout);
+  }, [user, profile, loading, pathname]);
 
   const titles = {
     '/admin': 'Executive Business Analytics',
@@ -22,7 +49,29 @@ export default function AdminLayout({ children }) {
     '/admin/customers': 'Client Directory & Lifetime Value Metrics',
     '/admin/blog': 'ABBA Journal & Devotional CMS',
     '/admin/newsletter': 'Newsletter Roster & Subscriber Export',
+    '/admin/reviews': 'Product Review Moderation',
+    '/admin/marketing': 'Marketing & Brand Campaign Tools',
   };
+
+  // If the user is on the admin login page, don't show the sidebar or header
+  if (pathname === '/admin/login') {
+    return (
+      <div className="min-h-screen bg-charcoal-dark font-sans selection:bg-gold selection:text-charcoal text-ivory">
+        {children}
+      </div>
+    );
+  }
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-charcoal-dark text-ivory">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 size={32} className="animate-spin text-gold" />
+          <p className="text-xs uppercase tracking-luxurious text-gold">Verifying Access</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-charcoal-dark flex font-sans selection:bg-gold selection:text-charcoal text-ivory">
