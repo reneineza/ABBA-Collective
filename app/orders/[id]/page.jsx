@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Button from '@/components/Button';
 import { safeJsonParse } from '@/lib/utils/json';
+import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { Package, CheckCircle2, ArrowLeft, Printer, ShieldCheck, MapPin, Truck } from 'lucide-react';
 
 export default function OrderDetailPage({ params }) {
@@ -24,7 +25,7 @@ export default function OrderDetailPage({ params }) {
           id: id || 'ord_demo',
           created_at: new Date().toISOString(),
           status: 'Confirmed',
-          total_amount: 270.00,
+          total_amount: 130000,
           payment_provider: 'Card',
           shipping_address: {
             first_name: 'Grace',
@@ -32,14 +33,14 @@ export default function OrderDetailPage({ params }) {
             phone: '+250789284564',
             country: 'Rwanda',
             city: 'Kigali',
-            address_line: '742 Evergreen Terrace, Suite 400',
+            address_line: 'KG 7 Ave, Suite 400',
             postal_code: '10001',
           },
           items: [
             {
               name: 'Adoption Hoodie',
               slug: 'adoption-hoodie',
-              price: 185.00,
+              price: 85000,
               quantity: 1,
               size: 'L',
               color: 'Charcoal',
@@ -48,7 +49,7 @@ export default function OrderDetailPage({ params }) {
             {
               name: 'ABBA Signature Tee',
               slug: 'abba-signature-tee',
-              price: 85.00,
+              price: 45000,
               quantity: 1,
               size: 'M',
               color: 'Ivory',
@@ -140,7 +141,7 @@ export default function OrderDetailPage({ params }) {
                     </div>
                   </div>
                   <p className="font-semibold text-charcoal text-sm">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    {formatCurrency(item.price * item.quantity)}
                   </p>
                 </div>
               ))}
@@ -162,7 +163,7 @@ export default function OrderDetailPage({ params }) {
             <div className="space-y-2 text-xs text-right">
               <span className="text-gold font-semibold uppercase tracking-wider block">Payment Summary</span>
               <p className="text-charcoal/80">Method: <strong>{order.payment_provider || 'Credit Card'}</strong></p>
-              <p className="text-lg font-bold text-forest">Total: ${Number(order.total_amount).toFixed(2)}</p>
+              <p className="text-lg font-bold text-forest">Total: {formatCurrency(order.total_amount)}</p>
             </div>
           </div>
 

@@ -19,7 +19,7 @@ export default function CartDrawer() {
 
   if (!isOpen) return null;
 
-  const FREE_SHIPPING_THRESHOLD = 200; // in USD base scale
+  const FREE_SHIPPING_THRESHOLD = 200000; // in RWF
   const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - cartTotal);
   const progressPercent = Math.min(100, (cartTotal / FREE_SHIPPING_THRESHOLD) * 100);
 

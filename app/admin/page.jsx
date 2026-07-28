@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import StatCard from '@/components/admin/StatCard';
 import OrderStatusBadge from '@/components/admin/OrderStatusBadge';
 import { safeJsonParse } from '@/lib/utils/json';
+import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { DollarSign, ShoppingBag, Package, Users, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -18,17 +19,19 @@ export default function AdminDashboardPage() {
           id: 'ord_9x28v',
           created_at: new Date().toISOString(),
           status: 'Confirmed',
-          total_amount: 270.00,
+          total_amount: 130000,
+          payment_provider: 'Card',
           shipping_address: { first_name: 'Grace', last_name: 'Heirs', city: 'Kigali' },
-          items: [{ name: 'Adoption Hoodie', quantity: 1, price: 185 }, { name: 'ABBA Signature Tee', quantity: 1, price: 85 }]
+          items: [{ name: 'Adoption Hoodie', quantity: 1, price: 85000 }, { name: 'ABBA Signature Tee', quantity: 1, price: 45000 }]
         },
         {
           id: 'ord_3k71p',
           created_at: new Date(Date.now() - 86400000).toISOString(),
           status: 'Shipped',
-          total_amount: 420.00,
-          shipping_address: { first_name: 'David', last_name: 'Covenant', city: 'Dallas' },
-          items: [{ name: 'Covenant Tailored Overcoat', quantity: 1, price: 420 }]
+          total_amount: 180000,
+          payment_provider: 'Mobile Money',
+          shipping_address: { first_name: 'David', last_name: 'Covenant', city: 'Kigali' },
+          items: [{ name: 'Covenant Tailored Overcoat', quantity: 1, price: 180000 }]
         }
       ]);
     } catch (e) {
@@ -45,14 +48,14 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Gross Revenue"
-          value={totalSales > 0 ? `$${totalSales.toFixed(2)}` : '—'}
+          value={totalSales > 0 ? formatCurrency(totalSales) : '—'}
           change={totalSales > 0 ? 'Based on all tracked orders' : 'No orders yet'}
           icon={DollarSign}
         />
         <StatCard
           title="Total Orders Executed"
           value={`${orders.length} Orders`}
-          change={orders.length > 0 ? `Avg. Value: $${avgOrderValue.toFixed(2)}` : 'No orders yet'}
+          change={orders.length > 0 ? `Avg. Value: ${formatCurrency(avgOrderValue)}` : 'No orders yet'}
           icon={ShoppingBag}
         />
         <StatCard

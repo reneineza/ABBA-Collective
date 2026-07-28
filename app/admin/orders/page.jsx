@@ -21,7 +21,7 @@ export default function AdminOrdersPage() {
           id: 'ord_9x28v',
           created_at: new Date().toISOString(),
           status: 'Confirmed',
-          total_amount: 270.00,
+          total_amount: 130000,
           payment_provider: 'Card',
           shipping_address: { first_name: 'Grace', last_name: 'Heirs', email: 'grace@example.com', city: 'Kigali' },
           items: [{ name: 'Adoption Hoodie', quantity: 1 }, { name: 'ABBA Signature Tee', quantity: 1 }]
@@ -30,9 +30,9 @@ export default function AdminOrdersPage() {
           id: 'ord_3k71p',
           created_at: new Date(Date.now() - 86400000).toISOString(),
           status: 'Shipped',
-          total_amount: 420.00,
-          payment_provider: 'Stripe',
-          shipping_address: { first_name: 'David', last_name: 'Covenant', email: 'david@example.com', city: 'Dallas' },
+          total_amount: 180000,
+          payment_provider: 'Mobile Money',
+          shipping_address: { first_name: 'David', last_name: 'Covenant', email: 'david@example.com', city: 'Kigali' },
           items: [{ name: 'Covenant Tailored Overcoat', quantity: 1 }]
         }
       ]);

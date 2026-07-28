@@ -9,7 +9,7 @@ import { Plus, Trash2, Check, X } from 'lucide-react';
 export default function ProductForm({ initialProduct, onSave, onCancel }) {
   const [name, setName] = useState(initialProduct?.name || '');
   const [slug, setSlug] = useState(initialProduct?.slug || '');
-  const [price, setPrice] = useState(initialProduct?.price || 120.00);
+  const [price, setPrice] = useState(initialProduct?.price || 120000);
   const [description, setDescription] = useState(initialProduct?.description || '');
   const [story, setStory] = useState(initialProduct?.story || '');
   const [details, setDetails] = useState(initialProduct?.details || '');
@@ -111,14 +111,15 @@ export default function ProductForm({ initialProduct, onSave, onCancel }) {
 
         <div>
           <label className="text-[10px] uppercase tracking-widest text-gold font-semibold block mb-1">
-            Price (USD Base) — Storefront Display: <span className="text-ivory font-bold">{formatPrice(price || 0)}</span>
+            Price (RWF) — Preview: <span className="text-ivory font-bold">{formatPrice(price || 0)}</span>
           </label>
           <input
             type="number"
-            step="0.01"
+            step="1"
             required
             value={price}
             onChange={(e) => setPrice(e.target.value)}
+            placeholder="120000"
             className="w-full p-3 text-xs bg-charcoal-dark border border-gold/30 focus:border-gold focus:outline-none"
           />
         </div>

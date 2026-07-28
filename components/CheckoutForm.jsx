@@ -36,7 +36,7 @@ export default function CheckoutForm() {
 
   const [paymentProvider, setPaymentProvider] = useState('Card');
 
-  const shippingCost = cartTotal >= 200 ? 0 : 15;
+  const shippingCost = cartTotal >= 200000 ? 0 : 15000;
   const grandTotal = cartTotal + shippingCost;
 
   const handleProceedToPayment = () => {
