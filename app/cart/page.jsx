@@ -11,7 +11,7 @@ import { ShoppingBag, ArrowRight, ShieldCheck, Truck, Lock } from 'lucide-react'
 
 export default function CartPage() {
   const { cart, cartTotal, totalItems, clearCart } = useCart();
-  const shippingCost = cartTotal >= 200 ? 0 : 15;
+  const shippingCost = cartTotal >= 200000 ? 0 : 15000;
   const grandTotal = cartTotal + shippingCost;
 
   return (

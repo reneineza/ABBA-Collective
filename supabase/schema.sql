@@ -1,4 +1,5 @@
--- ABBA Collective Supabase Database Schema Migration (Milestone 6 - Growth & Expansion)
+-- ABBA Collective Supabase Database Schema Migration
+-- Designed for 100% clean execution in Supabase SQL Editor
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -100,29 +101,28 @@ CREATE TABLE IF NOT EXISTS public.orders (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 10. REVIEWS TABLE (Milestone 6)
+-- 10. REVIEWS TABLE
 CREATE TABLE IF NOT EXISTS public.reviews (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   product_id UUID REFERENCES public.products(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   rating INTEGER CHECK (rating >= 1 AND rating <= 5) NOT NULL,
-  title TEXT NOT NULL,
   comment TEXT NOT NULL,
   approved BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 11. LOYALTY POINTS TABLE (Milestone 6)
+-- 11. LOYALTY POINTS TABLE
 CREATE TABLE IF NOT EXISTS public.loyalty_points (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-  points INTEGER NOT NULL,
+  points INTEGER DEFAULT 0 NOT NULL,
   transaction_type TEXT CHECK (transaction_type IN ('Purchase', 'Referral', 'Review', 'Redemption')) NOT NULL,
   description TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 12. CART SESSIONS TABLE (Milestone 6 - Abandoned Cart Tracking)
+-- 12. CART SESSIONS TABLE
 CREATE TABLE IF NOT EXISTS public.cart_sessions (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS public.cart_sessions (
   last_activity TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 13. AMBASSADORS TABLE (Milestone 6)
+-- 13. AMBASSADORS TABLE
 CREATE TABLE IF NOT EXISTS public.ambassadors (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS public.ambassadors (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 14. REFERRALS TABLE (Milestone 6)
+-- 14. REFERRALS TABLE
 CREATE TABLE IF NOT EXISTS public.referrals (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   ambassador_id UUID REFERENCES public.ambassadors(id) ON DELETE CASCADE NOT NULL,
@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS public.referrals (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 15. NOTIFICATION PREFERENCES TABLE (Milestone 6)
+-- 15. NOTIFICATION PREFERENCES TABLE
 CREATE TABLE IF NOT EXISTS public.notification_preferences (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL UNIQUE,
@@ -159,74 +159,52 @@ CREATE TABLE IF NOT EXISTS public.notification_preferences (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ROW LEVEL SECURITY (RLS)
-ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.loyalty_points ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.ambassadors ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.referrals ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Public users can view approved reviews" ON public.reviews FOR SELECT USING (approved = true);
-CREATE POLICY "Users can create reviews" ON public.reviews FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Admins can manage all reviews" ON public.reviews FOR ALL USING (
-  EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-);
-
--- 16. STORAGE BUCKETS & POLICIES
--- Create buckets for media
-INSERT INTO storage.buckets (id, name, public) VALUES ('products', 'products', true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO storage.buckets (id, name, public) VALUES ('brand-assets', 'brand-assets', true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', true) ON CONFLICT (id) DO NOTHING;
-
--- Enable RLS for storage.objects if not already enabled (this is usually enabled by default in Supabase, but good practice)
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
-
--- Storage Policies: Public Read Access
-CREATE POLICY "Public Read Access" ON storage.objects FOR SELECT USING (bucket_id IN ('products', 'brand-assets', 'avatars'));
-
--- Storage Policies: Admin Write Access for Products & Brand Assets
-CREATE POLICY "Admin Insert Media" ON storage.objects FOR INSERT WITH CHECK (
-  bucket_id IN ('products', 'brand-assets') AND
-  EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-);
-CREATE POLICY "Admin Update Media" ON storage.objects FOR UPDATE USING (
-  bucket_id IN ('products', 'brand-assets') AND
-  EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-);
-CREATE POLICY "Admin Delete Media" ON storage.objects FOR DELETE USING (
-  bucket_id IN ('products', 'brand-assets') AND
-  EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-);
-
--- Storage Policies: User Avatar Access
-CREATE POLICY "Users can upload their own avatar" ON storage.objects FOR INSERT WITH CHECK (
-  bucket_id = 'avatars' AND auth.uid() = owner
-);
-CREATE POLICY "Users can update their own avatar" ON storage.objects FOR UPDATE USING (
-  bucket_id = 'avatars' AND auth.uid() = owner
-);
-CREATE POLICY "Users can delete their own avatar" ON storage.objects FOR DELETE USING (
-  bucket_id = 'avatars' AND auth.uid() = owner
-);
-
--- 17. NEWSLETTER SUBSCRIBERS TABLE
+-- 16. NEWSLETTER SUBSCRIBERS TABLE
 CREATE TABLE IF NOT EXISTS public.newsletter_subscribers (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   email TEXT NOT NULL UNIQUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- RLS for newsletter_subscribers
+-- ROW LEVEL SECURITY (RLS) FOR PUBLIC TABLES
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.loyalty_points ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ambassadors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.referrals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
 
--- Anyone can subscribe (insert their email)
-CREATE POLICY "Anyone can subscribe to newsletter" ON public.newsletter_subscribers FOR INSERT WITH CHECK (true);
+-- Drop existing policies if re-running to avoid duplicate policy errors
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Public users can view approved reviews" ON public.reviews;
+DROP POLICY IF EXISTS "Users can create reviews" ON public.reviews;
+DROP POLICY IF EXISTS "Admins can manage all reviews" ON public.reviews;
+DROP POLICY IF EXISTS "Anyone can subscribe to newsletter" ON public.newsletter_subscribers;
+DROP POLICY IF EXISTS "Admins can view newsletter subscribers" ON public.newsletter_subscribers;
+DROP POLICY IF EXISTS "Admins can manage newsletter subscribers" ON public.newsletter_subscribers;
 
--- Admins can view all subscribers
+-- Profiles Policies
+CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+
+-- Reviews Policies
+CREATE POLICY "Public users can view approved reviews" ON public.reviews FOR SELECT USING (approved = true);
+CREATE POLICY "Users can create reviews" ON public.reviews FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Admins can manage all reviews" ON public.reviews FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
+);
+
+-- Newsletter Policies
+CREATE POLICY "Anyone can subscribe to newsletter" ON public.newsletter_subscribers FOR INSERT WITH CHECK (true);
 CREATE POLICY "Admins can view newsletter subscribers" ON public.newsletter_subscribers FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
 );
-
--- Admins can manage subscribers
 CREATE POLICY "Admins can manage newsletter subscribers" ON public.newsletter_subscribers FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
 );
+
+-- STORAGE BUCKET CREATION
+INSERT INTO storage.buckets (id, name, public) VALUES ('product-images', 'product-images', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO storage.buckets (id, name, public) VALUES ('blog-images', 'blog-images', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', true) ON CONFLICT (id) DO NOTHING;

@@ -70,7 +70,7 @@ export default function OrderDetailPage({ params }) {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         
         {/* Navigation back */}
-        <div className="flex justify-between items-center border-b border-charcoal/10 pb-4">
+        <div className="flex justify-between items-center border-b border-charcoal/10 pb-4 no-print">
           <Link
             href="/orders"
             className="text-xs uppercase tracking-widest font-semibold text-charcoal hover:text-gold flex items-center gap-1.5"
@@ -79,15 +79,25 @@ export default function OrderDetailPage({ params }) {
           </Link>
           <button
             onClick={() => window.print()}
-            className="text-xs uppercase tracking-widest font-semibold text-charcoal/70 hover:text-gold flex items-center gap-1.5"
+            className="text-xs uppercase tracking-widest font-semibold text-charcoal/70 hover:text-gold flex items-center gap-1.5 px-4 py-2 border border-charcoal/20 hover:border-gold rounded-sm transition-colors"
           >
             <Printer size={15} /> Print Digital Receipt
           </button>
         </div>
 
         {/* Order Receipt Card */}
-        <div className="bg-ivory-light border border-charcoal/10 rounded-sm p-8 sm:p-12 space-y-8 shadow-card">
+        <div id="printable-receipt" className="printable-receipt bg-ivory-light border border-charcoal/10 rounded-sm p-8 sm:p-12 space-y-8 shadow-card">
           
+          {/* Printable Brand Letterhead (Visible in print/PDF) */}
+          <div className="hidden print:block text-center border-b border-black/20 pb-4 mb-4">
+            <h2 className="font-serif-luxury text-3xl font-bold tracking-widest uppercase text-black">
+              A B B A   C O L L E C T I V E
+            </h2>
+            <p className="text-[10px] uppercase tracking-widest text-black/70">
+              Identity Received. Grace Revealed. • Kigali, Rwanda
+            </p>
+          </div>
+
           {/* Header Banner */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-charcoal/10 pb-6 gap-4">
             <div className="space-y-1">
@@ -109,7 +119,7 @@ export default function OrderDetailPage({ params }) {
           </div>
 
           {/* Delivery Tracker Steps */}
-          <div className="bg-ivory p-6 border border-charcoal/10 rounded-sm space-y-4">
+          <div className="bg-ivory p-6 border border-charcoal/10 rounded-sm space-y-4 no-print">
             <h4 className="text-xs uppercase tracking-widest font-semibold text-charcoal">
               Order Status & Shipment Tracking
             </h4>
@@ -130,7 +140,7 @@ export default function OrderDetailPage({ params }) {
               {order.items && order.items.map((item, idx) => (
                 <div key={idx} className="flex items-center justify-between py-2 border-b border-charcoal/10 text-xs">
                   <div className="flex items-center space-x-4">
-                    <div className="relative w-12 h-16 bg-ivory border border-charcoal/10 rounded-sm overflow-hidden flex-shrink-0">
+                    <div className="relative w-12 h-16 bg-ivory border border-charcoal/10 rounded-sm overflow-hidden flex-shrink-0 no-print">
                       <Image src={item.image} alt={item.name} fill sizes="50px" className="object-cover" />
                     </div>
                     <div>
@@ -154,16 +164,17 @@ export default function OrderDetailPage({ params }) {
               <span className="text-gold font-semibold uppercase tracking-wider block">Shipping Address</span>
               <p className="text-charcoal/80 font-light leading-relaxed">
                 {order.shipping_address?.first_name} {order.shipping_address?.last_name}<br />
+                {order.shipping_address?.phone && <>Phone: {order.shipping_address.phone}<br /></>}
                 {order.shipping_address?.address_line}<br />
-                {order.shipping_address?.city}, {order.shipping_address?.postal_code}<br />
+                {order.shipping_address?.city}{order.shipping_address?.postal_code ? `, ${order.shipping_address.postal_code}` : ''}<br />
                 {order.shipping_address?.country}
               </p>
             </div>
 
             <div className="space-y-2 text-xs text-right">
               <span className="text-gold font-semibold uppercase tracking-wider block">Payment Summary</span>
-              <p className="text-charcoal/80">Method: <strong>{order.payment_provider || 'Credit Card'}</strong></p>
-              <p className="text-lg font-bold text-forest">Total: {formatCurrency(order.total_amount)}</p>
+              <p className="text-charcoal/80">Method: <strong>{order.payment_provider || 'Credit Card / Mobile Money'}</strong></p>
+              <p className="text-lg font-bold text-forest">Total Paid: {formatCurrency(order.total_amount)}</p>
             </div>
           </div>
 

@@ -20,17 +20,24 @@ export default function ShippingPolicyPage() {
 
         <div className="space-y-6 text-xs sm:text-sm text-charcoal/80 font-light leading-relaxed">
           <section className="space-y-2">
-            <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">1. Complimentary Shipping</h2>
+            <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">1. Delivery Scope & Coverage</h2>
             <p>
-              We provide complimentary insured global shipping on all garment orders over <strong>270,000 RWF</strong> ($200 USD equivalent).
+              ABBA Collective exclusively delivers within <strong>Rwanda</strong> (covering Kigali City and all provincial regions). International delivery services will be launched in future collection releases.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">2. Delivery Options & Processing</h2>
+            <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">2. Complimentary Delivery Threshold</h2>
             <p>
-              • <strong>Rwanda / East Africa Express:</strong> 1 – 2 business days (13,500 RWF)<br />
-              • <strong>Standard International Shipping:</strong> 4 – 7 business days (20,250 RWF)
+              We provide complimentary insured doorstep delivery across Rwanda on all garment orders over <strong>200,000 RWF</strong>.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">3. Delivery Options & Timelines</h2>
+            <p>
+              • <strong>Kigali City Doorstep Delivery:</strong> 24 – 48 Hours (15,000 RWF or Complimentary over 200,000 RWF)<br />
+              • <strong>Rwanda Provinces Express Delivery:</strong> 1 – 3 Business Days (15,000 RWF or Complimentary over 200,000 RWF)
             </p>
           </section>
         </div>

@@ -159,7 +159,7 @@ export default function CheckoutForm() {
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+1 (555) 019-2831"
+                    placeholder="+250 788 123 456"
                     className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
                   />
                 </div>

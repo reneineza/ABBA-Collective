@@ -106,11 +106,11 @@ export default function CartDrawer() {
                 </div>
                 <div className="flex justify-between text-charcoal/70">
                   <span>Insured Shipping</span>
-                  <span>{cartTotal >= FREE_SHIPPING_THRESHOLD ? 'Complimentary' : formatPrice(15)}</span>
+                  <span>{cartTotal >= FREE_SHIPPING_THRESHOLD ? 'Complimentary' : formatPrice(15000)}</span>
                 </div>
                 <div className="flex justify-between border-t border-charcoal/10 pt-2 text-sm font-bold text-charcoal">
                   <span>Estimated Total</span>
-                  <span className="text-forest">{formatPrice(cartTotal + (cartTotal >= FREE_SHIPPING_THRESHOLD ? 0 : 15))}</span>
+                  <span className="text-forest">{formatPrice(cartTotal + (cartTotal >= FREE_SHIPPING_THRESHOLD ? 0 : 15000))}</span>
                 </div>
               </div>
 
