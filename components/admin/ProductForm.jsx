@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import ImageUploader from './ImageUploader';
 import { SAMPLE_CATEGORIES, SAMPLE_COLLECTIONS } from '@/lib/data/sampleData';
+import { formatPrice } from '@/lib/utils/formatCurrency';
 import { Plus, Trash2, Check, X } from 'lucide-react';
 
 export default function ProductForm({ initialProduct, onSave, onCancel }) {
@@ -109,7 +110,9 @@ export default function ProductForm({ initialProduct, onSave, onCancel }) {
         </div>
 
         <div>
-          <label className="text-[10px] uppercase tracking-widest text-gold font-semibold block mb-1">Price ($ USD)</label>
+          <label className="text-[10px] uppercase tracking-widest text-gold font-semibold block mb-1">
+            Price (USD Base) — Storefront Display: <span className="text-ivory font-bold">{formatPrice(price || 0)}</span>
+          </label>
           <input
             type="number"
             step="0.01"

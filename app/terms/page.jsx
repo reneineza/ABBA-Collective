@@ -30,7 +30,7 @@ export default function TermsPage() {
           <section className="space-y-2">
             <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">2. Garment Purchasing & Pricing</h2>
             <p>
-              Prices listed are in US Dollars ($ USD). We reserve the right to update product pricing, variant stock levels, or collection drops at any time.
+              Prices listed across our store are denominated in Rwandan Francs (RWF). We reserve the right to update product pricing, variant stock levels, or collection drops at any time.
             </p>
           </section>
         </div>

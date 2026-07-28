@@ -22,15 +22,15 @@ export default function ShippingPolicyPage() {
           <section className="space-y-2">
             <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">1. Complimentary Shipping</h2>
             <p>
-              We provide complimentary insured global shipping on all garment orders over <strong>$200.00 USD</strong>.
+              We provide complimentary insured global shipping on all garment orders over <strong>270,000 RWF</strong> ($200 USD equivalent).
             </p>
           </section>
 
           <section className="space-y-2">
             <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">2. Delivery Options & Processing</h2>
             <p>
-              • <strong>Rwanda / Africa Express:</strong> 1 – 3 business days ($10.00)<br />
-              • <strong>Standard International Shipping:</strong> 4 – 7 business days ($15.00)
+              • <strong>Rwanda / East Africa Express:</strong> 1 – 2 business days (13,500 RWF)<br />
+              • <strong>Standard International Shipping:</strong> 4 – 7 business days (20,250 RWF)
             </p>
           </section>
         </div>
