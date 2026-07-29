@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import HeroSection from '@/components/HeroSection';
@@ -6,10 +8,20 @@ import ProductCard from '@/components/ProductCard';
 import CollectionCard from '@/components/CollectionCard';
 import StorySection from '@/components/StorySection';
 import Button from '@/components/Button';
-import { SAMPLE_COLLECTIONS, SAMPLE_PRODUCTS, SAMPLE_BLOG_POSTS } from '@/lib/data/sampleData';
-import { ArrowRight, ShieldCheck, Sparkles, HeartHandshake } from 'lucide-react';
+import { SAMPLE_COLLECTIONS, SAMPLE_PRODUCTS } from '@/lib/data/sampleData';
+import { getStoredBlogPosts } from '@/lib/utils/blogStore';
+import { ArrowRight } from 'lucide-react';
 
 export default function HomePage() {
+  const [blogPosts, setBlogPosts] = useState([]);
+
+  useEffect(() => {
+    setBlogPosts(getStoredBlogPosts());
+    const handleUpdate = () => setBlogPosts(getStoredBlogPosts());
+    window.addEventListener('abba_blog_posts_updated', handleUpdate);
+    return () => window.removeEventListener('abba_blog_posts_updated', handleUpdate);
+  }, []);
+
   return (
     <div className="space-y-0">
       {/* 1. HERO SECTION */}
@@ -38,65 +50,59 @@ export default function HomePage() {
                 ✦ Kingdom Purpose ✦
               </span>
               <h3 className="font-serif-luxury text-lg text-ivory font-bold">Grace Revealed</h3>
-              <p className="text-xs text-ivory/70 font-light">Garments crafted to spark gospel conversations</p>
+              <p className="text-xs text-ivory/70 font-light">Garments designed for daily intentionality</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3. FEATURED COLLECTIONS */}
+      {/* 3. FEATURED PRODUCTS DROP */}
       <section className="py-20 bg-ivory">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-charcoal/10 pb-6">
             <div>
               <span className="text-gold text-xs uppercase tracking-luxurious font-semibold block mb-1">
-                Curated Chapters
+                Chapter 001 Release
               </span>
               <h2 className="font-serif-luxury text-3xl sm:text-4xl font-bold text-charcoal">
-                Featured Collections
+                Featured Garments
               </h2>
             </div>
             <Link
-              href="/collections"
+              href="/shop"
               className="text-xs uppercase tracking-widest text-charcoal hover:text-gold transition-colors font-semibold flex items-center gap-2 group"
             >
-              View All Collections <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
+              Explore Full Shop <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {SAMPLE_COLLECTIONS.map((col) => (
-              <CollectionCard key={col.id} collection={col} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {SAMPLE_PRODUCTS.filter((p) => p.featured).map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* 4. CURATED PRODUCTS PREVIEW */}
+      {/* 4. CURATED COLLECTIONS */}
       <section className="py-20 bg-ivory-light border-y border-charcoal/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <span className="text-gold text-xs uppercase tracking-luxurious font-semibold block">
-              ✦ Signature Garments ✦
+              ✦ Tailored Chapters ✦
             </span>
             <h2 className="font-serif-luxury text-3xl sm:text-4xl font-bold text-charcoal">
-              Crafted for Purpose
+              Curated Collections
             </h2>
-            <p className="text-xs sm:text-sm text-charcoal/70 font-light">
-              Every seam, weight, and silhouette designed as a tangible declaration of grace and identity.
+            <p className="text-xs text-charcoal/70 font-light">
+              Each chapter represents a specific theological focus expressed through distinct luxury silhouettes.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {SAMPLE_PRODUCTS.map((prod) => (
-              <ProductCard key={prod.id} product={prod} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {SAMPLE_COLLECTIONS.map((collection) => (
+              <CollectionCard key={collection.id} collection={collection} />
             ))}
-          </div>
-
-          <div className="text-center pt-6">
-            <Button href="/shop" variant="primary" size="lg">
-              Explore Full Shop
-            </Button>
           </div>
         </div>
       </section>
@@ -145,7 +151,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {SAMPLE_BLOG_POSTS.map((post) => (
+            {blogPosts.slice(0, 2).map((post) => (
               <div key={post.id} className="group bg-ivory-light border border-charcoal/10 rounded-sm overflow-hidden flex flex-col md:flex-row hover:shadow-card transition-all duration-500">
                 <div className="relative aspect-[4/3] md:w-1/2 overflow-hidden">
                   <Image

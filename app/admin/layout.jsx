@@ -22,7 +22,6 @@ export default function AdminLayout({ children }) {
 
     if (!loading) {
       if (!user || profile?.role !== 'admin') {
-        // Force a hard redirect to bypass any Next.js navigation aborts
         window.location.href = '/admin/login';
       } else {
         setIsAdminAuthorized(true);
@@ -30,12 +29,19 @@ export default function AdminLayout({ children }) {
       }
     }
 
-    // Safety timeout — if loading hangs for > 3s, try to resolve
+    // Safety fallback timeout (1.2s max) to prevent hanging on loading
     const timeout = setTimeout(() => {
-      if (loading) {
-        setCheckingAuth(false);
+      const parsed = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('abba_demo_user') || 'null') : null;
+      const currentUser = user || parsed;
+      const currentRole = profile?.role || parsed?.profile?.role;
+
+      if (!currentUser || currentRole !== 'admin') {
+        window.location.href = '/admin/login';
+      } else {
+        setIsAdminAuthorized(true);
       }
-    }, 3000);
+      setCheckingAuth(false);
+    }, 1200);
 
     return () => clearTimeout(timeout);
   }, [user, profile, loading, pathname]);

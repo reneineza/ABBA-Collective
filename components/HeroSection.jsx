@@ -1,10 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Button from './Button';
 
 export default function HeroSection() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-charcoal text-ivory py-20 px-4 sm:px-6 lg:px-8">
       {/* Editorial Background Image with Dark Vignette */}
@@ -19,7 +25,7 @@ export default function HeroSection() {
       {/* Hero Content Container */}
       <div className="relative z-20 max-w-4xl mx-auto text-center space-y-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           className="space-y-4"
@@ -40,9 +46,9 @@ export default function HeroSection() {
 
         {/* CTA Buttons */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={false}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 0.8, delay: 0.1 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
         >
           <Button href="/shop" variant="gold-outline" size="lg">
@@ -55,9 +61,9 @@ export default function HeroSection() {
 
         {/* Scripture Footer Ribbon */}
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={false}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.5 }}
+          transition={{ duration: 1, delay: 0.2 }}
           className="pt-12 flex items-center justify-center space-x-6 text-[11px] uppercase tracking-widest text-ivory/60 font-light"
         >
           <span>Galatians 4:6</span>

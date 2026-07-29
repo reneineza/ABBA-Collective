@@ -18,11 +18,18 @@ export function AuthProvider({ children }) {
     async function initAuth() {
       try {
         const supabase = getBrowserClient();
-        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Race getSession with a 1 second timeout to prevent hanging on placeholder URLs
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((resolve) => 
+          setTimeout(() => resolve({ data: { session: null }, timeout: true }), 1000)
+        );
+        
+        const result = await Promise.race([sessionPromise, timeoutPromise]);
 
-        if (session?.user) {
-          setUser(session.user);
-          await fetchProfile(session.user.id);
+        if (result?.data?.session?.user) {
+          setUser(result.data.session.user);
+          await fetchProfile(result.data.session.user.id);
         } else {
           // Check local demo user session safely
           const parsed = safeJsonParse(localStorage.getItem('abba_demo_user'), null);
