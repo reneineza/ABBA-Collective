@@ -111,9 +111,6 @@ export default function Footer() {
             <Link href="/returns-policy" className="hover:text-gold transition-colors">
               Returns
             </Link>
-            <Link href="/admin" className="hover:text-gold transition-colors text-gold/80 font-medium">
-              Admin Portal
-            </Link>
           </div>
         </div>
       </div>
