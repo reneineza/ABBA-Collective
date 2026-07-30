@@ -80,6 +80,11 @@ export default function Footer() {
                   The Journal
                 </Link>
               </li>
+              <li>
+                <Link href="/size-guide" className="hover:text-gold transition-colors">
+                  Size & Fit Guide
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -99,6 +104,9 @@ export default function Footer() {
         <div className="pt-8 border-t border-ivory/10 flex flex-wrap items-center justify-between text-xs text-ivory/50 font-light gap-4">
           <p>© {new Date().getFullYear()} ABBA Collective. All rights reserved.</p>
           <div className="flex flex-wrap items-center space-x-6">
+            <Link href="/size-guide" className="hover:text-gold transition-colors">
+              Size Guide
+            </Link>
             <Link href="/privacy-policy" className="hover:text-gold transition-colors">
               Privacy Policy
             </Link>

@@ -5,6 +5,7 @@ import ProductGallery from '@/components/ProductGallery';
 import ProductReviews from '@/components/ProductReviews';
 import ProductRecommendations from '@/components/ProductRecommendations';
 import SocialShareButtons from '@/components/SocialShareButtons';
+import SizeGuideModal from '@/components/SizeGuideModal';
 import Button from '@/components/Button';
 import { SAMPLE_PRODUCTS } from '@/lib/data/sampleData';
 import { safeJsonParse } from '@/lib/utils/json';
@@ -40,6 +41,7 @@ export default function ProductDetailPage({ params }) {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('story');
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
 
   useEffect(() => {
     if (product) {
@@ -181,9 +183,12 @@ export default function ProductDetailPage({ params }) {
                   <span className="text-charcoal font-semibold">
                     Size: <span className="text-gold">{selectedSize}</span>
                   </span>
-                  <span className="text-charcoal/50 text-[10px] underline cursor-pointer hover:text-gold">
+                  <button
+                    onClick={() => setIsSizeGuideOpen(true)}
+                    className="text-gold hover:text-forest transition-colors text-[11px] font-semibold underline tracking-wider uppercase flex items-center gap-1 cursor-pointer"
+                  >
                     Size Guide
-                  </span>
+                  </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {product.sizes.map((size) => (
@@ -346,6 +351,21 @@ export default function ProductDetailPage({ params }) {
 
         {/* RELATED GARMENT RECOMMENDATIONS */}
         <ProductRecommendations currentProduct={product} />
+
+        {/* SIZE GUIDE MODAL POPUP */}
+        <SizeGuideModal
+          isOpen={isSizeGuideOpen}
+          onClose={() => setIsSizeGuideOpen(false)}
+          initialCategory={
+            product?.category?.toLowerCase().includes('hoodie') || product?.category?.toLowerCase().includes('sweat')
+              ? 'hoodies'
+              : product?.category?.toLowerCase().includes('coat') || product?.category?.toLowerCase().includes('jacket')
+              ? 'outerwear'
+              : product?.category?.toLowerCase().includes('pant') || product?.category?.toLowerCase().includes('trouser')
+              ? 'trousers'
+              : 'tops'
+          }
+        />
 
       </div>
     </div>
