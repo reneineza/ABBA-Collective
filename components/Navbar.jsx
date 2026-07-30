@@ -221,13 +221,6 @@ export default function Navbar() {
                         {totalItems}
                       </span>
                     </button>
-                    <Link
-                      href="/admin"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="text-xs tracking-widest uppercase text-gold hover:text-charcoal font-semibold flex items-center gap-2"
-                    >
-                      <span>✦</span> Admin Dashboard
-                    </Link>
                   </div>
                 </div>
               </div>
