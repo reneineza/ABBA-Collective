@@ -21,6 +21,10 @@ export const metadata = {
   },
 };
 
+// Adobe Fonts web project serving the brand typeface Futura PT (fonts.adobe.com → Web Projects).
+// Leave empty to use Jost (free Futura-style fallback from Google Fonts).
+const ADOBE_FONTS_KIT_ID = '';
+
 export const viewport = {
   themeColor: '#1C1C1C',
 };
@@ -35,9 +39,12 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Jost:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap"
           rel="stylesheet"
         />
+        {ADOBE_FONTS_KIT_ID && (
+          <link rel="stylesheet" href={`https://use.typekit.net/${ADOBE_FONTS_KIT_ID}.css`} />
+        )}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
