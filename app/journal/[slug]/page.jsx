@@ -65,7 +65,7 @@ export default function JournalDetailPage({ params }) {
 
           <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-charcoal/60 font-light border-y border-charcoal/10 py-4">
             <span className="flex items-center gap-1.5 font-medium text-charcoal">
-              {post.author || 'ABBA Collective Editorial'}
+              {post.author || 'ABBA Editorial'}
             </span>
             <span className="flex items-center gap-1.5">
               <Calendar size={14} className="text-gold" /> {post.date}

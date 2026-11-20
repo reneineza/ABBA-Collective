@@ -16,7 +16,7 @@ export default function StorySection() {
             <div className="relative aspect-[4/5] w-full rounded-sm overflow-hidden border border-charcoal/15 shadow-card">
               <Image
                 src="https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=1200&auto=format&fit=crop"
-                alt="ABBA Collective Craftsmanship"
+                alt="ABBA Craftsmanship"
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover object-center"
@@ -52,7 +52,7 @@ export default function StorySection() {
             </p>
 
             <p className="text-sm sm:text-base text-charcoal/80 font-light leading-relaxed">
-              <strong>COLLECTIVE</strong> represents a unified community gathered around a shared identity, purpose, and Kingdom mission. We create garments not as simple merchandise, but as tactile monuments of grace.
+              We are a unified community gathered around a shared identity, purpose, and Kingdom mission. We create garments not as simple merchandise, but as tactile monuments of grace.
             </p>
 
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-charcoal/10">

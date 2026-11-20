@@ -51,7 +51,7 @@ export default function AdminOrdersPage() {
       await sendShippingUpdate({
         order: targetOrder,
         status: newStatus,
-        customerEmail: targetOrder.shipping_address?.email || 'customer@abbacollective.com',
+        customerEmail: targetOrder.shipping_address?.email || 'customer@example.com',
       });
     }
   };

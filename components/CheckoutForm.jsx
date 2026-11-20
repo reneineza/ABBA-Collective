@@ -155,7 +155,7 @@ export default function CheckoutForm() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="info@abbacollective.com"
+                  placeholder="you@example.com"
                   className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
                 />
               </div>

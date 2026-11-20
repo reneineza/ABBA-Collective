@@ -32,7 +32,7 @@ export default function LoyaltyRewardsPage() {
         <div className="bg-charcoal text-ivory p-8 sm:p-12 rounded-sm border border-gold/30 flex flex-col md:flex-row md:items-center justify-between gap-8 shadow-xl">
           <div className="space-y-2">
             <span className="text-gold text-xs uppercase tracking-luxurious font-semibold block">
-              ✦ Collective Royal Circle ✦
+              ✦ ABBA Royal Circle ✦
             </span>
             <h1 className="font-serif-luxury text-3xl sm:text-5xl font-bold text-ivory">
               Loyalty Rewards & Privilege

@@ -94,7 +94,7 @@ export default function OrderDetailPage({ params }) {
           
           {/* Printable Brand Letterhead (Visible in print/PDF) */}
           <div className="hidden print:block text-center border-b border-black/20 pb-4 mb-4">
-            <BrandLogo title="ABBA Collective" className="h-12 w-auto mx-auto mb-2 text-black" />
+            <BrandLogo title="ABBA" className="h-12 w-auto mx-auto mb-2 text-black" />
             <p className="text-[10px] uppercase tracking-widest text-black/70">
               Identity Received. Grace Revealed. • Kigali, Rwanda
             </p>

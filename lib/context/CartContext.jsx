@@ -64,7 +64,7 @@ export function CartProvider({ children }) {
             color: selectedColor,
             image: mainImage,
             quantity,
-            collection: product.collection || product.category || 'ABBA Collective',
+            collection: product.collection || product.category || 'ABBA',
           },
         ];
       }

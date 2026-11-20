@@ -4,8 +4,8 @@ import Button from '@/components/Button';
 import { Sparkles, HeartHandshake, ShieldCheck, Gem } from 'lucide-react';
 
 export const metadata = {
-  title: 'Our Story & Ethos | ABBA Collective',
-  description: 'Learn about ABBA Collective—a luxury faith-driven lifestyle apparel brand created around biblical identity, sonship, and quiet craftsmanship.',
+  title: 'Our Story & Ethos | ABBA',
+  description: 'Learn about ABBA—a luxury faith-driven lifestyle apparel brand created around biblical identity, sonship, and quiet craftsmanship.',
 };
 
 export default function AboutPage() {
@@ -21,7 +21,7 @@ export default function AboutPage() {
           <span className="italic font-normal text-olive">Grace Revealed.</span>
         </h1>
         <p className="text-sm sm:text-base text-charcoal/80 font-light leading-relaxed max-w-2xl mx-auto">
-          ABBA Collective exists to bridge luxury fashion craftsmanship with eternal spiritual truth—reminding believers of who they are in Christ before they ever perform or strive.
+          ABBA exists to bridge luxury fashion craftsmanship with eternal spiritual truth—reminding believers of who they are in Christ before they ever perform or strive.
         </p>
       </section>
 
@@ -72,20 +72,20 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* COLLECTIVE Meaning */}
+          {/* Community Meaning */}
           <div className="bg-ivory-light p-8 sm:p-10 border border-charcoal/10 rounded-sm space-y-4 flex flex-col justify-between hover:border-gold/40 transition-colors">
             <div className="space-y-3">
               <span className="text-gold text-xs uppercase tracking-widest font-semibold block">
                 02 / The Community
               </span>
               <h2 className="font-serif-luxury text-3xl font-bold text-charcoal">
-                COLLECTIVE
+                COMMUNITY
               </h2>
               <p className="text-xs uppercase tracking-widest text-olive font-semibold">
                 Gathered in Shared Mission
               </p>
               <p className="text-sm text-charcoal/80 font-light leading-relaxed">
-                <em>Collective</em> represents a global body of believers unified around a common identity, royal priesthood, and Kingdom assignment. We are a people called out to reveal the grace and beauty of God to our generation.
+                ABBA gathers a global body of believers unified around a common identity, royal priesthood, and Kingdom assignment. We are a people called out to reveal the grace and beauty of God to our generation.
               </p>
             </div>
             <div className="pt-4 border-t border-charcoal/10 text-xs font-serif italic text-charcoal/60">

@@ -10,7 +10,7 @@ export default function AdminCustomersPage() {
     {
       id: 'usr_1',
       full_name: 'Grace Heirs',
-      email: 'grace@abbacollective.com',
+      email: 'grace@example.com',
       phone: '+250 789 284 564',
       orders_count: 3,
       total_spending: 690000,

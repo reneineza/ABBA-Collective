@@ -5,17 +5,18 @@ import CartDrawer from '@/components/CartDrawer';
 import { CartProvider } from '@/lib/context/CartContext';
 import { AuthProvider } from '@/lib/context/AuthContext';
 import { getOrganizationSchema } from '@/lib/seo/structuredData';
+import { SITE_URL } from '@/lib/config/site';
 
 export const metadata = {
-  metadataBase: new URL('https://abbacollective.com'),
-  title: 'ABBA Collective | Identity Received. Grace Revealed.',
+  metadataBase: new URL(SITE_URL),
+  title: 'ABBA | Identity Received. Grace Revealed.',
   description: 'A premium faith-driven lifestyle apparel house based in Kigali, Rwanda, creating meaningful garments inspired by biblical identity. Delivery across Rwanda; pay with MTN MoMo, Airtel Money or card.',
-  keywords: 'ABBA Collective, Christian clothing Rwanda, Kigali fashion brand, Rwanda clothing brand, faith-driven fashion, premium Christian apparel, biblical identity, made in Rwanda',
+  keywords: 'ABBA, Christian clothing Rwanda, Kigali fashion brand, Rwanda clothing brand, faith-driven fashion, premium Christian apparel, biblical identity, made in Rwanda',
   openGraph: {
-    title: 'ABBA Collective | Identity Received. Grace Revealed.',
+    title: 'ABBA | Identity Received. Grace Revealed.',
     description: 'Luxury faith-driven lifestyle apparel inspired by biblical identity and sonship.',
-    url: 'https://abbacollective.com',
-    siteName: 'ABBA Collective',
+    url: SITE_URL,
+    siteName: 'ABBA',
     locale: 'en_US',
     type: 'website',
   },

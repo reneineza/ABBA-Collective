@@ -3,7 +3,7 @@ import CollectionCard from '@/components/CollectionCard';
 import { SAMPLE_COLLECTIONS } from '@/lib/data/sampleData';
 
 export const metadata = {
-  title: 'Collections | ABBA Collective',
+  title: 'Collections | ABBA',
   description: 'Explore thematic product collections inspired by biblical identity and Kingdom purpose.',
 };
 

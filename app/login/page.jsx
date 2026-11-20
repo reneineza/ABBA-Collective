@@ -2,8 +2,8 @@ import React from 'react';
 import AuthForm from '@/components/AuthForm';
 
 export const metadata = {
-  title: 'Client Sign In | ABBA Collective',
-  description: 'Sign in to your ABBA Collective account to access order history, profile settings, and saved wishlist items.',
+  title: 'Client Sign In | ABBA',
+  description: 'Sign in to your ABBA account to access order history, profile settings, and saved wishlist items.',
 };
 
 export default function LoginPage() {

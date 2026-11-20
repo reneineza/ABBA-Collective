@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import { Share2, Link as LinkIcon, Check, Twitter } from 'lucide-react';
+import { SITE_URL } from '@/lib/config/site';
 
 export default function SocialShareButtons({ title, url }) {
   const [copied, setCopied] = useState(false);
 
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : url || 'https://abbacollective.com';
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : url || SITE_URL;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);

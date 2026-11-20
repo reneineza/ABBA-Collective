@@ -1,8 +1,8 @@
 import React from 'react';
 
 export const metadata = {
-  title: 'Returns Policy | ABBA Collective',
-  description: 'Garment returns and exchange guidelines for ABBA Collective clients.',
+  title: 'Returns Policy | ABBA',
+  description: 'Garment returns and exchange guidelines for ABBA clients.',
 };
 
 export default function ReturnsPolicyPage() {

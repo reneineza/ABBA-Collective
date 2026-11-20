@@ -8,7 +8,7 @@ export default function ArticleForm({ initialArticle, onSave, onCancel }) {
   const [title, setTitle] = useState(initialArticle?.title || '');
   const [slug, setSlug] = useState(initialArticle?.slug || '');
   const [category, setCategory] = useState(initialArticle?.category || 'Theological Identity');
-  const [author, setAuthor] = useState(initialArticle?.author || 'ABBA Collective Editorial Team');
+  const [author, setAuthor] = useState(initialArticle?.author || 'ABBA Editorial Team');
   const [date, setDate] = useState(
     initialArticle?.date || formatDate(new Date())
   );
@@ -141,7 +141,7 @@ export default function ArticleForm({ initialArticle, onSave, onCancel }) {
             type="text"
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
-            placeholder="ABBA Collective Editorial Team"
+            placeholder="ABBA Editorial Team"
             className="w-full p-3 text-xs bg-charcoal-dark border border-gold/30 text-ivory focus:border-gold focus:outline-none"
           />
         </div>

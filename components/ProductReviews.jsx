@@ -90,7 +90,7 @@ export default function ProductReviews({ productId, productName }) {
             Customer Reviews & Reflections
           </h3>
           <p className="text-xs text-charcoal/60 font-light">
-            Verified feedback from the ABBA Collective community.
+            Verified feedback from the ABBA community.
           </p>
         </div>
 

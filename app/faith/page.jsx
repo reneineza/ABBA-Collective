@@ -3,8 +3,8 @@ import Button from '@/components/Button';
 import { BookOpen, ShieldCheck, Heart, Sparkles, Compass } from 'lucide-react';
 
 export const metadata = {
-  title: 'Statement of Faith | ABBA Collective',
-  description: 'Read the Statement of Faith of ABBA Collective—our biblical convictions regarding God, adoption, grace, and Christian identity.',
+  title: 'Statement of Faith | ABBA',
+  description: 'Read the Statement of Faith of ABBA—our biblical convictions regarding God, adoption, grace, and Christian identity.',
 };
 
 export default function FaithPage() {
@@ -43,7 +43,7 @@ export default function FaithPage() {
       number: "06",
       title: "Adoption and Identity",
       verse: "Galatians 4:4–7",
-      text: "We believe that those who belong to Christ are adopted into God's family. Our deepest identity is not found in success, possessions, status, or human approval, but in being children of God through Jesus Christ. The name ABBA Collective reflects this truth: Our identity is received before it is expressed.",
+      text: "We believe that those who belong to Christ are adopted into God's family. Our deepest identity is not found in success, possessions, status, or human approval, but in being children of God through Jesus Christ. The name ABBA reflects this truth: Our identity is received before it is expressed.",
     },
     {
       number: "07",
@@ -55,7 +55,7 @@ export default function FaithPage() {
       number: "08",
       title: "The Church and Community",
       verse: "Matthew 28:19–20",
-      text: "We believe God calls His people into a community of faith centered on Christ. The church exists to worship God, proclaim the gospel, make disciples, serve others, and display God's kingdom in the world. As a brand, ABBA Collective seeks to reflect these values through meaningful relationships, ethical practices, and service.",
+      text: "We believe God calls His people into a community of faith centered on Christ. The church exists to worship God, proclaim the gospel, make disciples, serve others, and display God's kingdom in the world. As a brand, ABBA seeks to reflect these values through meaningful relationships, ethical practices, and service.",
     },
     {
       number: "09",
@@ -67,7 +67,7 @@ export default function FaithPage() {
       number: "10",
       title: "The Glory of God",
       verse: "1 Corinthians 10:31",
-      text: "We believe the ultimate purpose of all things is the glory of God. Our designs, decisions, relationships, and businesses exist to honor Him. We desire that everything ABBA Collective creates would point beyond ourselves to the greatness, goodness, and grace of God.",
+      text: "We believe the ultimate purpose of all things is the glory of God. Our designs, decisions, relationships, and businesses exist to honor Him. We desire that everything ABBA creates would point beyond ourselves to the greatness, goodness, and grace of God.",
     },
   ];
 
@@ -82,7 +82,7 @@ export default function FaithPage() {
           Statement of Faith
         </h1>
         <p className="text-sm sm:text-base text-charcoal/80 font-light leading-relaxed max-w-3xl mx-auto">
-          ABBA Collective is built upon the truth of the gospel of Jesus Christ. We believe that all creation exists for the glory of God, and that our work, creativity, and businesses are opportunities to worship Him and faithfully steward what He has entrusted to us.
+          ABBA is built upon the truth of the gospel of Jesus Christ. We believe that all creation exists for the glory of God, and that our work, creativity, and businesses are opportunities to worship Him and faithfully steward what He has entrusted to us.
         </p>
       </section>
 

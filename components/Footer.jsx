@@ -36,16 +36,16 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-12 mb-16">
           {/* Brand Identity & Mission (Col 1-5) */}
           <div className="md:col-span-5 space-y-4">
-            <Link href="/" aria-label="ABBA Collective home" className="inline-block">
+            <Link href="/" aria-label="ABBA home" className="inline-block">
               <BrandLogo
-                title="ABBA Collective"
+                title="ABBA"
                 className="h-12 w-auto"
                 markClassName="text-gold"
                 wordmarkClassName="text-ivory"
               />
             </Link>
             <p className="text-sm text-ivory/70 leading-relaxed max-w-md font-light">
-              ABBA Collective is a luxury faith-driven apparel house creating meaningful garments inspired by biblical identity. Designed with uncompromising craftsmanship and quiet elegance.
+              ABBA is a luxury faith-driven apparel house creating meaningful garments inspired by biblical identity. Designed with uncompromising craftsmanship and quiet elegance.
             </p>
             <div className="pt-2">
               <p className="text-xs tracking-widest uppercase text-gold font-medium">
@@ -96,7 +96,7 @@ export default function Footer() {
           {/* Newsletter Subscription (Col 8-12) */}
           <div className="md:col-span-4 space-y-4">
             <h3 className="text-xs tracking-luxurious uppercase font-semibold text-gold mb-2">
-              Join The Collective
+              Join ABBA
             </h3>
             <p className="text-xs text-ivory/70 leading-relaxed font-light">
               Receive quiet reflections on identity, early access to limited collection releases, and exclusive editorial drops.
@@ -107,7 +107,7 @@ export default function Footer() {
 
         {/* Legal Policies Strip */}
         <div className="pt-8 border-t border-ivory/10 flex flex-wrap items-center justify-between text-xs text-ivory/50 font-light gap-4">
-          <p>© {new Date().getFullYear()} ABBA Collective. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} ABBA. All rights reserved.</p>
           <div className="flex flex-wrap items-center space-x-6">
             <Link href="/size-guide" className="hover:text-gold transition-colors">
               Size Guide

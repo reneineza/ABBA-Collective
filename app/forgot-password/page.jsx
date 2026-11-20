@@ -2,8 +2,8 @@ import React from 'react';
 import AuthForm from '@/components/AuthForm';
 
 export const metadata = {
-  title: 'Reset Password | ABBA Collective',
-  description: 'Request a password reset link for your ABBA Collective account.',
+  title: 'Reset Password | ABBA',
+  description: 'Request a password reset link for your ABBA account.',
 };
 
 export default function ForgotPasswordPage() {

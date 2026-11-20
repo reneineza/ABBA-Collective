@@ -25,7 +25,7 @@ export default function AdminLoginPage() {
         // Use hard redirect to force full page reload with new auth state
         window.location.href = '/admin';
       } else {
-        setError('Access denied. Admin credentials required. Use admin@abbacollective.com to demo admin access.');
+        setError('Access denied. Admin credentials required.');
       }
     } catch (err) {
       setError(err.message || 'Failed to authenticate. Please check your credentials.');
@@ -44,7 +44,7 @@ export default function AdminLoginPage() {
 
       <div className="relative z-10 w-full max-w-md p-8 sm:p-12 bg-charcoal border border-charcoal-light shadow-2xl rounded-sm">
         <div className="text-center space-y-4 mb-10">
-          <Link href="/" aria-label="ABBA Collective home" className="inline-block hover:opacity-80 transition-opacity">
+          <Link href="/" aria-label="ABBA home" className="inline-block hover:opacity-80 transition-opacity">
             <BrandLogo variant="mark" className="h-14 w-auto mx-auto text-gold" />
             <h1 className="sr-only">ABBA Admin</h1>
           </Link>

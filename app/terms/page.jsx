@@ -1,8 +1,8 @@
 import React from 'react';
 
 export const metadata = {
-  title: 'Terms of Service | ABBA Collective',
-  description: 'Review the terms and conditions governing the use of ABBA Collective website and garment orders.',
+  title: 'Terms of Service | ABBA',
+  description: 'Review the terms and conditions governing the use of ABBA website and garment orders.',
 };
 
 export default function TermsPage() {
@@ -23,7 +23,7 @@ export default function TermsPage() {
           <section className="space-y-2">
             <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">1. Brand Identity & Intellectual Property</h2>
             <p>
-              All designs, photography, scripture reflections, logo marks, and narrative copy on ABBA Collective remain the sole intellectual property of ABBA Collective. Unauthorized replication is strictly prohibited.
+              All designs, photography, scripture reflections, logo marks, and narrative copy on ABBA remain the sole intellectual property of ABBA. Unauthorized replication is strictly prohibited.
             </p>
           </section>
 

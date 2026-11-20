@@ -1,15 +1,15 @@
-# ABBA Collective — Luxury Faith-Driven Lifestyle Apparel House
+# ABBA — Luxury Faith-Driven Lifestyle Apparel House
 
 > *"Identity Received. Grace Revealed."*
 
-ABBA Collective is a production-ready luxury faith-driven lifestyle e-commerce platform built with Next.js App Router, JavaScript, Tailwind CSS, Framer Motion, and Supabase.
+ABBA is a production-ready luxury faith-driven lifestyle e-commerce platform built with Next.js App Router, JavaScript, Tailwind CSS, Framer Motion, and Supabase.
 
 ---
 
 ## Brand Context & Identity
 
-- **Brand Name**: ABBA Collective
-- **Meaning**: *ABBA* represents the Fatherhood of God and the identity believers receive through adoption in Christ (Galatians 4:6, Romans 8:15). *Collective* represents a community gathered around a shared identity, purpose, and mission.
+- **Brand Name**: ABBA
+- **Meaning**: *ABBA* represents the Fatherhood of God and the identity believers receive through adoption in Christ (Galatians 4:6, Romans 8:15).
 - **Brand Palette**:
   - Charcoal: `#1C1C1C`
   - Olive: `#3B3418`
@@ -86,4 +86,4 @@ ABBA Collective is a production-ready luxury faith-driven lifestyle e-commerce p
 
 ## License
 
-Created for ABBA Collective. All rights reserved.
+Created for ABBA. All rights reserved.

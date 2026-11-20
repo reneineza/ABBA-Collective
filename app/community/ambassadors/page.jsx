@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Button from '@/components/Button';
 import { useAuth } from '@/lib/context/AuthContext';
 import { Users, Award, Copy, Check, Share2, ArrowRight } from 'lucide-react';
+import { SITE_URL } from '@/lib/config/site';
 
 export default function AmbassadorPage() {
   const { profile } = useAuth();
@@ -17,7 +18,7 @@ export default function AmbassadorPage() {
     ? `ABBA-${profile.full_name.split(' ')[0].toUpperCase()}-2026` 
     : 'ABBA-AMBASSADOR-2026';
 
-  const referralLink = `https://abbacollective.com/register?ref=${referralCode}`;
+  const referralLink = `${SITE_URL}/register?ref=${referralCode}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(referralLink);
@@ -40,7 +41,7 @@ export default function AmbassadorPage() {
             ✦ Community & Ambassador Program ✦
           </span>
           <h1 className="font-serif-luxury text-4xl sm:text-5xl font-bold text-charcoal">
-            ABBA Collective Ambassador Roster
+            ABBA Ambassador Roster
           </h1>
           <p className="text-xs sm:text-sm text-charcoal/70 font-light leading-relaxed">
             Gather around a shared identity and mission. Represent divine sonship, quiet luxury tailoring, and kingdom purpose.
@@ -124,7 +125,7 @@ export default function AmbassadorPage() {
                     required
                     value={applicantEmail}
                     onChange={(e) => setApplicantEmail(e.target.value)}
-                    placeholder="info@abbacollective.com"
+                    placeholder="you@example.com"
                     className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
                   />
                 </div>

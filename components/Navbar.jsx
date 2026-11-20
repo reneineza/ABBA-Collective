@@ -91,9 +91,9 @@ export default function Navbar() {
             </nav>
 
             {/* Brand Logo Centered */}
-            <Link href="/" aria-label="ABBA Collective home" className="group flex items-center">
+            <Link href="/" aria-label="ABBA home" className="group flex items-center">
               <BrandLogo
-                title="ABBA Collective"
+                title="ABBA"
                 className="h-8 sm:h-10 w-auto text-olive group-hover:text-gold transition-colors duration-300"
               />
             </Link>
@@ -180,8 +180,8 @@ export default function Navbar() {
             >
               <div>
                 <div className="flex items-center justify-between border-b border-charcoal/10 pb-4 mb-6">
-                  <Link href="/" onClick={() => setMobileMenuOpen(false)} aria-label="ABBA Collective home">
-                    <BrandLogo title="ABBA Collective" className="h-8 w-auto text-olive" />
+                  <Link href="/" onClick={() => setMobileMenuOpen(false)} aria-label="ABBA home">
+                    <BrandLogo title="ABBA" className="h-8 w-auto text-olive" />
                   </Link>
                   <button
                     onClick={() => setMobileMenuOpen(false)}

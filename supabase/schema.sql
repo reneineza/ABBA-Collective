@@ -1,4 +1,4 @@
--- ABBA Collective Supabase Database Schema Migration
+-- ABBA Supabase Database Schema Migration
 -- Designed for 100% clean execution in Supabase SQL Editor
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

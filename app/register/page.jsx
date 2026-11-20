@@ -2,8 +2,8 @@ import React from 'react';
 import AuthForm from '@/components/AuthForm';
 
 export const metadata = {
-  title: 'Join The Collective | ABBA Collective',
-  description: 'Create an account with ABBA Collective for a personalized identity-driven luxury fashion experience.',
+  title: 'Create Account | ABBA',
+  description: 'Create an account with ABBA for a personalized identity-driven luxury fashion experience.',
 };
 
 export default function RegisterPage() {

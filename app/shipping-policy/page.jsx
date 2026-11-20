@@ -3,8 +3,8 @@ import { formatPrice } from '@/lib/utils/formatCurrency';
 import { DELIVERY_ZONES, FREE_DELIVERY_THRESHOLD } from '@/lib/utils/delivery';
 
 export const metadata = {
-  title: 'Delivery Policy | ABBA Collective',
-  description: 'Delivery fees, timelines and coverage for ABBA Collective orders across Rwanda.',
+  title: 'Delivery Policy | ABBA',
+  description: 'Delivery fees, timelines and coverage for ABBA orders across Rwanda.',
 };
 
 export default function ShippingPolicyPage() {
@@ -24,7 +24,7 @@ export default function ShippingPolicyPage() {
           <section className="space-y-2">
             <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">1. Delivery Coverage</h2>
             <p>
-              ABBA Collective delivers within <strong>Rwanda</strong>, covering Kigali City and all 30 districts across the Northern, Southern, Eastern and Western Provinces. International delivery will be introduced in a future collection release.
+              ABBA delivers within <strong>Rwanda</strong>, covering Kigali City and all 30 districts across the Northern, Southern, Eastern and Western Provinces. International delivery will be introduced in a future collection release.
             </p>
           </section>
 

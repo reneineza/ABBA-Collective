@@ -46,7 +46,7 @@ export default function AccountPage() {
               Welcome, {profile?.full_name || 'Valued Member'}
             </h1>
             <p className="text-xs text-ivory/70 font-light">
-              {profile?.email || user?.email || 'info@abbacollective.com'}
+              {profile?.email || user?.email || ''}
             </p>
           </div>
 

@@ -1,8 +1,8 @@
 import React from 'react';
 
 export const metadata = {
-  title: 'Privacy Policy | ABBA Collective',
-  description: 'Learn how ABBA Collective collects, uses, and safeguards client personal information.',
+  title: 'Privacy Policy | ABBA',
+  description: 'Learn how ABBA collects, uses, and safeguards client personal information.',
 };
 
 export default function PrivacyPolicyPage() {
@@ -23,7 +23,7 @@ export default function PrivacyPolicyPage() {
           <section className="space-y-2">
             <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">1. Information We Collect</h2>
             <p>
-              When you visit or place an order with ABBA Collective, we collect information necessary to process your purchase, including your full name, delivery address, email address, and phone number. Mobile Money and card payments are processed directly by MTN, Airtel, and our card payment provider; we do not store your Mobile Money PIN or full card details.
+              When you visit or place an order with ABBA, we collect information necessary to process your purchase, including your full name, delivery address, email address, and phone number. Mobile Money and card payments are processed directly by MTN, Airtel, and our card payment provider; we do not store your Mobile Money PIN or full card details.
             </p>
           </section>
 

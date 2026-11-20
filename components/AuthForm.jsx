@@ -49,7 +49,7 @@ export default function AuthForm({ mode = 'login' }) {
       } else if (mode === 'register') {
         const res = await signUp(email, password, fullName);
         if (res.success) {
-          setSuccessMsg('Account created successfully. Welcome to ABBA Collective.');
+          setSuccessMsg('Account created successfully. Welcome to ABBA.');
           setTimeout(() => router.push('/account'), 1000);
         }
       } else if (mode === 'forgot-password') {
@@ -73,7 +73,7 @@ export default function AuthForm({ mode = 'login' }) {
         </span>
         <h2 className="font-serif-luxury text-3xl font-bold text-charcoal">
           {mode === 'login' && 'Sign In to ABBA'}
-          {mode === 'register' && 'Join The Collective'}
+          {mode === 'register' && 'Join ABBA'}
           {mode === 'forgot-password' && 'Reset Password'}
         </h2>
         <p className="text-xs text-charcoal/60 font-light">
@@ -128,7 +128,7 @@ export default function AuthForm({ mode = 'login' }) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="info@abbacollective.com"
+              placeholder="you@example.com"
               className="w-full py-3 pl-10 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
               disabled={loading}
             />

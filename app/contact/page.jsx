@@ -37,7 +37,7 @@ export default function ContactPage() {
             ✦ Concierge Client Care ✦
           </span>
           <h1 className="font-serif-luxury text-4xl sm:text-5xl font-bold text-charcoal">
-            Contact The Collective
+            Contact ABBA
           </h1>
           <p className="text-xs sm:text-sm text-charcoal/70 font-light">
             We are here to assist with size consultation, garment care guidance, or order status inquiries.
@@ -75,7 +75,7 @@ export default function ContactPage() {
               </div>
               <div className="flex items-start space-x-3">
                 <MapPin size={16} className="text-gold mt-0.5" />
-                <span>ABBA Collective Atelier & Studios<br />Kigali, Rwanda</span>
+                <span>ABBA Atelier & Studios<br />Kigali, Rwanda</span>
               </div>
             </div>
           </div>

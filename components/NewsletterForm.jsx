@@ -31,7 +31,7 @@ export default function NewsletterForm({ darkTheme = false }) {
       }
 
       setStatus('success');
-      setMessage('Welcome to ABBA Collective. You are subscribed.');
+      setMessage('Welcome to ABBA. You are subscribed.');
       setEmail('');
     } catch (err) {
       console.log('Newsletter subscription note:', err.message);
