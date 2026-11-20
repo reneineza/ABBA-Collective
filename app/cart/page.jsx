@@ -7,12 +7,12 @@ import Button from '@/components/Button';
 import CartItem from '@/components/CartItem';
 import { useCart } from '@/lib/context/CartContext';
 import { formatPrice } from '@/lib/utils/formatCurrency';
+import { FREE_DELIVERY_THRESHOLD, DELIVERY_ZONES } from '@/lib/utils/delivery';
 import { ShoppingBag, ArrowRight, ShieldCheck, Truck, Lock } from 'lucide-react';
 
 export default function CartPage() {
   const { cart, cartTotal, totalItems, clearCart } = useCart();
-  const shippingCost = cartTotal >= 200000 ? 0 : 15000;
-  const grandTotal = cartTotal + shippingCost;
+  const freeDelivery = cartTotal >= FREE_DELIVERY_THRESHOLD;
 
   return (
     <div className="bg-ivory text-charcoal py-16 sm:py-24">
@@ -75,12 +75,12 @@ export default function CartPage() {
                   <span>{formatPrice(cartTotal)}</span>
                 </div>
                 <div className="flex justify-between text-ivory/80">
-                  <span>Insured Shipping</span>
-                  <span>{shippingCost === 0 ? 'Complimentary' : formatPrice(shippingCost)}</span>
+                  <span>Delivery</span>
+                  <span>{freeDelivery ? 'Complimentary' : `From ${formatPrice(DELIVERY_ZONES.kigali.fee)}`}</span>
                 </div>
                 <div className="flex justify-between text-base font-bold text-gold pt-2 border-t border-ivory/10">
-                  <span>Estimated Total</span>
-                  <span>{formatPrice(grandTotal)}</span>
+                  <span>{freeDelivery ? 'Estimated Total' : 'Total before Delivery'}</span>
+                  <span>{formatPrice(cartTotal)}</span>
                 </div>
               </div>
 

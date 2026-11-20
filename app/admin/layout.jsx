@@ -51,7 +51,7 @@ export default function AdminLayout({ children }) {
     '/admin/products': 'Garments & Fashion Inventory Management',
     '/admin/collections': 'Collection & Chapter Management',
     '/admin/categories': 'Product Taxonomies & Categories',
-    '/admin/orders': 'Customer Order Fulfillment & Shipping',
+    '/admin/orders': 'Customer Order Fulfillment & Delivery',
     '/admin/customers': 'Client Directory & Lifetime Value Metrics',
     '/admin/blog': 'ABBA Journal & Devotional CMS',
     '/admin/newsletter': 'Newsletter Roster & Subscriber Export',

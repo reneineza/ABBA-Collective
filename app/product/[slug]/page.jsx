@@ -13,6 +13,7 @@ import { useCart } from '@/lib/context/CartContext';
 import { getProductSchema } from '@/lib/seo/structuredData';
 import { trackProductView } from '@/lib/analytics/analyticsService';
 import { formatPrice } from '@/lib/utils/formatCurrency';
+import { FREE_DELIVERY_THRESHOLD } from '@/lib/utils/delivery';
 import { ShoppingBag, Heart, ShieldCheck, Truck, RotateCcw, PackageX } from 'lucide-react';
 
 export default function ProductDetailPage({ params }) {
@@ -273,7 +274,7 @@ export default function ProductDetailPage({ params }) {
               <div className="grid grid-cols-2 gap-4 pt-4 text-[11px] text-charcoal/70 border-t border-charcoal/10 font-light">
                 <div className="flex items-center gap-2">
                   <Truck size={15} className="text-gold" />
-                  <span>Complimentary Rwanda Express Shipping over 200,000 RWF</span>
+                  <span>Free delivery across Rwanda over {formatPrice(FREE_DELIVERY_THRESHOLD)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <ShieldCheck size={15} className="text-gold" />

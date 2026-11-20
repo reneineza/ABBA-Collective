@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import Button from '@/components/Button';
-import { Mail, MapPin, Phone, CheckCircle2, Loader2 } from 'lucide-react';
+import { Mail, MapPin, Phone, MessageCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { BUSINESS_CONTACT } from '@/lib/utils/rwanda';
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
@@ -51,14 +52,25 @@ export default function ContactPage() {
             <div className="space-y-4 text-xs text-charcoal/80">
               <div className="flex items-center space-x-3">
                 <Mail size={16} className="text-gold" />
-                <a href="mailto:info@abbacollective.com" className="hover:text-olive transition-colors">
-                  info@abbacollective.com
+                <a href={`mailto:${BUSINESS_CONTACT.email}`} className="hover:text-olive transition-colors">
+                  {BUSINESS_CONTACT.email}
                 </a>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone size={16} className="text-gold" />
-                <a href="tel:+250789284564" className="hover:text-olive transition-colors">
-                  +250 789 284 564
+                <a href={BUSINESS_CONTACT.phoneHref} className="hover:text-olive transition-colors">
+                  {BUSINESS_CONTACT.phone}
+                </a>
+              </div>
+              <div className="flex items-center space-x-3">
+                <MessageCircle size={16} className="text-gold" />
+                <a
+                  href={BUSINESS_CONTACT.whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-olive transition-colors"
+                >
+                  Chat with us on WhatsApp
                 </a>
               </div>
               <div className="flex items-start space-x-3">

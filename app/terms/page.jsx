@@ -16,7 +16,7 @@ export default function TermsPage() {
           <h1 className="font-serif-luxury text-4xl font-bold text-charcoal">
             Terms of Service
           </h1>
-          <p className="text-xs text-charcoal/60">Effective Date: July 28, 2026</p>
+          <p className="text-xs text-charcoal/60">Effective Date: 20 November 2026</p>
         </div>
 
         <div className="space-y-6 text-xs sm:text-sm text-charcoal/80 font-light leading-relaxed">
@@ -31,6 +31,27 @@ export default function TermsPage() {
             <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">2. Garment Purchasing & Pricing</h2>
             <p>
               Prices listed across our store are denominated in Rwandan Francs (RWF). We reserve the right to update product pricing, variant stock levels, or collection drops at any time.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">3. Payments</h2>
+            <p>
+              We accept MTN MoMo, Airtel Money, and Visa / Mastercard cards. All payments are charged in Rwandan Francs (RWF). An order is confirmed once payment has been approved by your payment provider.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">4. Delivery</h2>
+            <p>
+              We currently deliver within Rwanda only. Delivery fees and timelines are set out in our <a href="/shipping-policy" className="underline hover:text-olive">Delivery Policy</a>.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">5. Governing Law</h2>
+            <p>
+              These terms are governed by the laws of the Republic of Rwanda. Any dispute arising from the use of this website or from an order shall be subject to the jurisdiction of the competent courts of Rwanda.
             </p>
           </section>
         </div>

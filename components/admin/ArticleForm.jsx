@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, Image as ImageIcon, Sparkles, BookOpen, User, Calendar, Clock, FileText } from 'lucide-react';
+import { formatDate } from '@/lib/utils/formatDate';
 
 export default function ArticleForm({ initialArticle, onSave, onCancel }) {
   const [title, setTitle] = useState(initialArticle?.title || '');
@@ -9,7 +10,7 @@ export default function ArticleForm({ initialArticle, onSave, onCancel }) {
   const [category, setCategory] = useState(initialArticle?.category || 'Theological Identity');
   const [author, setAuthor] = useState(initialArticle?.author || 'ABBA Collective Editorial Team');
   const [date, setDate] = useState(
-    initialArticle?.date || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    initialArticle?.date || formatDate(new Date())
   );
   const [readTime, setReadTime] = useState(initialArticle?.readTime || '5 min read');
   const [imageUrl, setImageUrl] = useState(

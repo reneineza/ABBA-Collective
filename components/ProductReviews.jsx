@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star, CheckCircle2, MessageSquare, Send } from 'lucide-react';
 import { safeJsonParse } from '@/lib/utils/json';
+import { formatDate } from '@/lib/utils/formatDate';
 
 export default function ProductReviews({ productId, productName }) {
   const [reviews, setReviews] = useState([]);
@@ -215,7 +216,7 @@ export default function ProductReviews({ productId, productName }) {
                 )}
               </div>
               <span className="text-[10px] text-charcoal/50">
-                {new Date(rev.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                {formatDate(rev.created_at, 'short')}
               </span>
             </div>
 

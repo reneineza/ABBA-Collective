@@ -22,12 +22,21 @@ CREATE TABLE IF NOT EXISTS public.addresses (
   last_name TEXT NOT NULL,
   phone TEXT NOT NULL,
   country TEXT DEFAULT 'Rwanda' NOT NULL,
-  city TEXT NOT NULL,
+  province TEXT,
+  district TEXT,
+  city TEXT NOT NULL, -- district name, kept for compatibility
   address_line TEXT NOT NULL,
-  postal_code TEXT NOT NULL,
+  landmark TEXT, -- directions for the delivery rider (Rwanda has no postal codes)
+  postal_code TEXT,
   is_default BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Migration for databases created before Rwanda address fields were added
+ALTER TABLE public.addresses ADD COLUMN IF NOT EXISTS province TEXT;
+ALTER TABLE public.addresses ADD COLUMN IF NOT EXISTS district TEXT;
+ALTER TABLE public.addresses ADD COLUMN IF NOT EXISTS landmark TEXT;
+ALTER TABLE public.addresses ALTER COLUMN postal_code DROP NOT NULL;
 
 -- 3. SHIPPING METHODS TABLE
 CREATE TABLE IF NOT EXISTS public.shipping_methods (
@@ -98,8 +107,18 @@ CREATE TABLE IF NOT EXISTS public.orders (
   total_amount NUMERIC(12, 2) NOT NULL,
   shipping_address JSONB NOT NULL,
   shipping_method_id UUID REFERENCES public.shipping_methods(id) ON DELETE SET NULL,
+  shipping_fee NUMERIC(12, 2) DEFAULT 0 NOT NULL,
+  payment_provider TEXT CHECK (payment_provider IN ('MTN MoMo', 'Airtel Money', 'Card')),
+  transaction_id TEXT,
+  currency TEXT DEFAULT 'RWF' NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Migration for databases created before Rwanda payment fields were added
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS shipping_fee NUMERIC(12, 2) DEFAULT 0 NOT NULL;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS payment_provider TEXT;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS transaction_id TEXT;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'RWF' NOT NULL;
 
 -- 10. REVIEWS TABLE
 CREATE TABLE IF NOT EXISTS public.reviews (

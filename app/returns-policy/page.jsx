@@ -29,7 +29,17 @@ export default function ReturnsPolicyPage() {
           <section className="space-y-2">
             <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">2. Initiating a Return</h2>
             <p>
-              To request a return shipping label, contact our Atelier Client Concierge at <strong>info@abbacollective.com</strong> with your order reference number.
+              Contact our Client Concierge on WhatsApp or by phone at <strong>+250 789 284 564</strong>, or by email at <strong>info@abbacollective.com</strong>, with your order reference number. We will confirm your return and arrange with you how the garment gets back to our Kigali studio.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">3. Refunds</h2>
+            <p>
+              Once we receive and inspect the returned garment, refunds are issued in Rwandan Francs (RWF) to your original payment method: the same MTN MoMo or Airtel Money number used at checkout, or the Visa / Mastercard used for the order.
+            </p>
+            <p>
+              Size exchanges are dispatched once the original garment has been received, subject to stock availability.
             </p>
           </section>
         </div>

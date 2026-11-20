@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatPrice } from '@/lib/utils/formatCurrency';
+import { formatDate } from '@/lib/utils/formatDate';
 import { Package, ArrowRight, CheckCircle2, Clock, Truck } from 'lucide-react';
 
 export default function OrderCard({ order }) {
@@ -28,7 +29,7 @@ export default function OrderCard({ order }) {
             #{order.id}
           </h4>
           <p className="text-[10px] text-charcoal/50">
-            Placed on {new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            Placed on {formatDate(order.created_at, 'short')}
           </p>
         </div>
 

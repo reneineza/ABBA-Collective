@@ -6,6 +6,7 @@ import CartItem from './CartItem';
 import Button from './Button';
 import { useCart } from '@/lib/context/CartContext';
 import { formatPrice } from '@/lib/utils/formatCurrency';
+import { FREE_DELIVERY_THRESHOLD, DELIVERY_ZONES } from '@/lib/utils/delivery';
 import { usePathname } from 'next/navigation';
 import { X, ShoppingBag, ArrowRight, ShieldCheck } from 'lucide-react';
 
@@ -19,9 +20,8 @@ export default function CartDrawer() {
 
   if (!isOpen) return null;
 
-  const FREE_SHIPPING_THRESHOLD = 200000; // in RWF
-  const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - cartTotal);
-  const progressPercent = Math.min(100, (cartTotal / FREE_SHIPPING_THRESHOLD) * 100);
+  const remainingForFreeShipping = Math.max(0, FREE_DELIVERY_THRESHOLD - cartTotal);
+  const progressPercent = Math.min(100, (cartTotal / FREE_DELIVERY_THRESHOLD) * 100);
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
@@ -51,13 +51,13 @@ export default function CartDrawer() {
             </button>
           </div>
 
-          {/* Free Shipping Threshold Bar */}
+          {/* Free Delivery Threshold Bar */}
           <div className="bg-ivory-light px-6 py-3 border-b border-charcoal/10 space-y-1.5">
             <div className="flex justify-between text-xs text-charcoal/80">
               {progressPercent >= 100 ? (
-                <span className="font-semibold text-olive">✦ You unlocked Complimentary Shipping!</span>
+                <span className="font-semibold text-olive">✦ You unlocked Complimentary Delivery!</span>
               ) : (
-                <span>Add <strong>{formatPrice(remainingForFreeShipping)}</strong> for free shipping</span>
+                <span>Add <strong>{formatPrice(remainingForFreeShipping)}</strong> for free delivery across Rwanda</span>
               )}
               <span className="font-bold text-gold">{Math.round(progressPercent)}%</span>
             </div>
@@ -105,12 +105,12 @@ export default function CartDrawer() {
                   <span className="font-semibold text-charcoal text-sm">{formatPrice(cartTotal)}</span>
                 </div>
                 <div className="flex justify-between text-charcoal/70">
-                  <span>Insured Shipping</span>
-                  <span>{cartTotal >= FREE_SHIPPING_THRESHOLD ? 'Complimentary' : formatPrice(15000)}</span>
+                  <span>Delivery</span>
+                  <span>{cartTotal >= FREE_DELIVERY_THRESHOLD ? 'Complimentary' : `From ${formatPrice(DELIVERY_ZONES.kigali.fee)}`}</span>
                 </div>
                 <div className="flex justify-between border-t border-charcoal/10 pt-2 text-sm font-bold text-charcoal">
-                  <span>Estimated Total</span>
-                  <span className="text-olive">{formatPrice(cartTotal + (cartTotal >= FREE_SHIPPING_THRESHOLD ? 0 : 15000))}</span>
+                  <span>{cartTotal >= FREE_DELIVERY_THRESHOLD ? 'Estimated Total' : 'Total before Delivery'}</span>
+                  <span className="text-olive">{formatPrice(cartTotal)}</span>
                 </div>
               </div>
 

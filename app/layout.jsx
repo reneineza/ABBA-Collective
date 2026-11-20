@@ -9,8 +9,8 @@ import { getOrganizationSchema } from '@/lib/seo/structuredData';
 export const metadata = {
   metadataBase: new URL('https://abbacollective.com'),
   title: 'ABBA Collective | Identity Received. Grace Revealed.',
-  description: 'A premium faith-driven lifestyle apparel house creating meaningful garments inspired by biblical identity, designed with uncompromising excellence and craftsmanship.',
-  keywords: 'ABBA Collective, luxury Christian clothing, faith-driven fashion, premium Christian apparel, biblical identity, luxury streetwear',
+  description: 'A premium faith-driven lifestyle apparel house based in Kigali, Rwanda, creating meaningful garments inspired by biblical identity. Delivery across Rwanda; pay with MTN MoMo, Airtel Money or card.',
+  keywords: 'ABBA Collective, Christian clothing Rwanda, Kigali fashion brand, Rwanda clothing brand, faith-driven fashion, premium Christian apparel, biblical identity, made in Rwanda',
   openGraph: {
     title: 'ABBA Collective | Identity Received. Grace Revealed.',
     description: 'Luxury faith-driven lifestyle apparel inspired by biblical identity and sonship.',

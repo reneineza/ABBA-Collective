@@ -21,7 +21,7 @@ export default function CheckoutPage() {
             Checkout Portal
           </h1>
           <p className="text-xs sm:text-sm text-charcoal/70 font-light">
-            Encrypted order creation & shipping verification.
+            Secure checkout with Mobile Money or card. Delivery across Rwanda.
           </p>
         </div>
 

@@ -1,8 +1,10 @@
 import React from 'react';
+import { formatPrice } from '@/lib/utils/formatCurrency';
+import { DELIVERY_ZONES, FREE_DELIVERY_THRESHOLD } from '@/lib/utils/delivery';
 
 export const metadata = {
-  title: 'Shipping Policy | ABBA Collective',
-  description: 'Understand shipping options, delivery times, and complimentary shipping thresholds.',
+  title: 'Delivery Policy | ABBA Collective',
+  description: 'Delivery fees, timelines and coverage for ABBA Collective orders across Rwanda.',
 };
 
 export default function ShippingPolicyPage() {
@@ -14,30 +16,37 @@ export default function ShippingPolicyPage() {
             ✦ Client Logistics ✦
           </span>
           <h1 className="font-serif-luxury text-4xl font-bold text-charcoal">
-            Shipping & Logistics Policy
+            Delivery Policy
           </h1>
         </div>
 
         <div className="space-y-6 text-xs sm:text-sm text-charcoal/80 font-light leading-relaxed">
           <section className="space-y-2">
-            <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">1. Delivery Scope & Coverage</h2>
+            <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">1. Delivery Coverage</h2>
             <p>
-              ABBA Collective exclusively delivers within <strong>Rwanda</strong> (covering Kigali City and all provincial regions). International delivery services will be launched in future collection releases.
+              ABBA Collective delivers within <strong>Rwanda</strong>, covering Kigali City and all 30 districts across the Northern, Southern, Eastern and Western Provinces. International delivery will be introduced in a future collection release.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">2. Complimentary Delivery Threshold</h2>
+            <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">2. Delivery Fees & Timelines</h2>
             <p>
-              We provide complimentary insured doorstep delivery across Rwanda on all garment orders over <strong>200,000 RWF</strong>.
+              • <strong>{DELIVERY_ZONES.kigali.label} (Gasabo, Kicukiro, Nyarugenge):</strong> {DELIVERY_ZONES.kigali.timeline} — {formatPrice(DELIVERY_ZONES.kigali.fee)}<br />
+              • <strong>{DELIVERY_ZONES.provinces.label}:</strong> {DELIVERY_ZONES.provinces.timeline} — {formatPrice(DELIVERY_ZONES.provinces.fee)}
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">3. Delivery Options & Timelines</h2>
+            <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">3. Complimentary Delivery</h2>
             <p>
-              • <strong>Kigali City Doorstep Delivery:</strong> 24 – 48 Hours (15,000 RWF or Complimentary over 200,000 RWF)<br />
-              • <strong>Rwanda Provinces Express Delivery:</strong> 1 – 3 Business Days (15,000 RWF or Complimentary over 200,000 RWF)
+              Delivery is complimentary anywhere in Rwanda on orders of <strong>{formatPrice(FREE_DELIVERY_THRESHOLD)}</strong> or more.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="font-serif-luxury text-2xl font-bold text-charcoal">4. How Delivery Works</h2>
+            <p>
+              Our rider will call the phone number on your order before arriving. Please make sure it is reachable and include clear directions or a nearby landmark with your address. Orders to other provinces may be sent with a trusted courier, in which case we share the tracking details with you by SMS or WhatsApp.
             </p>
           </section>
         </div>

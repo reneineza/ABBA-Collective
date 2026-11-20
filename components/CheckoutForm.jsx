@@ -9,8 +9,16 @@ import { sendOrderConfirmation } from '@/lib/email/emailService';
 import { trackCheckoutStarted, trackPurchase } from '@/lib/analytics/analyticsService';
 import { safeJsonParse } from '@/lib/utils/json';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
-import { Lock, ArrowRight, ArrowLeft, CreditCard, Smartphone, Wallet, Loader2 } from 'lucide-react';
+import { getDeliveryFee, getDeliveryZone } from '@/lib/utils/delivery';
+import { isValidRwandaPhone, isPhoneOnNetwork, formatRwandaPhone } from '@/lib/utils/rwanda';
+import { Lock, ArrowRight, ArrowLeft, CreditCard, Smartphone, Loader2 } from 'lucide-react';
 import AddressForm from './AddressForm';
+
+const PAYMENT_METHODS = [
+  { id: 'MTN MoMo', label: 'MTN MoMo', hint: '078 / 079', icon: Smartphone },
+  { id: 'Airtel Money', label: 'Airtel Money', hint: '072 / 073', icon: Smartphone },
+  { id: 'Card', label: 'Visa / Mastercard', hint: 'Debit or credit', icon: CreditCard },
+];
 
 export default function CheckoutForm() {
   const router = useRouter();
@@ -29,15 +37,21 @@ export default function CheckoutForm() {
     last_name: profile?.full_name ? profile.full_name.split(' ')[1] || '' : '',
     phone: profile?.phone || '',
     country: 'Rwanda',
-    city: 'Kigali',
+    province: '',
+    district: '',
+    city: '',
     address_line: '',
-    postal_code: '',
+    landmark: '',
   });
 
-  const [paymentProvider, setPaymentProvider] = useState('Card');
+  const [paymentProvider, setPaymentProvider] = useState('MTN MoMo');
+  const [momoNumber, setMomoNumber] = useState(profile?.phone || '');
+  const [paymentError, setPaymentError] = useState('');
 
-  const shippingCost = cartTotal >= 200000 ? 0 : 15000;
-  const grandTotal = cartTotal + shippingCost;
+  const hasDistrict = Boolean(shippingAddress.district);
+  const shippingCost = getDeliveryFee(cartTotal, shippingAddress.district);
+  const grandTotal = cartTotal + (hasDistrict ? shippingCost : 0);
+  const isMobileMoney = paymentProvider !== 'Card';
 
   const handleProceedToPayment = () => {
     trackCheckoutStarted(cartTotal, cart.length);
@@ -45,6 +59,13 @@ export default function CheckoutForm() {
   };
 
   const handleCompleteOrder = async () => {
+    if (isMobileMoney && !isPhoneOnNetwork(momoNumber, paymentProvider)) {
+      setPaymentError(
+        `Enter a valid ${paymentProvider} number (${PAYMENT_METHODS.find((m) => m.id === paymentProvider).hint}).`
+      );
+      return;
+    }
+    setPaymentError('');
     setLoading(true);
 
     try {
@@ -55,6 +76,7 @@ export default function CheckoutForm() {
         provider: paymentProvider,
         amount: grandTotal,
         customerEmail: email,
+        phoneNumber: isMobileMoney ? formatRwandaPhone(momoNumber) : undefined,
       });
 
       const newOrder = {
@@ -62,6 +84,7 @@ export default function CheckoutForm() {
         user_id: user?.id || 'usr_guest',
         status: 'Confirmed',
         total_amount: grandTotal,
+        shipping_fee: shippingCost,
         shipping_address: shippingAddress,
         payment_provider: paymentProvider,
         transaction_id: paymentRes.transactionId,
@@ -159,17 +182,23 @@ export default function CheckoutForm() {
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+250 788 123 456"
+                    placeholder="078 812 3456"
                     className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
                   />
+                  {phone && !isValidRwandaPhone(phone) && (
+                    <p className="text-[11px] text-red-600 mt-1">Enter a Rwandan mobile number, e.g. 078 812 3456</p>
+                  )}
                 </div>
               </div>
             </div>
             <div className="flex justify-end pt-2">
               <button
-                onClick={() => setStep(2)}
-                disabled={!email}
-                className="px-8 py-3.5 bg-charcoal text-ivory hover:bg-olive transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2"
+                onClick={() => {
+                  if (!momoNumber) setMomoNumber(phone);
+                  setStep(2);
+                }}
+                disabled={!email || !isValidRwandaPhone(phone)}
+                className="px-8 py-3.5 bg-charcoal text-ivory hover:bg-olive transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Continue to Shipping <ArrowRight size={16} />
               </button>
@@ -181,7 +210,7 @@ export default function CheckoutForm() {
         {step === 2 && (
           <div className="space-y-6">
             <AddressForm
-              initialAddress={shippingAddress}
+              initialAddress={{ ...shippingAddress, phone: shippingAddress.phone || phone }}
               onSave={(updatedAddress) => {
                 setShippingAddress(updatedAddress);
                 setStep(3);
@@ -208,9 +237,18 @@ export default function CheckoutForm() {
                 <span className="font-semibold text-gold uppercase tracking-wider">Recipient</span>
                 <span>{fullName} ({email})</span>
               </div>
-              <div className="flex justify-between pt-1">
+              <div className="flex justify-between border-b border-charcoal/10 pb-2 pt-1 gap-4">
                 <span className="font-semibold text-gold uppercase tracking-wider">Destination</span>
-                <span className="text-right">{shippingAddress.address_line}, {shippingAddress.city}, {shippingAddress.country}</span>
+                <span className="text-right">
+                  {shippingAddress.address_line}, {shippingAddress.district}, {shippingAddress.province}
+                  {shippingAddress.landmark && <><br /><span className="text-charcoal/60">{shippingAddress.landmark}</span></>}
+                </span>
+              </div>
+              <div className="flex justify-between pt-1">
+                <span className="font-semibold text-gold uppercase tracking-wider">Delivery</span>
+                <span className="text-right">
+                  {getDeliveryZone(shippingAddress.district).label} · {getDeliveryZone(shippingAddress.district).timeline}
+                </span>
               </div>
             </div>
 
@@ -239,51 +277,59 @@ export default function CheckoutForm() {
                 Step 4: Select Payment Method
               </h3>
               <p className="text-xs text-charcoal/60 font-light">
-                Encrypted & secure checkout architecture ready for Stripe, Mobile Money & Card providers.
+                Pay securely with Mobile Money or card. All amounts are charged in Rwandan Francs (RWF).
               </p>
             </div>
 
             {/* Provider Selection Cards */}
             <div className="grid grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={() => setPaymentProvider('Card')}
-                className={`p-4 border text-center rounded-sm space-y-2 transition-all ${
-                  paymentProvider === 'Card'
-                    ? 'border-gold bg-gold/10 text-charcoal font-semibold shadow-sm'
-                    : 'border-charcoal/20 bg-ivory text-charcoal/70 hover:border-gold'
-                }`}
-              >
-                <CreditCard size={20} className="mx-auto text-gold" />
-                <span className="text-xs tracking-wider uppercase block">Credit Card</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentProvider('Stripe')}
-                className={`p-4 border text-center rounded-sm space-y-2 transition-all ${
-                  paymentProvider === 'Stripe'
-                    ? 'border-gold bg-gold/10 text-charcoal font-semibold shadow-sm'
-                    : 'border-charcoal/20 bg-ivory text-charcoal/70 hover:border-gold'
-                }`}
-              >
-                <Wallet size={20} className="mx-auto text-gold" />
-                <span className="text-xs tracking-wider uppercase block">Stripe Pay</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentProvider('Mobile Money')}
-                className={`p-4 border text-center rounded-sm space-y-2 transition-all ${
-                  paymentProvider === 'Mobile Money'
-                    ? 'border-gold bg-gold/10 text-charcoal font-semibold shadow-sm'
-                    : 'border-charcoal/20 bg-ivory text-charcoal/70 hover:border-gold'
-                }`}
-              >
-                <Smartphone size={20} className="mx-auto text-gold" />
-                <span className="text-xs tracking-wider uppercase block">Mobile Money</span>
-              </button>
+              {PAYMENT_METHODS.map(({ id, label, hint, icon: Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => {
+                    setPaymentProvider(id);
+                    setPaymentError('');
+                  }}
+                  className={`p-4 border text-center rounded-sm space-y-2 transition-all ${
+                    paymentProvider === id
+                      ? 'border-gold bg-gold/10 text-charcoal font-semibold shadow-sm'
+                      : 'border-charcoal/20 bg-ivory text-charcoal/70 hover:border-gold'
+                  }`}
+                >
+                  <Icon size={20} className="mx-auto text-gold" />
+                  <span className="text-xs tracking-wider uppercase block">{label}</span>
+                  <span className="text-[10px] text-charcoal/50 block font-normal">{hint}</span>
+                </button>
+              ))}
             </div>
+
+            {isMobileMoney ? (
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase tracking-widest font-semibold block text-charcoal">
+                  {paymentProvider} Number
+                </label>
+                <input
+                  type="tel"
+                  value={momoNumber}
+                  onChange={(e) => {
+                    setMomoNumber(e.target.value);
+                    setPaymentError('');
+                  }}
+                  placeholder={paymentProvider === 'MTN MoMo' ? '078 812 3456' : '073 812 3456'}
+                  className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
+                />
+                <p className="text-[11px] text-charcoal/60">
+                  You'll receive a prompt on this phone. Enter your PIN to approve {formatCurrency(grandTotal)}.
+                </p>
+              </div>
+            ) : (
+              <p className="text-[11px] text-charcoal/60">
+                You'll be taken to our secure card payment page to complete your Visa or Mastercard payment.
+              </p>
+            )}
+
+            {paymentError && <p className="text-xs text-red-600">{paymentError}</p>}
 
             {/* Submit Button */}
             <div className="pt-4 border-t border-charcoal/10 flex justify-between items-center">
@@ -351,8 +397,10 @@ export default function CheckoutForm() {
             <span>{formatCurrency(cartTotal)}</span>
           </div>
           <div className="flex justify-between text-ivory/80">
-            <span>Insured Shipping</span>
-            <span>{shippingCost === 0 ? 'Complimentary' : formatCurrency(shippingCost)}</span>
+            <span>Delivery</span>
+            <span>
+              {shippingCost === 0 ? 'Complimentary' : !hasDistrict ? 'Calculated after address' : formatCurrency(shippingCost)}
+            </span>
           </div>
           <div className="flex justify-between text-base font-bold text-gold border-t border-ivory/10 pt-3">
             <span>Total</span>

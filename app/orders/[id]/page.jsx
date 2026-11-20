@@ -7,6 +7,7 @@ import Button from '@/components/Button';
 import BrandLogo from '@/components/BrandLogo';
 import { safeJsonParse } from '@/lib/utils/json';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
+import { formatDate } from '@/lib/utils/formatDate';
 import { Package, CheckCircle2, ArrowLeft, Printer, ShieldCheck, MapPin, Truck } from 'lucide-react';
 
 export default function OrderDetailPage({ params }) {
@@ -27,15 +28,17 @@ export default function OrderDetailPage({ params }) {
           created_at: new Date().toISOString(),
           status: 'Confirmed',
           total_amount: 130000,
-          payment_provider: 'Card',
+          payment_provider: 'MTN MoMo',
           shipping_address: {
             first_name: 'Grace',
             last_name: 'Heirs',
-            phone: '+250789284564',
+            phone: '+250 789 284 564',
             country: 'Rwanda',
-            city: 'Kigali',
-            address_line: 'KG 7 Ave, Suite 400',
-            postal_code: '10001',
+            province: 'Kigali City',
+            district: 'Gasabo',
+            city: 'Gasabo',
+            address_line: 'KG 7 Ave, Kigali Heights, Kimihurura',
+            landmark: 'Main entrance, ground floor reception',
           },
           items: [
             {
@@ -107,7 +110,7 @@ export default function OrderDetailPage({ params }) {
                 Order #{order.id}
               </h1>
               <p className="text-xs text-charcoal/60">
-                Placed on {new Date(order.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                Placed on {formatDate(order.created_at)}
               </p>
             </div>
 
@@ -160,19 +163,23 @@ export default function OrderDetailPage({ params }) {
           {/* Summary Details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-charcoal/10">
             <div className="space-y-2 text-xs">
-              <span className="text-gold font-semibold uppercase tracking-wider block">Shipping Address</span>
+              <span className="text-gold font-semibold uppercase tracking-wider block">Delivery Address</span>
               <p className="text-charcoal/80 font-light leading-relaxed">
                 {order.shipping_address?.first_name} {order.shipping_address?.last_name}<br />
                 {order.shipping_address?.phone && <>Phone: {order.shipping_address.phone}<br /></>}
                 {order.shipping_address?.address_line}<br />
-                {order.shipping_address?.city}{order.shipping_address?.postal_code ? `, ${order.shipping_address.postal_code}` : ''}<br />
+                {[order.shipping_address?.district || order.shipping_address?.city, order.shipping_address?.province]
+                  .filter(Boolean)
+                  .join(', ')}
+                <br />
+                {order.shipping_address?.landmark && <>{order.shipping_address.landmark}<br /></>}
                 {order.shipping_address?.country}
               </p>
             </div>
 
             <div className="space-y-2 text-xs text-right">
               <span className="text-gold font-semibold uppercase tracking-wider block">Payment Summary</span>
-              <p className="text-charcoal/80">Method: <strong>{order.payment_provider || 'Credit Card / Mobile Money'}</strong></p>
+              <p className="text-charcoal/80">Method: <strong>{order.payment_provider || 'Mobile Money / Card'}</strong></p>
               <p className="text-lg font-bold text-olive">Total Paid: {formatCurrency(order.total_amount)}</p>
             </div>
           </div>

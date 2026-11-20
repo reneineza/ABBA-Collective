@@ -38,7 +38,7 @@ export default function CheckoutSuccessPage() {
               <span className="text-gold font-bold">1.</span> Atelier garment inspection & precision packaging.
             </li>
             <li className="flex items-center gap-2">
-              <span className="text-gold font-bold">2.</span> Insured dispatch with live tracking updates.
+              <span className="text-gold font-bold">2.</span> Our delivery rider calls you before arriving at your address.
             </li>
             <li className="flex items-center gap-2">
               <span className="text-gold font-bold">3.</span> Delivered in signature ABBA Collective gift box.

@@ -12,10 +12,22 @@ ABBA Collective is a production-ready luxury faith-driven lifestyle e-commerce p
 - **Meaning**: *ABBA* represents the Fatherhood of God and the identity believers receive through adoption in Christ (Galatians 4:6, Romans 8:15). *Collective* represents a community gathered around a shared identity, purpose, and mission.
 - **Brand Palette**:
   - Charcoal: `#1C1C1C`
-  - Ivory / Cream: `#F5F2EB`
-  - Forest Green: `#1E3F20`
-  - Antique Gold: `#C4A661`
-- **Primary Currency**: Rwandan Francs (RWF)
+  - Olive: `#3B3418`
+  - Ivory / Cream: `#F4EEE6`
+  - Gold: `#BFA355`
+- **Brand Assets**: logo, icon and pattern tiles in `public/brand/`; use `components/BrandLogo.jsx` for the logo
+- **Typography**: Cormorant Garamond (headings), Inter (body)
+
+---
+
+## Market: Rwanda
+
+- **Currency**: Rwandan Francs (RWF)
+- **Delivery**: Rwanda only, priced by zone (Kigali City vs. other provinces) in `lib/utils/delivery.js`
+- **Addresses**: Province → District (all 30 districts) plus rider directions, in `lib/utils/rwanda.js`
+- **Payments**: MTN MoMo, Airtel Money, Visa / Mastercard (`lib/payments/paymentService.js` holds demo stubs to connect to a live gateway)
+- **Phone numbers**: validated as Rwandan mobiles (MTN 078/079, Airtel 072/073)
+- **Dates**: day-month-year in Kigali time (`lib/utils/formatDate.js`)
 
 ---
 
@@ -23,7 +35,7 @@ ABBA Collective is a production-ready luxury faith-driven lifestyle e-commerce p
 
 - **Frontend**: Next.js App Router (JavaScript), Tailwind CSS, Framer Motion, Lucide React
 - **Backend & Auth**: Supabase PostgreSQL, Supabase Auth, Supabase Storage
-- **Architecture**: Service abstraction for Payments (Stripe, Mobile Money, Cards), Transactional Email Notifications, Google Search JSON-LD Structured Data, and Product Recommendation Engine.
+- **Architecture**: Service abstraction for Payments (MTN MoMo, Airtel Money, Cards), Transactional Email Notifications, Google Search JSON-LD Structured Data, and Product Recommendation Engine.
 
 ---
 

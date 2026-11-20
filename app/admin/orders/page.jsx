@@ -31,7 +31,7 @@ export default function AdminOrdersPage() {
           created_at: new Date(Date.now() - 86400000).toISOString(),
           status: 'Shipped',
           total_amount: 180000,
-          payment_provider: 'Mobile Money',
+          payment_provider: 'MTN MoMo',
           shipping_address: { first_name: 'David', last_name: 'Covenant', email: 'david@example.com', city: 'Kigali' },
           items: [{ name: 'Covenant Tailored Overcoat', quantity: 1 }]
         }

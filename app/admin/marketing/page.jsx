@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Megaphone, Save, Check, Sparkles, Image as ImageIcon } from 'lucide-react';
 
 export default function AdminMarketingPage() {
-  const [announcementText, setAnnouncementText] = useState('✦ Identity Received. Grace Revealed. ✦ Complimentary Shipping on all Rwandan Orders');
+  const [announcementText, setAnnouncementText] = useState('✦ Identity Received. Grace Revealed. ✦ Complimentary Delivery across Rwanda on Orders over 200,000 RWF');
   const [announcementActive, setAnnouncementActive] = useState(true);
   const [featuredCollection, setFeaturedCollection] = useState('adoption');
   const [saved, setSaved] = useState(false);
