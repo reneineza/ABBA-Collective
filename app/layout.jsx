@@ -29,7 +29,8 @@ export default function RootLayout({ children }) {
   const orgSchema = getOrganizationSchema();
 
   return (
-    <html lang="en" className="scroll-smooth">
+    // suppressHydrationWarning: browser extensions inject attributes on <html> (e.g. crxlauncher-bridged)
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
