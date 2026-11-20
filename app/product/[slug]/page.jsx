@@ -43,6 +43,27 @@ export default function ProductDetailPage({ params }) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
 
+  // Sync wishlist state with localStorage (same key as WishlistButton)
+  useEffect(() => {
+    if (!product) return;
+    const savedWishlist = safeJsonParse(localStorage.getItem('abba_wishlist'), []);
+    setIsWishlisted(Array.isArray(savedWishlist) && savedWishlist.includes(product.id));
+  }, [product]);
+
+  const toggleWishlist = () => {
+    if (!product) return;
+    let savedWishlist = safeJsonParse(localStorage.getItem('abba_wishlist'), []);
+    if (!Array.isArray(savedWishlist)) savedWishlist = [];
+    if (savedWishlist.includes(product.id)) {
+      savedWishlist = savedWishlist.filter((id) => id !== product.id);
+      setIsWishlisted(false);
+    } else {
+      savedWishlist.push(product.id);
+      setIsWishlisted(true);
+    }
+    localStorage.setItem('abba_wishlist', JSON.stringify(savedWishlist));
+  };
+
   useEffect(() => {
     if (product) {
       if (product.colors && product.colors.length > 0) setSelectedColor(product.colors[0]);
@@ -240,9 +261,9 @@ export default function ProductDetailPage({ params }) {
 
                 {/* Wishlist Button */}
                 <button
-                  onClick={() => setIsWishlisted(!isWishlisted)}
+                  onClick={toggleWishlist}
                   className="p-3.5 border border-charcoal/20 rounded-sm text-charcoal hover:text-gold transition-colors"
-                  title="Add to Wishlist"
+                  title={isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
                 >
                   <Heart size={18} className={isWishlisted ? "fill-gold text-gold" : ""} />
                 </button>

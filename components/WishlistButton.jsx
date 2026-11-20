@@ -2,11 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
-import { useAuth } from '@/lib/context/AuthContext';
 import { safeJsonParse } from '@/lib/utils/json';
 
 export default function WishlistButton({ productId, className = '' }) {
-  const { user } = useAuth();
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   useEffect(() => {

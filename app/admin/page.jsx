@@ -107,7 +107,7 @@ export default function AdminDashboardPage() {
                   </p>
                 </div>
                 <div className="flex items-center space-x-4">
-                  <span className="font-bold text-gold">${Number(ord.total_amount).toFixed(2)}</span>
+                  <span className="font-bold text-gold">{formatCurrency(ord.total_amount)}</span>
                   <OrderStatusBadge status={ord.status} />
                 </div>
               </div>
