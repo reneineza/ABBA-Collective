@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { Lock, Mail, Loader2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import BrandLogo from '@/components/BrandLogo';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -36,16 +37,16 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-charcoal-dark relative overflow-hidden">
       {/* Decorative Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-forest via-gold to-charcoal-muted"></div>
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-forest/5 rounded-full blur-3xl"></div>
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-olive via-gold to-charcoal-muted"></div>
+      <div aria-hidden="true" className="brand-pattern-mark text-gold absolute inset-0 opacity-[0.04]"></div>
+      <div className="absolute -top-40 -right-40 w-96 h-96 bg-olive/5 rounded-full blur-3xl"></div>
       <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gold/5 rounded-full blur-3xl"></div>
 
       <div className="relative z-10 w-full max-w-md p-8 sm:p-12 bg-charcoal border border-charcoal-light shadow-2xl rounded-sm">
         <div className="text-center space-y-4 mb-10">
-          <Link href="/" className="inline-block hover:opacity-80 transition-opacity">
-            <h1 className="font-serif-luxury text-3xl font-bold text-ivory tracking-wider uppercase">
-              ABBA
-            </h1>
+          <Link href="/" aria-label="ABBA Collective home" className="inline-block hover:opacity-80 transition-opacity">
+            <BrandLogo variant="mark" className="h-14 w-auto mx-auto text-gold" />
+            <h1 className="sr-only">ABBA Admin</h1>
           </Link>
           <div className="h-px w-12 bg-gold/50 mx-auto"></div>
           <p className="text-xs uppercase tracking-luxurious text-gold font-medium">

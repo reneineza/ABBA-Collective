@@ -45,7 +45,7 @@ export default function AdvancedSearchPage({ searchParams }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by garment name, textile, collection, or scripture..."
-              className="w-full py-4 pl-12 pr-4 text-sm bg-ivory-light border border-charcoal/20 focus:border-forest focus:outline-none rounded-sm shadow-sm"
+              className="w-full py-4 pl-12 pr-4 text-sm bg-ivory-light border border-charcoal/20 focus:border-olive focus:outline-none rounded-sm shadow-sm"
             />
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gold" />
           </div>

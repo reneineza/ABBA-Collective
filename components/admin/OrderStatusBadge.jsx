@@ -7,8 +7,8 @@ export default function OrderStatusBadge({ status = 'Pending', onChange }) {
     Pending: 'bg-gold/20 text-gold border-gold/40',
     Confirmed: 'bg-gold/30 text-gold-light border-gold/50',
     Processing: 'bg-charcoal-muted/30 text-ivory border-charcoal-muted/50',
-    Shipped: 'bg-forest/30 text-forest-light border-forest/40',
-    Delivered: 'bg-forest/50 text-ivory border-forest/50',
+    Shipped: 'bg-olive/30 text-olive-light border-olive/40',
+    Delivered: 'bg-olive/50 text-ivory border-olive/50',
     Cancelled: 'bg-charcoal-light/30 text-charcoal-muted border-charcoal-light/50',
   };
 

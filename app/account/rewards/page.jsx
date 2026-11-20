@@ -88,7 +88,7 @@ export default function LoyaltyRewardsPage() {
                   <p className="font-bold text-charcoal">{item.description}</p>
                   <p className="text-[10px] text-charcoal/50">{item.date} • {item.type}</p>
                 </div>
-                <span className="font-bold text-forest text-sm">+{item.points} Points</span>
+                <span className="font-bold text-olive text-sm">+{item.points} Points</span>
               </div>
             ))}
           </div>

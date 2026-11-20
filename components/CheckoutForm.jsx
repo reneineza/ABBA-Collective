@@ -102,16 +102,16 @@ export default function CheckoutForm() {
         
         {/* Step Indicator */}
         <div className="flex items-center justify-between border-b border-charcoal/10 pb-4 text-xs font-semibold uppercase tracking-widest">
-          <span className={`pb-2 border-b-2 transition-all ${step >= 1 ? 'border-gold text-forest' : 'border-transparent text-charcoal/40'}`}>
+          <span className={`pb-2 border-b-2 transition-all ${step >= 1 ? 'border-gold text-olive' : 'border-transparent text-charcoal/40'}`}>
             1. Info
           </span>
-          <span className={`pb-2 border-b-2 transition-all ${step >= 2 ? 'border-gold text-forest' : 'border-transparent text-charcoal/40'}`}>
+          <span className={`pb-2 border-b-2 transition-all ${step >= 2 ? 'border-gold text-olive' : 'border-transparent text-charcoal/40'}`}>
             2. Address
           </span>
-          <span className={`pb-2 border-b-2 transition-all ${step >= 3 ? 'border-gold text-forest' : 'border-transparent text-charcoal/40'}`}>
+          <span className={`pb-2 border-b-2 transition-all ${step >= 3 ? 'border-gold text-olive' : 'border-transparent text-charcoal/40'}`}>
             3. Review
           </span>
-          <span className={`pb-2 border-b-2 transition-all ${step >= 4 ? 'border-gold text-forest' : 'border-transparent text-charcoal/40'}`}>
+          <span className={`pb-2 border-b-2 transition-all ${step >= 4 ? 'border-gold text-olive' : 'border-transparent text-charcoal/40'}`}>
             4. Payment
           </span>
         </div>
@@ -133,7 +133,7 @@ export default function CheckoutForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="info@abbacollective.com"
-                  className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+                  className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -147,7 +147,7 @@ export default function CheckoutForm() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Grace Heirs"
-                    className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+                    className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
                   />
                 </div>
                 <div>
@@ -160,7 +160,7 @@ export default function CheckoutForm() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+250 788 123 456"
-                    className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+                    className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
                   />
                 </div>
               </div>
@@ -169,7 +169,7 @@ export default function CheckoutForm() {
               <button
                 onClick={() => setStep(2)}
                 disabled={!email}
-                className="px-8 py-3.5 bg-charcoal text-ivory hover:bg-forest transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2"
+                className="px-8 py-3.5 bg-charcoal text-ivory hover:bg-olive transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2"
               >
                 Continue to Shipping <ArrowRight size={16} />
               </button>
@@ -223,7 +223,7 @@ export default function CheckoutForm() {
               </button>
               <button
                 onClick={handleProceedToPayment}
-                className="px-8 py-3.5 bg-charcoal text-ivory hover:bg-forest transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2"
+                className="px-8 py-3.5 bg-charcoal text-ivory hover:bg-olive transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2"
               >
                 Proceed to Payment <ArrowRight size={16} />
               </button>
@@ -297,7 +297,7 @@ export default function CheckoutForm() {
               <button
                 onClick={handleCompleteOrder}
                 disabled={loading}
-                className="px-10 py-4 bg-forest text-ivory hover:bg-forest-dark transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2 shadow-xl"
+                className="px-10 py-4 bg-olive text-ivory hover:bg-olive-dark transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2 shadow-xl"
               >
                 {loading ? (
                   <Loader2 size={16} className="animate-spin" />

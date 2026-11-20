@@ -23,7 +23,7 @@ export default function Error({ error, reset }) {
         <div className="pt-2 flex justify-center gap-4">
           <button
             onClick={() => reset()}
-            className="px-6 py-3 bg-charcoal text-ivory text-xs uppercase tracking-widest font-bold hover:bg-forest transition-colors"
+            className="px-6 py-3 bg-charcoal text-ivory text-xs uppercase tracking-widest font-bold hover:bg-olive transition-colors"
           >
             Try Again
           </button>

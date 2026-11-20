@@ -7,6 +7,8 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // ABBA brand palette (BRANDING/COLOR PALLETE): the DEFAULT of each family is
+      // an official brand colour; the other shades are derived for UI states.
       colors: {
         charcoal: {
           DEFAULT: "#1C1C1C",
@@ -15,22 +17,22 @@ module.exports = {
           muted: "#4A4A4A",
         },
         ivory: {
-          DEFAULT: "#F5F2EB",
-          light: "#FAF8F5",
-          dark: "#EAE5D9",
-          border: "#E2DDD0",
+          DEFAULT: "#F4EEE6",
+          light: "#FAF7F2",
+          dark: "#E9E0D3",
+          border: "#DDD3C4",
         },
-        forest: {
-          DEFAULT: "#1E3F20",
-          dark: "#142B16",
-          light: "#2B562E",
-          muted: "#36683A",
+        olive: {
+          DEFAULT: "#3B3418",
+          dark: "#2A2511",
+          light: "#4E4522",
+          muted: "#5F5530",
         },
         gold: {
-          DEFAULT: "#C4A661",
-          light: "#D4B872",
-          dark: "#A88B46",
-          subtle: "rgba(196, 166, 97, 0.15)",
+          DEFAULT: "#BFA355",
+          light: "#CDB46E",
+          dark: "#A38A42",
+          subtle: "rgba(191, 163, 85, 0.15)",
         },
       },
       fontFamily: {
@@ -44,7 +46,7 @@ module.exports = {
       boxShadow: {
         subtle: "0 4px 20px -2px rgba(28, 28, 28, 0.05)",
         card: "0 10px 30px -5px rgba(28, 28, 28, 0.08)",
-        gold: "0 4px 25px rgba(196, 166, 97, 0.2)",
+        gold: "0 4px 25px rgba(191, 163, 85, 0.2)",
       },
     },
   },

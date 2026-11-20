@@ -51,13 +51,13 @@ export default function ContactPage() {
             <div className="space-y-4 text-xs text-charcoal/80">
               <div className="flex items-center space-x-3">
                 <Mail size={16} className="text-gold" />
-                <a href="mailto:info@abbacollective.com" className="hover:text-forest transition-colors">
+                <a href="mailto:info@abbacollective.com" className="hover:text-olive transition-colors">
                   info@abbacollective.com
                 </a>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone size={16} className="text-gold" />
-                <a href="tel:+250789284564" className="hover:text-forest transition-colors">
+                <a href="tel:+250789284564" className="hover:text-olive transition-colors">
                   +250 789 284 564
                 </a>
               </div>
@@ -71,7 +71,7 @@ export default function ContactPage() {
           <div className="md:col-span-7">
             {status === 'success' ? (
               <div className="flex flex-col items-center justify-center h-full space-y-4 py-10 text-center">
-                <CheckCircle2 size={40} className="text-forest" />
+                <CheckCircle2 size={40} className="text-olive" />
                 <h3 className="font-serif-luxury text-2xl font-bold text-charcoal">Message Received</h3>
                 <p className="text-xs text-charcoal/70 font-light">
                   Thank you for reaching out. Our team will respond within 1–2 business days.
@@ -98,7 +98,7 @@ export default function ContactPage() {
                     onChange={handleChange}
                     placeholder="Full Name *"
                     required
-                    className="p-3 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+                    className="p-3 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
                   />
                   <input
                     type="email"
@@ -107,7 +107,7 @@ export default function ContactPage() {
                     onChange={handleChange}
                     placeholder="Email Address *"
                     required
-                    className="p-3 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+                    className="p-3 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
                   />
                 </div>
                 <input
@@ -116,7 +116,7 @@ export default function ContactPage() {
                   value={form.subject}
                   onChange={handleChange}
                   placeholder="Subject / Order ID"
-                  className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+                  className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
                 />
                 <textarea
                   name="message"
@@ -125,12 +125,12 @@ export default function ContactPage() {
                   rows={4}
                   placeholder="Your inquiry or message... *"
                   required
-                  className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none resize-none"
+                  className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none resize-none"
                 />
                 <button
                   type="submit"
                   disabled={status === 'loading'}
-                  className="px-6 py-3 bg-charcoal text-ivory hover:bg-forest transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2 disabled:opacity-70"
+                  className="px-6 py-3 bg-charcoal text-ivory hover:bg-olive transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2 disabled:opacity-70"
                 >
                   {status === 'loading' ? <Loader2 size={14} className="animate-spin" /> : null}
                   Send Message

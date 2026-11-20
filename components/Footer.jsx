@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import NewsletterForm from './NewsletterForm';
+import BrandLogo from './BrandLogo';
 
 export default function Footer() {
   const pathname = usePathname();
@@ -13,9 +14,13 @@ export default function Footer() {
   }
 
   return (
-    <footer className="bg-charcoal text-ivory pt-16 pb-12 border-t border-gold/20">
+    <footer className="relative bg-charcoal text-ivory pt-16 pb-12 border-t border-gold/20 overflow-hidden">
+      {/* Brand Mark Pattern, fading out below the scripture */}
+      <div aria-hidden="true" className="brand-pattern-mark text-gold absolute inset-x-0 top-0 h-80 opacity-[0.07]" />
+      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-80 bg-gradient-to-b from-charcoal/40 to-charcoal pointer-events-none" />
+
       {/* Scripture Anchor Section */}
-      <div className="max-w-4xl mx-auto text-center px-4 mb-16 border-b border-ivory/10 pb-12">
+      <div className="relative max-w-4xl mx-auto text-center px-4 mb-16 border-b border-ivory/10 pb-12">
         <span className="text-gold text-xs tracking-luxurious uppercase block mb-3">
           ✦ Sacred Foundation ✦
         </span>
@@ -27,17 +32,17 @@ export default function Footer() {
         </cite>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-12 mb-16">
           {/* Brand Identity & Mission (Col 1-5) */}
           <div className="md:col-span-5 space-y-4">
-            <Link href="/" className="inline-block">
-              <h2 className="font-serif-luxury text-3xl font-bold tracking-widest text-ivory">
-                ABBA
-              </h2>
-              <span className="text-[10px] tracking-[0.35em] text-gold uppercase block -mt-1">
-                COLLECTIVE
-              </span>
+            <Link href="/" aria-label="ABBA Collective home" className="inline-block">
+              <BrandLogo
+                title="ABBA Collective"
+                className="h-12 w-auto"
+                markClassName="text-gold"
+                wordmarkClassName="text-ivory"
+              />
             </Link>
             <p className="text-sm text-ivory/70 leading-relaxed max-w-md font-light">
               ABBA Collective is a luxury faith-driven apparel house creating meaningful garments inspired by biblical identity. Designed with uncompromising craftsmanship and quiet elegance.

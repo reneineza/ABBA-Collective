@@ -4,15 +4,15 @@
 
 
 :root {
-  --bg-ivory: #F5F2EB;
-  --bg-ivory-light: #FAF8F5;
+  --bg-ivory: #F4EEE6;
+  --bg-ivory-light: #FAF7F2;
   --text-charcoal: #1C1C1C;
-  --accent-forest: #1E3F20;
-  --accent-gold: #C4A661;
+  --accent-olive: #3B3418;
+  --accent-gold: #BFA355;
 }
 
 body {
-  background-color: #F5F2EB;
+  background-color: #F4EEE6;
   color: #1C1C1C;
   font-family: 'Inter', sans-serif;
   overflow-x: hidden;
@@ -26,19 +26,19 @@ h1, h2, h3, h4, .font-serif-luxury {
 
 /* Custom Text Highlight Selection (Gold/Charcoal instead of Browser Blue) */
 ::selection {
-  background-color: #C4A661;
+  background-color: #BFA355;
   color: #1C1C1C;
 }
 
 ::-moz-selection {
-  background-color: #C4A661;
+  background-color: #BFA355;
   color: #1C1C1C;
 }
 
-/* Custom Dropdown Option Styling (Charcoal/Forest/Gold instead of Browser Blue) */
+/* Custom Dropdown Option Styling (Charcoal/Olive/Gold instead of Browser Blue) */
 select option {
   background-color: #1C1C1C !important;
-  color: #F5F2EB !important;
+  color: #F4EEE6 !important;
   padding: 10px;
 }
 
@@ -46,22 +46,22 @@ select option:hover,
 select option:focus,
 select option:active,
 select option:checked {
-  background-color: #1E3F20 !important;
-  color: #C4A661 !important;
+  background-color: #3B3418 !important;
+  color: #BFA355 !important;
 }
 
-/* Focus Ring Accent (Forest Green / Gold instead of Browser Blue) */
+/* Focus Ring Accent (Olive / Gold instead of Browser Blue) */
 *:focus {
-  outline-color: #1E3F20 !important;
+  outline-color: #3B3418 !important;
 }
 
 *:focus-visible {
-  outline-color: #C4A661 !important;
+  outline-color: #BFA355 !important;
 }
 
 /* Glassmorphism Navigation */
 .glass-header {
-  background: rgba(245, 242, 235, 0.88);
+  background: rgba(244, 238, 230, 0.88);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(28, 28, 28, 0.08);
@@ -71,12 +71,44 @@ select option:checked {
   background: rgba(28, 28, 28, 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(196, 166, 97, 0.2);
+  border-bottom: 1px solid rgba(191, 163, 85, 0.2);
 }
 
 /* Gold Accent Border Gradient */
 .border-gold-gradient {
-  border-image: linear-gradient(to right, #C4A661, #D4B872, #C4A661) 1;
+  border-image: linear-gradient(to right, #BFA355, #CDB46E, #BFA355) 1;
+}
+
+/* Brand Patterns (BRANDING/PNG PATTERNS) - tiles are used as masks so the
+   pattern takes the element's text colour, e.g. `brand-pattern-mark text-gold opacity-10` */
+.brand-pattern-mark,
+.brand-pattern-bloom,
+.brand-pattern-arch {
+  background-color: currentColor;
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+  pointer-events: none;
+}
+
+.brand-pattern-mark {
+  -webkit-mask-image: url('/brand/pattern-mark.svg');
+  mask-image: url('/brand/pattern-mark.svg');
+  -webkit-mask-size: 41px 51px;
+  mask-size: 41px 51px;
+}
+
+.brand-pattern-bloom {
+  -webkit-mask-image: url('/brand/pattern-bloom.svg');
+  mask-image: url('/brand/pattern-bloom.svg');
+  -webkit-mask-size: 71px 71px;
+  mask-size: 71px 71px;
+}
+
+.brand-pattern-arch {
+  -webkit-mask-image: url('/brand/pattern-arch.svg');
+  mask-image: url('/brand/pattern-arch.svg');
+  -webkit-mask-size: 54px 61px;
+  mask-size: 54px 61px;
 }
 
 /* Custom Scrollbar */
@@ -84,14 +116,14 @@ select option:checked {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #F5F2EB;
+  background: #F4EEE6;
 }
 ::-webkit-scrollbar-thumb {
-  background: #C4A661;
+  background: #BFA355;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #1E3F20;
+  background: #3B3418;
 }
 
 /* Print Styles for Digital Receipt & Invoice Printing */

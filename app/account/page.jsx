@@ -72,7 +72,7 @@ export default function AccountPage() {
             onClick={() => setActiveTab('profile')}
             className={`pb-3 transition-all ${
               activeTab === 'profile'
-                ? 'text-forest font-bold border-b-2 border-gold'
+                ? 'text-olive font-bold border-b-2 border-gold'
                 : 'text-charcoal/60 hover:text-gold'
             }`}
           >
@@ -82,7 +82,7 @@ export default function AccountPage() {
             onClick={() => setActiveTab('orders')}
             className={`pb-3 transition-all ${
               activeTab === 'orders'
-                ? 'text-forest font-bold border-b-2 border-gold'
+                ? 'text-olive font-bold border-b-2 border-gold'
                 : 'text-charcoal/60 hover:text-gold'
             }`}
           >
@@ -92,7 +92,7 @@ export default function AccountPage() {
             onClick={() => setActiveTab('addresses')}
             className={`pb-3 transition-all ${
               activeTab === 'addresses'
-                ? 'text-forest font-bold border-b-2 border-gold'
+                ? 'text-olive font-bold border-b-2 border-gold'
                 : 'text-charcoal/60 hover:text-gold'
             }`}
           >

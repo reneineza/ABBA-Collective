@@ -153,7 +153,7 @@ export default function ProductReviews({ productId, productName }) {
               value={authorName}
               onChange={(e) => setAuthorName(e.target.value)}
               placeholder="e.g. Grace H."
-              className="w-full p-3 text-xs bg-ivory-light border border-charcoal/20 focus:border-forest focus:outline-none"
+              className="w-full p-3 text-xs bg-ivory-light border border-charcoal/20 focus:border-olive focus:outline-none"
             />
           </div>
           <div>
@@ -166,7 +166,7 @@ export default function ProductReviews({ productId, productName }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Exceptional French Terry density"
-              className="w-full p-3 text-xs bg-ivory-light border border-charcoal/20 focus:border-forest focus:outline-none"
+              className="w-full p-3 text-xs bg-ivory-light border border-charcoal/20 focus:border-olive focus:outline-none"
             />
           </div>
         </div>
@@ -181,20 +181,20 @@ export default function ProductReviews({ productId, productName }) {
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             placeholder="Share details on garment weight, sizing fit, craftsmanship, and daily wear experience..."
-            className="w-full p-3 text-xs bg-ivory-light border border-charcoal/20 focus:border-forest focus:outline-none"
+            className="w-full p-3 text-xs bg-ivory-light border border-charcoal/20 focus:border-olive focus:outline-none"
           />
         </div>
 
         <div className="flex justify-between items-center pt-2">
           {submittedSuccess ? (
-            <span className="text-xs text-forest font-semibold flex items-center gap-1.5">
+            <span className="text-xs text-olive font-semibold flex items-center gap-1.5">
               <CheckCircle2 size={16} /> Thank you! Your review has been submitted.
             </span>
           ) : <span />}
 
           <button
             type="submit"
-            className="px-6 py-3 bg-charcoal text-ivory hover:bg-forest transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2"
+            className="px-6 py-3 bg-charcoal text-ivory hover:bg-olive transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2"
           >
             <Send size={14} /> Submit Review
           </button>
@@ -209,7 +209,7 @@ export default function ProductReviews({ productId, productName }) {
               <div className="flex items-center space-x-2">
                 <span className="font-bold text-sm text-charcoal">{rev.author_name}</span>
                 {rev.verified && (
-                  <span className="text-[10px] uppercase tracking-widest text-forest font-semibold flex items-center gap-1 bg-forest/10 px-2 py-0.5 rounded-sm">
+                  <span className="text-[10px] uppercase tracking-widest text-olive font-semibold flex items-center gap-1 bg-olive/10 px-2 py-0.5 rounded-sm">
                     <CheckCircle2 size={12} /> Verified Purchaser
                   </span>
                 )}

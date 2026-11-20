@@ -92,7 +92,7 @@ export default function AuthForm({ mode = 'login' }) {
       )}
 
       {successMsg && (
-        <div className="p-3 bg-forest/10 border border-forest/30 text-forest text-xs rounded-sm flex items-center gap-2">
+        <div className="p-3 bg-olive/10 border border-olive/30 text-olive text-xs rounded-sm flex items-center gap-2">
           <CheckCircle2 size={16} className="flex-shrink-0" />
           <span>{successMsg}</span>
         </div>
@@ -111,7 +111,7 @@ export default function AuthForm({ mode = 'login' }) {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="John Doe"
-                className="w-full py-3 pl-10 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+                className="w-full py-3 pl-10 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
                 disabled={loading}
               />
               <User size={16} className="absolute left-3 text-charcoal/40" />
@@ -129,7 +129,7 @@ export default function AuthForm({ mode = 'login' }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="info@abbacollective.com"
-              className="w-full py-3 pl-10 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+              className="w-full py-3 pl-10 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
               disabled={loading}
             />
             <Mail size={16} className="absolute left-3 text-charcoal/40" />
@@ -154,7 +154,7 @@ export default function AuthForm({ mode = 'login' }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full py-3 pl-10 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+                className="w-full py-3 pl-10 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
                 disabled={loading}
               />
               <Lock size={16} className="absolute left-3 text-charcoal/40" />
@@ -165,7 +165,7 @@ export default function AuthForm({ mode = 'login' }) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3.5 bg-charcoal text-ivory hover:bg-forest transition-colors text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 mt-2"
+          className="w-full py-3.5 bg-charcoal text-ivory hover:bg-olive transition-colors text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 mt-2"
         >
           {loading ? (
             <Loader2 size={16} className="animate-spin" />

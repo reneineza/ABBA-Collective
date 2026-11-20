@@ -106,7 +106,7 @@ export default function AddressForm({ initialAddress, onSave }) {
           type="button"
           onClick={handleUseCurrentLocation}
           disabled={isLocating}
-          className="px-3.5 py-2 bg-gold/10 text-forest border border-gold/40 hover:bg-gold hover:text-charcoal transition-all text-xs font-semibold uppercase tracking-wider rounded-sm flex items-center justify-center gap-1.5 self-start sm:self-auto"
+          className="px-3.5 py-2 bg-gold/10 text-olive border border-gold/40 hover:bg-gold hover:text-charcoal transition-all text-xs font-semibold uppercase tracking-wider rounded-sm flex items-center justify-center gap-1.5 self-start sm:self-auto"
         >
           {isLocating ? (
             <>
@@ -121,7 +121,7 @@ export default function AddressForm({ initialAddress, onSave }) {
       </div>
 
       {locationStatus && (
-        <p className={`text-xs font-medium ${locationStatus.startsWith('✓') ? 'text-forest' : 'text-amber-700'}`}>
+        <p className={`text-xs font-medium ${locationStatus.startsWith('✓') ? 'text-olive' : 'text-amber-700'}`}>
           {locationStatus}
         </p>
       )}
@@ -134,7 +134,7 @@ export default function AddressForm({ initialAddress, onSave }) {
         <select
           onChange={handleSelectLandmark}
           defaultValue=""
-          className="w-full p-2.5 text-xs bg-ivory-light border border-charcoal/20 focus:border-forest focus:outline-none text-charcoal font-medium"
+          className="w-full p-2.5 text-xs bg-ivory-light border border-charcoal/20 focus:border-olive focus:outline-none text-charcoal font-medium"
         >
           <option value="" disabled>-- Select a famous Kigali landmark or neighborhood --</option>
           {FAMOUS_KIGALI_LOCATIONS.map((loc, idx) => (
@@ -156,7 +156,7 @@ export default function AddressForm({ initialAddress, onSave }) {
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             placeholder="Jean"
-            className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+            className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
           />
         </div>
         <div>
@@ -169,7 +169,7 @@ export default function AddressForm({ initialAddress, onSave }) {
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             placeholder="Mugisha"
-            className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+            className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
           />
         </div>
       </div>
@@ -185,7 +185,7 @@ export default function AddressForm({ initialAddress, onSave }) {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+250 788 123 456"
-            className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+            className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
           />
         </div>
         <div>
@@ -195,7 +195,7 @@ export default function AddressForm({ initialAddress, onSave }) {
           <select
             value={country}
             onChange={(e) => setCountry(e.target.value)}
-            className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none font-medium text-charcoal"
+            className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none font-medium text-charcoal"
           >
             <option value="Rwanda">Rwanda</option>
             <option value="United States">United States</option>
@@ -217,7 +217,7 @@ export default function AddressForm({ initialAddress, onSave }) {
           value={addressLine}
           onChange={(e) => setAddressLine(e.target.value)}
           placeholder="e.g., KG 7 Ave, Kigali Heights or House #12"
-          className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+          className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
         />
       </div>
 
@@ -232,7 +232,7 @@ export default function AddressForm({ initialAddress, onSave }) {
             value={city}
             onChange={(e) => setCity(e.target.value)}
             placeholder="Kigali"
-            className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+            className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
           />
         </div>
         <div>
@@ -244,7 +244,7 @@ export default function AddressForm({ initialAddress, onSave }) {
             value={postalCode}
             onChange={(e) => setPostalCode(e.target.value)}
             placeholder="Optional (e.g. Near Kimironko Market)"
-            className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+            className="w-full p-3 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
           />
         </div>
       </div>
@@ -252,7 +252,7 @@ export default function AddressForm({ initialAddress, onSave }) {
       <div className="pt-2 flex justify-end">
         <button
           type="submit"
-          className="px-8 py-3 bg-charcoal text-ivory hover:bg-forest transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2 rounded-sm shadow-sm"
+          className="px-8 py-3 bg-charcoal text-ivory hover:bg-olive transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2 rounded-sm shadow-sm"
         >
           <Check size={16} /> Save Address
         </button>

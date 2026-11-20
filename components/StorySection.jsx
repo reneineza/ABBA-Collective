@@ -43,7 +43,7 @@ export default function StorySection() {
               </span>
               <h2 className="font-serif-luxury text-3xl sm:text-4xl md:text-5xl font-bold text-charcoal leading-tight">
                 Identity Received. <br />
-                <span className="italic font-normal text-forest">Grace Revealed.</span>
+                <span className="italic font-normal text-olive">Grace Revealed.</span>
               </h2>
             </div>
 

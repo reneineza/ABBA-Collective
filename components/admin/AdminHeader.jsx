@@ -21,7 +21,7 @@ export default function AdminHeader({ title = 'Dashboard Overview' }) {
 
       <div className="flex items-center space-x-6">
         {/* Role Badge */}
-        <div className="hidden sm:flex items-center space-x-2 bg-forest/20 text-forest border border-forest/40 px-3 py-1 rounded-sm text-[10px] uppercase tracking-widest font-bold">
+        <div className="hidden sm:flex items-center space-x-2 bg-olive/20 text-olive border border-olive/40 px-3 py-1 rounded-sm text-[10px] uppercase tracking-widest font-bold">
           <ShieldCheck size={14} className="text-gold" />
           <span className="text-gold">ADMIN ROLE</span>
         </div>

@@ -45,7 +45,7 @@ export default function ProfileForm() {
           </p>
         </div>
         {saved && (
-          <span className="text-xs uppercase tracking-widest text-forest font-semibold flex items-center gap-1.5 bg-forest/10 px-3 py-1 rounded-sm">
+          <span className="text-xs uppercase tracking-widest text-olive font-semibold flex items-center gap-1.5 bg-olive/10 px-3 py-1 rounded-sm">
             <CheckCircle2 size={14} /> Saved
           </span>
         )}
@@ -61,7 +61,7 @@ export default function ProfileForm() {
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full py-3 pl-10 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+              className="w-full py-3 pl-10 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
             />
             <User size={16} className="absolute left-3 text-charcoal/40" />
           </div>
@@ -76,7 +76,7 @@ export default function ProfileForm() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full py-3 pl-10 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+              className="w-full py-3 pl-10 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
             />
             <Mail size={16} className="absolute left-3 text-charcoal/40" />
           </div>
@@ -92,7 +92,7 @@ export default function ProfileForm() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+1 (555) 019-2831"
-              className="w-full py-3 pl-10 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+              className="w-full py-3 pl-10 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
             />
             <Phone size={16} className="absolute left-3 text-charcoal/40" />
           </div>
@@ -103,7 +103,7 @@ export default function ProfileForm() {
         <button
           type="submit"
           disabled={loading}
-          className="px-8 py-3 bg-charcoal text-ivory hover:bg-forest transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2"
+          className="px-8 py-3 bg-charcoal text-ivory hover:bg-olive transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : 'Save Changes'}
         </button>

@@ -322,7 +322,7 @@ export default function SizeGuidePage() {
                 {currentCategoryData.tagline}
               </p>
             </div>
-            <span className="text-[11px] text-forest font-semibold uppercase tracking-widest bg-forest/10 px-3 py-1.5 rounded-sm self-start sm:self-center">
+            <span className="text-[11px] text-olive font-semibold uppercase tracking-widest bg-olive/10 px-3 py-1.5 rounded-sm self-start sm:self-center">
               ✦ Pre-shrunk Organic Textiles
             </span>
           </div>
@@ -454,7 +454,7 @@ export default function SizeGuidePage() {
                 <span className="text-gold font-serif-luxury text-3xl font-bold block">
                   {item.step}
                 </span>
-                <h3 className="font-serif-luxury text-xl font-bold text-charcoal group-hover:text-forest transition-colors">
+                <h3 className="font-serif-luxury text-xl font-bold text-charcoal group-hover:text-olive transition-colors">
                   {item.title}
                 </h3>
                 <p className="text-xs text-charcoal/70 font-light leading-relaxed">

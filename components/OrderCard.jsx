@@ -11,8 +11,8 @@ export default function OrderCard({ order }) {
     Pending: 'bg-gold/10 text-gold-dark border-gold/30',
     Confirmed: 'bg-gold/20 text-gold-dark border-gold/40',
     Processing: 'bg-charcoal/10 text-charcoal border-charcoal/30',
-    Shipped: 'bg-forest/10 text-forest border-forest/30',
-    Delivered: 'bg-forest/20 text-forest-dark border-forest/40',
+    Shipped: 'bg-olive/10 text-olive border-olive/30',
+    Delivered: 'bg-olive/20 text-olive-dark border-olive/40',
     Cancelled: 'bg-charcoal-muted/10 text-charcoal-muted border-charcoal-muted/30',
   };
 
@@ -53,7 +53,7 @@ export default function OrderCard({ order }) {
       <div className="pt-3 border-t border-charcoal/10 flex justify-between items-center">
         <div>
           <span className="text-[10px] uppercase tracking-widest text-charcoal/50 block">Total Amount</span>
-          <span className="text-base font-bold text-forest">{formatPrice(order.total_amount)}</span>
+          <span className="text-base font-bold text-olive">{formatPrice(order.total_amount)}</span>
         </div>
 
         <Link

@@ -11,7 +11,7 @@ export default function CheckoutSuccessPage() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
         
         {/* Checkmark Badge */}
-        <div className="w-20 h-20 rounded-full bg-forest/10 text-forest border border-forest/30 flex items-center justify-center mx-auto shadow-gold">
+        <div className="w-20 h-20 rounded-full bg-olive/10 text-olive border border-olive/30 flex items-center justify-center mx-auto shadow-gold">
           <CheckCircle2 size={40} className="text-gold" />
         </div>
 
@@ -29,7 +29,7 @@ export default function CheckoutSuccessPage() {
 
         {/* Callout Box */}
         <div className="bg-ivory-light border border-charcoal/10 p-8 rounded-sm space-y-4 max-w-lg mx-auto text-left shadow-subtle">
-          <div className="flex items-center space-x-3 text-forest border-b border-charcoal/10 pb-3">
+          <div className="flex items-center space-x-3 text-olive border-b border-charcoal/10 pb-3">
             <ShieldCheck size={18} className="text-gold" />
             <h4 className="font-serif-luxury text-lg font-bold text-charcoal">What Happens Next?</h4>
           </div>

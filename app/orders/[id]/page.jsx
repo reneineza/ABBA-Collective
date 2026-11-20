@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Button from '@/components/Button';
+import BrandLogo from '@/components/BrandLogo';
 import { safeJsonParse } from '@/lib/utils/json';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { Package, CheckCircle2, ArrowLeft, Printer, ShieldCheck, MapPin, Truck } from 'lucide-react';
@@ -90,9 +91,7 @@ export default function OrderDetailPage({ params }) {
           
           {/* Printable Brand Letterhead (Visible in print/PDF) */}
           <div className="hidden print:block text-center border-b border-black/20 pb-4 mb-4">
-            <h2 className="font-serif-luxury text-3xl font-bold tracking-widest uppercase text-black">
-              A B B A   C O L L E C T I V E
-            </h2>
+            <BrandLogo title="ABBA Collective" className="h-12 w-auto mx-auto mb-2 text-black" />
             <p className="text-[10px] uppercase tracking-widest text-black/70">
               Identity Received. Grace Revealed. • Kigali, Rwanda
             </p>
@@ -112,7 +111,7 @@ export default function OrderDetailPage({ params }) {
               </p>
             </div>
 
-            <div className="flex items-center space-x-2 bg-forest/10 text-forest px-4 py-2 rounded-sm border border-forest/30 self-start sm:self-auto">
+            <div className="flex items-center space-x-2 bg-olive/10 text-olive px-4 py-2 rounded-sm border border-olive/30 self-start sm:self-auto">
               <CheckCircle2 size={16} />
               <span className="text-xs font-bold uppercase tracking-wider">{order.status}</span>
             </div>
@@ -174,7 +173,7 @@ export default function OrderDetailPage({ params }) {
             <div className="space-y-2 text-xs text-right">
               <span className="text-gold font-semibold uppercase tracking-wider block">Payment Summary</span>
               <p className="text-charcoal/80">Method: <strong>{order.payment_provider || 'Credit Card / Mobile Money'}</strong></p>
-              <p className="text-lg font-bold text-forest">Total Paid: {formatCurrency(order.total_amount)}</p>
+              <p className="text-lg font-bold text-olive">Total Paid: {formatCurrency(order.total_amount)}</p>
             </div>
           </div>
 

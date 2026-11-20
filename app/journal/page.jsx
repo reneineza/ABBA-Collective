@@ -53,7 +53,7 @@ export default function JournalPage() {
                     <span>{post.category}</span>
                     <span>{post.date} • {post.readTime}</span>
                   </div>
-                  <h2 className="font-serif-luxury text-2xl font-bold text-charcoal group-hover:text-forest transition-colors leading-snug">
+                  <h2 className="font-serif-luxury text-2xl font-bold text-charcoal group-hover:text-olive transition-colors leading-snug">
                     {post.title}
                   </h2>
                   <p className="text-xs text-charcoal/70 font-light leading-relaxed">
@@ -61,7 +61,7 @@ export default function JournalPage() {
                   </p>
                 </div>
                 <div className="pt-2">
-                  <span className="text-xs uppercase tracking-widest text-forest font-semibold border-b border-forest/30 pb-0.5 group-hover:text-gold group-hover:border-gold transition-colors">
+                  <span className="text-xs uppercase tracking-widest text-olive font-semibold border-b border-olive/30 pb-0.5 group-hover:text-gold group-hover:border-gold transition-colors">
                     Read Journal Entry &rarr;
                   </span>
                 </div>

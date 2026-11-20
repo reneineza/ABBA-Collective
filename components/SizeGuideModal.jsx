@@ -219,7 +219,7 @@ export default function SizeGuideModal({ isOpen, onClose, initialCategory = 'top
               <Link
                 href="/size-guide"
                 onClick={onClose}
-                className="px-4 py-2.5 bg-charcoal text-ivory hover:bg-forest transition-colors text-xs uppercase tracking-widest font-bold rounded-sm flex items-center gap-2 shadow-sm"
+                className="px-4 py-2.5 bg-charcoal text-ivory hover:bg-olive transition-colors text-xs uppercase tracking-widest font-bold rounded-sm flex items-center gap-2 shadow-sm"
               >
                 View Full Size Guide Page
                 <ArrowRight size={14} />

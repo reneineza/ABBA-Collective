@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { ShoppingBag, Search, User, Heart, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/lib/context/CartContext';
+import BrandLogo from './BrandLogo';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -74,7 +75,7 @@ export default function Navbar() {
                     key={link.href}
                     href={link.href}
                     className={`text-xs tracking-widest uppercase transition-colors relative py-1 ${
-                      isActive ? 'text-forest font-semibold' : 'text-charcoal/80 hover:text-gold'
+                      isActive ? 'text-olive font-semibold' : 'text-charcoal/80 hover:text-gold'
                     }`}
                   >
                     {link.name}
@@ -90,13 +91,11 @@ export default function Navbar() {
             </nav>
 
             {/* Brand Logo Centered */}
-            <Link href="/" className="group flex flex-col items-center text-center">
-              <span className="font-serif-luxury text-2xl sm:text-3xl tracking-widest text-charcoal font-bold group-hover:text-forest transition-colors">
-                ABBA
-              </span>
-              <span className="text-[9px] sm:text-[10px] tracking-[0.35em] text-gold uppercase font-medium mt-[1px]">
-                COLLECTIVE
-              </span>
+            <Link href="/" aria-label="ABBA Collective home" className="group flex items-center">
+              <BrandLogo
+                title="ABBA Collective"
+                className="h-8 sm:h-10 w-auto text-olive group-hover:text-gold transition-colors duration-300"
+              />
             </Link>
 
             {/* Desktop Navigation Right & Action Icons */}
@@ -109,7 +108,7 @@ export default function Navbar() {
                       key={link.href}
                       href={link.href}
                       className={`text-xs tracking-widest uppercase transition-colors relative py-1 ${
-                        isActive ? 'text-forest font-semibold' : 'text-charcoal/80 hover:text-gold'
+                        isActive ? 'text-olive font-semibold' : 'text-charcoal/80 hover:text-gold'
                       }`}
                     >
                       {link.name}
@@ -181,12 +180,9 @@ export default function Navbar() {
             >
               <div>
                 <div className="flex items-center justify-between border-b border-charcoal/10 pb-4 mb-6">
-                  <div>
-                    <h2 className="font-serif-luxury text-2xl font-bold tracking-wider text-charcoal">
-                      ABBA
-                    </h2>
-                    <p className="text-[9px] tracking-widest text-gold uppercase">COLLECTIVE</p>
-                  </div>
+                  <Link href="/" onClick={() => setMobileMenuOpen(false)} aria-label="ABBA Collective home">
+                    <BrandLogo title="ABBA Collective" className="h-8 w-auto text-olive" />
+                  </Link>
                   <button
                     onClick={() => setMobileMenuOpen(false)}
                     className="p-2 text-charcoal hover:text-gold"
@@ -202,7 +198,7 @@ export default function Navbar() {
                       href={link.href}
                       onClick={() => setMobileMenuOpen(false)}
                       className={`text-sm tracking-widest uppercase transition-colors ${
-                        pathname === link.href ? 'text-forest font-semibold' : 'text-charcoal/80 hover:text-gold'
+                        pathname === link.href ? 'text-olive font-semibold' : 'text-charcoal/80 hover:text-gold'
                       }`}
                     >
                       {link.name}

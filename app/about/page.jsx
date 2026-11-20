@@ -18,7 +18,7 @@ export default function AboutPage() {
         </span>
         <h1 className="font-serif-luxury text-4xl sm:text-6xl font-bold text-charcoal leading-tight">
           Identity Received. <br />
-          <span className="italic font-normal text-forest">Grace Revealed.</span>
+          <span className="italic font-normal text-olive">Grace Revealed.</span>
         </h1>
         <p className="text-sm sm:text-base text-charcoal/80 font-light leading-relaxed max-w-2xl mx-auto">
           ABBA Collective exists to bridge luxury fashion craftsmanship with eternal spiritual truth—reminding believers of who they are in Christ before they ever perform or strive.
@@ -60,7 +60,7 @@ export default function AboutPage() {
               <h2 className="font-serif-luxury text-3xl font-bold text-charcoal">
                 ABBA
               </h2>
-              <p className="text-xs uppercase tracking-widest text-forest font-semibold">
+              <p className="text-xs uppercase tracking-widest text-olive font-semibold">
                 The Fatherhood of God
               </p>
               <p className="text-sm text-charcoal/80 font-light leading-relaxed">
@@ -81,7 +81,7 @@ export default function AboutPage() {
               <h2 className="font-serif-luxury text-3xl font-bold text-charcoal">
                 COLLECTIVE
               </h2>
-              <p className="text-xs uppercase tracking-widest text-forest font-semibold">
+              <p className="text-xs uppercase tracking-widest text-olive font-semibold">
                 Gathered in Shared Mission
               </p>
               <p className="text-sm text-charcoal/80 font-light leading-relaxed">

@@ -97,8 +97,8 @@ export default function JournalDetailPage({ params }) {
 
         {/* Scripture Callout Block */}
         {post.scripture && (
-          <div className="bg-forest/5 border border-forest/20 p-6 rounded-sm space-y-2">
-            <div className="flex items-center gap-2 text-xs uppercase tracking-widest font-semibold text-forest">
+          <div className="bg-olive/5 border border-olive/20 p-6 rounded-sm space-y-2">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-widest font-semibold text-olive">
               <BookOpen size={16} /> Scripture Reflection
             </div>
             <p className="font-serif-luxury text-base sm:text-lg text-charcoal font-medium italic">
@@ -111,7 +111,7 @@ export default function JournalDetailPage({ params }) {
         <div className="space-y-6 text-sm sm:text-base text-charcoal/85 leading-relaxed font-light font-sans">
           {Array.isArray(post.content) && post.content.length > 0 ? (
             post.content.map((paragraph, idx) => (
-              <p key={idx} className="first-letter:text-3xl first-letter:font-serif-luxury first-letter:font-bold first-letter:mr-1 first-letter:float-left first-letter:text-forest">
+              <p key={idx} className="first-letter:text-3xl first-letter:font-serif-luxury first-letter:font-bold first-letter:mr-1 first-letter:float-left first-letter:text-olive">
                 {paragraph}
               </p>
             ))
@@ -165,7 +165,7 @@ export default function JournalDetailPage({ params }) {
                     <span className="text-[10px] uppercase tracking-widest text-gold font-semibold block mb-1">
                       {relPost.category}
                     </span>
-                    <h3 className="font-serif-luxury text-lg font-bold text-charcoal group-hover:text-forest transition-colors">
+                    <h3 className="font-serif-luxury text-lg font-bold text-charcoal group-hover:text-olive transition-colors">
                       {relPost.title}
                     </h3>
                   </div>

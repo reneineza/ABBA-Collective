@@ -46,7 +46,7 @@ export default function NewsletterForm({ darkTheme = false }) {
     <div className="w-full">
       {status === 'success' ? (
         <div className={`p-4 rounded-sm border flex items-center gap-3 ${
-          darkTheme ? 'bg-forest/30 border-gold/40 text-ivory' : 'bg-forest/10 border-forest text-forest'
+          darkTheme ? 'bg-olive/30 border-gold/40 text-ivory' : 'bg-olive/10 border-olive text-olive'
         }`}>
           <Check size={18} className="text-gold flex-shrink-0" />
           <p className="text-xs font-medium tracking-wide">{message}</p>
@@ -62,7 +62,7 @@ export default function NewsletterForm({ darkTheme = false }) {
               className={`w-full py-3.5 pl-4 pr-12 text-xs tracking-wide focus:outline-none transition-all ${
                 darkTheme
                   ? 'bg-ivory/10 text-ivory placeholder-ivory/40 border border-ivory/20 focus:border-gold'
-                  : 'bg-ivory-light text-charcoal placeholder-charcoal/40 border border-charcoal/20 focus:border-forest'
+                  : 'bg-ivory-light text-charcoal placeholder-charcoal/40 border border-charcoal/20 focus:border-olive'
               }`}
               disabled={status === 'loading'}
             />
@@ -72,7 +72,7 @@ export default function NewsletterForm({ darkTheme = false }) {
               className={`absolute right-1 p-2.5 transition-colors ${
                 darkTheme
                   ? 'text-gold hover:text-ivory'
-                  : 'text-forest hover:text-charcoal'
+                  : 'text-olive hover:text-charcoal'
               }`}
               aria-label="Subscribe to newsletter"
             >

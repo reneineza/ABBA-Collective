@@ -32,8 +32,8 @@ export default function SocialShareButtons({ title, url }) {
       >
         {copied ? (
           <>
-            <Check size={13} className="text-forest" />
-            <span className="text-forest font-semibold">Link Copied!</span>
+            <Check size={13} className="text-olive" />
+            <span className="text-olive font-semibold">Link Copied!</span>
           </>
         ) : (
           <>

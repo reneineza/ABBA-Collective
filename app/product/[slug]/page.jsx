@@ -162,7 +162,7 @@ export default function ProductDetailPage({ params }) {
                 <p className="text-2xl font-bold text-charcoal tracking-wide">
                   {formatPrice(product.price)}
                 </p>
-                <span className="text-xs uppercase tracking-widest text-forest font-semibold bg-forest/10 px-3 py-1 rounded-sm">
+                <span className="text-xs uppercase tracking-widest text-olive font-semibold bg-olive/10 px-3 py-1 rounded-sm">
                   {isOutOfStock ? 'Out of Stock' : `In Stock (${stockQuantity} available)`}
                 </span>
               </div>
@@ -206,7 +206,7 @@ export default function ProductDetailPage({ params }) {
                   </span>
                   <button
                     onClick={() => setIsSizeGuideOpen(true)}
-                    className="text-gold hover:text-forest transition-colors text-[11px] font-semibold underline tracking-wider uppercase flex items-center gap-1 cursor-pointer"
+                    className="text-gold hover:text-olive transition-colors text-[11px] font-semibold underline tracking-wider uppercase flex items-center gap-1 cursor-pointer"
                   >
                     Size Guide
                   </button>
@@ -253,7 +253,7 @@ export default function ProductDetailPage({ params }) {
                 <button
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
-                  className="flex-1 py-3.5 bg-charcoal text-ivory hover:bg-forest transition-colors text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+                  className="flex-1 py-3.5 bg-charcoal text-ivory hover:bg-olive transition-colors text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
                 >
                   <ShoppingBag size={16} />
                   {isOutOfStock ? 'Out of Stock' : 'Add to Shopping Bag'}
@@ -294,7 +294,7 @@ export default function ProductDetailPage({ params }) {
               onClick={() => setActiveTab('story')}
               className={`pb-3 transition-all relative ${
                 activeTab === 'story'
-                  ? 'text-forest font-bold border-b-2 border-gold'
+                  ? 'text-olive font-bold border-b-2 border-gold'
                   : 'text-charcoal/60 hover:text-gold'
               }`}
             >
@@ -304,7 +304,7 @@ export default function ProductDetailPage({ params }) {
               onClick={() => setActiveTab('details')}
               className={`pb-3 transition-all relative ${
                 activeTab === 'details'
-                  ? 'text-forest font-bold border-b-2 border-gold'
+                  ? 'text-olive font-bold border-b-2 border-gold'
                   : 'text-charcoal/60 hover:text-gold'
               }`}
             >
@@ -314,7 +314,7 @@ export default function ProductDetailPage({ params }) {
               onClick={() => setActiveTab('reflection')}
               className={`pb-3 transition-all relative ${
                 activeTab === 'reflection'
-                  ? 'text-forest font-bold border-b-2 border-gold'
+                  ? 'text-olive font-bold border-b-2 border-gold'
                   : 'text-charcoal/60 hover:text-gold'
               }`}
             >

@@ -67,7 +67,7 @@ export default function AdminReviewsPage() {
       header: 'Moderation Status',
       accessor: (row) => (
         <span className={`px-2.5 py-1 text-[10px] uppercase font-bold rounded-sm border ${
-          row.approved ? 'bg-forest/20 text-forest border-forest/30' : 'bg-yellow-950/40 text-yellow-300 border-yellow-800/40'
+          row.approved ? 'bg-olive/20 text-olive border-olive/30' : 'bg-yellow-950/40 text-yellow-300 border-yellow-800/40'
         }`}>
           {row.approved ? 'Approved' : 'Pending Approval'}
         </span>

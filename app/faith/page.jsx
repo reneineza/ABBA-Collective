@@ -102,7 +102,7 @@ export default function FaithPage() {
                   {item.title}
                 </h2>
               </div>
-              <span className="text-xs uppercase tracking-widest text-forest font-semibold self-start sm:self-auto">
+              <span className="text-xs uppercase tracking-widest text-olive font-semibold self-start sm:self-auto">
                 {item.verse}
               </span>
             </div>

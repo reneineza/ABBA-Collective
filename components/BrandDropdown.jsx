@@ -24,7 +24,7 @@ export default function BrandDropdown({ options, value, onChange, placeholder = 
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full sm:w-auto py-2.5 px-4 text-xs bg-ivory border border-charcoal/20 hover:border-gold focus:border-forest focus:outline-none uppercase tracking-widest text-charcoal font-semibold rounded-sm flex items-center justify-between gap-3 shadow-sm transition-all"
+        className="w-full sm:w-auto py-2.5 px-4 text-xs bg-ivory border border-charcoal/20 hover:border-gold focus:border-olive focus:outline-none uppercase tracking-widest text-charcoal font-semibold rounded-sm flex items-center justify-between gap-3 shadow-sm transition-all"
       >
         <span>{selectedOption ? selectedOption.label : placeholder}</span>
         <ChevronDown size={14} className={`text-gold transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
@@ -45,8 +45,8 @@ export default function BrandDropdown({ options, value, onChange, placeholder = 
                   }}
                   className={`w-full text-left px-4 py-2.5 text-xs uppercase tracking-widest font-semibold transition-colors flex items-center justify-between ${
                     isSelected
-                      ? 'bg-forest text-gold border-l-2 border-gold'
-                      : 'text-ivory/80 hover:bg-forest/50 hover:text-gold'
+                      ? 'bg-olive text-gold border-l-2 border-gold'
+                      : 'text-ivory/80 hover:bg-olive/50 hover:text-gold'
                   }`}
                 >
                   <span>{opt.label}</span>

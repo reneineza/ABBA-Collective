@@ -23,10 +23,10 @@ export default function Button({
   };
 
   const variants = {
-    primary: 'bg-charcoal text-ivory hover:bg-forest hover:shadow-lg border border-charcoal hover:border-forest',
+    primary: 'bg-charcoal text-ivory hover:bg-olive hover:shadow-lg border border-charcoal hover:border-olive',
     secondary: 'bg-ivory text-charcoal border border-charcoal/20 hover:border-charcoal hover:bg-ivory-light',
     'gold-outline': 'bg-transparent text-gold border border-gold hover:bg-gold hover:text-charcoal shadow-subtle',
-    dark: 'bg-forest text-ivory hover:bg-forest-dark border border-forest',
+    dark: 'bg-olive text-ivory hover:bg-olive-dark border border-olive',
     ghost: 'bg-transparent text-charcoal hover:text-gold hover:bg-charcoal/5',
   };
 

@@ -105,7 +105,7 @@ export default function ShopPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search garments..."
-                className="w-full py-2.5 pl-9 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none rounded-sm"
+                className="w-full py-2.5 pl-9 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none rounded-sm"
               />
               <Search size={15} className="absolute left-3 top-3 text-charcoal/40" />
             </div>
@@ -161,12 +161,12 @@ export default function ShopPage() {
               <div className="flex items-center gap-2">
                 <span className="text-[10px] uppercase tracking-widest text-gold font-semibold">Active Filters:</span>
                 {selectedCategory !== 'all' && (
-                  <span className="bg-forest/10 text-forest px-2 py-0.5 rounded-sm text-[10px] font-semibold">
+                  <span className="bg-olive/10 text-olive px-2 py-0.5 rounded-sm text-[10px] font-semibold">
                     Category: {SAMPLE_CATEGORIES.find((c) => c.id === selectedCategory)?.name || selectedCategory}
                   </span>
                 )}
                 {selectedCollection !== 'all' && (
-                  <span className="bg-forest/10 text-forest px-2 py-0.5 rounded-sm text-[10px] font-semibold">
+                  <span className="bg-olive/10 text-olive px-2 py-0.5 rounded-sm text-[10px] font-semibold">
                     Collection: {SAMPLE_COLLECTIONS.find((c) => c.id === selectedCollection)?.name || selectedCollection}
                   </span>
                 )}
@@ -183,7 +183,7 @@ export default function ShopPage() {
             <p className="text-xs text-charcoal/60">Try selecting a different category or resetting your search criteria.</p>
             <button
               onClick={handleResetFilters}
-              className="px-6 py-2.5 bg-charcoal text-ivory text-xs uppercase tracking-widest font-semibold hover:bg-forest transition-colors rounded-sm"
+              className="px-6 py-2.5 bg-charcoal text-ivory text-xs uppercase tracking-widest font-semibold hover:bg-olive transition-colors rounded-sm"
             >
               Reset All Filters
             </button>

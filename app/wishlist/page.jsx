@@ -59,7 +59,7 @@ export default function WishlistPage() {
                 <ProductCard product={prod} />
                 <button
                   onClick={() => handleMoveToCart(prod)}
-                  className="w-full py-2.5 bg-forest text-ivory hover:bg-forest-dark transition-colors text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-1.5 rounded-sm shadow-sm"
+                  className="w-full py-2.5 bg-olive text-ivory hover:bg-olive-dark transition-colors text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-1.5 rounded-sm shadow-sm"
                 >
                   <ShoppingBag size={14} /> Move to Shopping Bag
                 </button>

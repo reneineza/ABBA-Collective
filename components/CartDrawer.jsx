@@ -55,7 +55,7 @@ export default function CartDrawer() {
           <div className="bg-ivory-light px-6 py-3 border-b border-charcoal/10 space-y-1.5">
             <div className="flex justify-between text-xs text-charcoal/80">
               {progressPercent >= 100 ? (
-                <span className="font-semibold text-forest">✦ You unlocked Complimentary Shipping!</span>
+                <span className="font-semibold text-olive">✦ You unlocked Complimentary Shipping!</span>
               ) : (
                 <span>Add <strong>{formatPrice(remainingForFreeShipping)}</strong> for free shipping</span>
               )}
@@ -84,7 +84,7 @@ export default function CartDrawer() {
                 </div>
                 <button
                   onClick={closeCart}
-                  className="mt-4 px-6 py-2.5 bg-charcoal text-ivory text-xs uppercase tracking-widest font-semibold hover:bg-forest transition-colors"
+                  className="mt-4 px-6 py-2.5 bg-charcoal text-ivory text-xs uppercase tracking-widest font-semibold hover:bg-olive transition-colors"
                 >
                   Explore Garments
                 </button>
@@ -110,7 +110,7 @@ export default function CartDrawer() {
                 </div>
                 <div className="flex justify-between border-t border-charcoal/10 pt-2 text-sm font-bold text-charcoal">
                   <span>Estimated Total</span>
-                  <span className="text-forest">{formatPrice(cartTotal + (cartTotal >= FREE_SHIPPING_THRESHOLD ? 0 : 15000))}</span>
+                  <span className="text-olive">{formatPrice(cartTotal + (cartTotal >= FREE_SHIPPING_THRESHOLD ? 0 : 15000))}</span>
                 </div>
               </div>
 

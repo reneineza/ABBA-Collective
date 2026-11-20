@@ -71,7 +71,7 @@ export default function AmbassadorPage() {
             >
               {copied ? (
                 <>
-                  <Check size={15} className="text-forest" /> Copied!
+                  <Check size={15} className="text-olive" /> Copied!
                 </>
               ) : (
                 <>
@@ -94,7 +94,7 @@ export default function AmbassadorPage() {
           </div>
 
           {submitted ? (
-            <div className="bg-forest/10 border border-forest/30 p-6 rounded-sm text-forest space-y-2 text-center">
+            <div className="bg-olive/10 border border-olive/30 p-6 rounded-sm text-olive space-y-2 text-center">
               <Check size={32} className="mx-auto text-gold" />
               <h4 className="font-serif-luxury text-xl font-bold text-charcoal">Application Received</h4>
               <p className="text-xs font-light">Our brand committee will review your application within 2 business days.</p>
@@ -112,7 +112,7 @@ export default function AmbassadorPage() {
                     value={applicantName}
                     onChange={(e) => setApplicantName(e.target.value)}
                     placeholder="Grace Heirs"
-                    className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+                    className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
                   />
                 </div>
                 <div>
@@ -125,7 +125,7 @@ export default function AmbassadorPage() {
                     value={applicantEmail}
                     onChange={(e) => setApplicantEmail(e.target.value)}
                     placeholder="info@abbacollective.com"
-                    className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+                    className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
                   />
                 </div>
               </div>
@@ -140,13 +140,13 @@ export default function AmbassadorPage() {
                   value={socialHandle}
                   onChange={(e) => setSocialHandle(e.target.value)}
                   placeholder="@graceheirs or instagram.com/grace"
-                  className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-forest focus:outline-none"
+                  className="w-full p-3.5 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
                 />
               </div>
 
               <button
                 type="submit"
-                className="px-8 py-4 bg-charcoal text-ivory hover:bg-forest transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2"
+                className="px-8 py-4 bg-charcoal text-ivory hover:bg-olive transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2"
               >
                 Submit Ambassador Application <ArrowRight size={16} />
               </button>

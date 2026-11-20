@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Package, Layers, Tag, ShoppingBag, Users, FileText, Mail, Star, Megaphone, ExternalLink, LogOut } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
+import BrandLogo from '@/components/BrandLogo';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -35,10 +36,8 @@ export default function AdminSidebar() {
         {/* Admin Brand Header */}
         <div className="p-6 border-b border-gold/20">
           <Link href="/admin" className="block">
-            <h2 className="font-serif-luxury text-2xl font-bold tracking-widest text-ivory">
-              ABBA
-            </h2>
-            <span className="text-[9px] tracking-[0.35em] text-gold uppercase block -mt-1 font-semibold">
+            <BrandLogo className="h-9 w-auto" markClassName="text-gold" wordmarkClassName="text-ivory" />
+            <span className="text-[9px] tracking-[0.35em] text-gold uppercase block mt-3 font-semibold">
               ATELIER ADMIN
             </span>
           </Link>

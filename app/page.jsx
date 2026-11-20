@@ -111,7 +111,9 @@ export default function HomePage() {
       <StorySection />
 
       {/* 6. STATEMENT OF FAITH CALLOUT */}
-      <section className="py-24 bg-forest text-ivory relative overflow-hidden">
+      <section className="py-24 bg-olive text-ivory relative overflow-hidden">
+        <div aria-hidden="true" className="brand-pattern-arch text-gold absolute inset-0 opacity-[0.08]" />
+        <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,theme(colors.olive.DEFAULT)_35%,transparent_80%)]" />
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 relative z-10">
           <span className="text-gold text-xs uppercase tracking-luxurious font-semibold block">
             ✦ Core Convictions ✦
@@ -169,7 +171,7 @@ export default function HomePage() {
                       <span>{post.readTime}</span>
                     </div>
                     <Link href={`/journal/${post.slug}`}>
-                      <h3 className="font-serif-luxury text-xl font-bold text-charcoal group-hover:text-forest transition-colors leading-snug">
+                      <h3 className="font-serif-luxury text-xl font-bold text-charcoal group-hover:text-olive transition-colors leading-snug">
                         {post.title}
                       </h3>
                     </Link>
@@ -179,7 +181,7 @@ export default function HomePage() {
                   </div>
                   <Link
                     href={`/journal/${post.slug}`}
-                    className="text-[10px] uppercase tracking-widest text-forest font-semibold border-b border-forest/30 self-start pb-0.5 hover:text-gold transition-colors"
+                    className="text-[10px] uppercase tracking-widest text-olive font-semibold border-b border-olive/30 self-start pb-0.5 hover:text-gold transition-colors"
                   >
                     Read Journal Entry
                   </Link>
