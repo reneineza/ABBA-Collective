@@ -37,7 +37,7 @@ module.exports = {
       },
       fontFamily: {
         serif: ["var(--font-cormorant)", "Cormorant Garamond", "Playfair Display", "Georgia", "serif"],
-        sans: ["futura-pt", "Jost", "sans-serif"],
+        sans: ["var(--font-inter)", "Inter", "Manrope", "sans-serif"],
       },
       letterSpacing: {
         widest: "0.25em",
