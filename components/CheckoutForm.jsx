@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/context/CartContext';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -13,6 +13,7 @@ import { getDeliveryFee, getDeliveryZone } from '@/lib/utils/delivery';
 import { isValidRwandaPhone, isPhoneOnNetwork, formatRwandaPhone } from '@/lib/utils/rwanda';
 import { Lock, ArrowRight, ArrowLeft, CreditCard, Smartphone, Loader2 } from 'lucide-react';
 import AddressForm from './AddressForm';
+import { listAddresses, saveAddress } from '@/lib/addresses';
 
 const PAYMENT_METHODS = [
   { id: 'MTN MoMo', label: 'MTN MoMo', hint: '078 / 079', icon: Smartphone },
@@ -43,6 +44,21 @@ export default function CheckoutForm() {
     address_line: '',
     landmark: '',
   });
+
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [useNewAddress, setUseNewAddress] = useState(false);
+  const [saveToAddressBook, setSaveToAddressBook] = useState(true);
+
+  // Signed-in customers: prefill contact details and load saved addresses
+  useEffect(() => {
+    if (!user) return;
+    setEmail((current) => current || user.email || '');
+    setFullName((current) => current || profile?.full_name || '');
+    setPhone((current) => current || profile?.phone || '');
+    listAddresses()
+      .then(setSavedAddresses)
+      .catch((err) => console.error('Could not load addresses:', err.message));
+  }, [user?.id, profile?.id]);
 
   const [paymentProvider, setPaymentProvider] = useState('MTN MoMo');
   const [momoNumber, setMomoNumber] = useState(profile?.phone || '');
@@ -209,13 +225,71 @@ export default function CheckoutForm() {
         {/* STEP 2: SHIPPING ADDRESS */}
         {step === 2 && (
           <div className="space-y-6">
-            <AddressForm
-              initialAddress={{ ...shippingAddress, phone: shippingAddress.phone || phone }}
-              onSave={(updatedAddress) => {
-                setShippingAddress(updatedAddress);
-                setStep(3);
-              }}
-            />
+            {savedAddresses.length > 0 && !useNewAddress ? (
+              <div className="bg-ivory-light border border-charcoal/10 p-6 sm:p-8 space-y-4 rounded-sm">
+                <h3 className="font-serif-luxury text-2xl font-bold text-charcoal">Step 2: Deliver To</h3>
+                <div className="space-y-3">
+                  {savedAddresses.map((address) => (
+                    <button
+                      key={address.id}
+                      type="button"
+                      onClick={() => {
+                        setShippingAddress(address);
+                        setStep(3);
+                      }}
+                      className="w-full text-left p-4 bg-ivory border border-charcoal/15 hover:border-gold rounded-sm transition-colors flex justify-between items-center gap-4"
+                    >
+                      <span className="text-xs text-charcoal/80 leading-relaxed">
+                        <strong className="text-charcoal">
+                          {address.first_name} {address.last_name}
+                        </strong>
+                        {address.is_default && <span className="ml-2 text-[10px] uppercase tracking-widest text-gold font-bold">Default</span>}
+                        <br />
+                        {address.address_line}, {address.district || address.city}, {address.province}
+                        <br />
+                        {address.phone}
+                      </span>
+                      <span className="text-[10px] uppercase tracking-widest font-bold text-olive whitespace-nowrap">Deliver Here →</span>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUseNewAddress(true)}
+                  className="text-xs uppercase tracking-widest font-semibold text-gold hover:text-charcoal"
+                >
+                  + Use a New Address
+                </button>
+              </div>
+            ) : (
+              <AddressForm
+                initialAddress={{ ...shippingAddress, phone: shippingAddress.phone || phone }}
+                onSave={async (updatedAddress) => {
+                  if (user && saveToAddressBook) {
+                    try {
+                      await saveAddress(user.id, updatedAddress);
+                    } catch (err) {
+                      console.error('Could not save address:', err.message);
+                    }
+                  }
+                  setShippingAddress(updatedAddress);
+                  setStep(3);
+                }}
+                onCancel={savedAddresses.length > 0 ? () => setUseNewAddress(false) : undefined}
+              >
+                {user && (
+                  <label className="flex items-center gap-2 text-xs text-charcoal/80">
+                    <input
+                      type="checkbox"
+                      checked={saveToAddressBook}
+                      onChange={(e) => setSaveToAddressBook(e.target.checked)}
+                      className="accent-olive"
+                    />
+                    Save this address to my account
+                  </label>
+                )}
+              </AddressForm>
+            )}
             <button
               onClick={() => setStep(1)}
               className="text-xs uppercase tracking-widest font-semibold text-charcoal/60 hover:text-gold flex items-center gap-1"

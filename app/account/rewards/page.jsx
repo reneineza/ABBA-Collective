@@ -4,17 +4,29 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Button from '@/components/Button';
 import { useAuth } from '@/lib/context/AuthContext';
-import { safeJsonParse } from '@/lib/utils/json';
+import { getBrowserClient } from '@/lib/supabase';
+import { formatDate } from '@/lib/utils/formatDate';
 import { Award, Gift, ArrowLeft, Star, ShoppingBag, Users, CheckCircle2 } from 'lucide-react';
 
 export default function LoyaltyRewardsPage() {
-  const { profile } = useAuth();
-  const [points, setPoints] = useState(450);
-  const [history, setHistory] = useState([
-    { id: 'p1', type: 'Purchase', points: +250, description: 'Earned from Order #ord_9x28v', date: '2026-07-28' },
-    { id: 'p2', type: 'Review', points: +100, description: 'Product review submission reward', date: '2026-07-27' },
-    { id: 'p3', type: 'Referral', points: +100, description: 'Friend sign up via ambassador code', date: '2026-07-25' },
-  ]);
+  const { user } = useAuth();
+  const [history, setHistory] = useState([]);
+  const [loadingLedger, setLoadingLedger] = useState(true);
+  const points = history.reduce((total, item) => total + item.points, 0);
+
+  // Points are awarded by the store (admins / server); customers can only read their ledger
+  useEffect(() => {
+    if (!user) return;
+    getBrowserClient()
+      .from('loyalty_points')
+      .select('id, points, transaction_type, description, created_at')
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) console.error('Could not load points:', error.message);
+        setHistory(data || []);
+        setLoadingLedger(false);
+      });
+  }, [user?.id]);
 
   return (
     <div className="bg-ivory text-charcoal py-16 sm:py-24">
@@ -82,13 +94,23 @@ export default function LoyaltyRewardsPage() {
             Points Ledger & Activity History
           </h3>
           <div className="divide-y divide-charcoal/10 text-xs">
+            {!loadingLedger && history.length === 0 && (
+              <p className="py-6 text-center text-charcoal/60">
+                No points yet. Your first order will start your Royal Circle balance.
+              </p>
+            )}
             {history.map((item) => (
               <div key={item.id} className="py-3 flex justify-between items-center">
                 <div className="space-y-0.5">
                   <p className="font-bold text-charcoal">{item.description}</p>
-                  <p className="text-[10px] text-charcoal/50">{item.date} • {item.type}</p>
+                  <p className="text-[10px] text-charcoal/50">
+                    {formatDate(item.created_at, 'short')} • {item.transaction_type}
+                  </p>
                 </div>
-                <span className="font-bold text-olive text-sm">+{item.points} Points</span>
+                <span className={`font-bold text-sm ${item.points < 0 ? 'text-red-700' : 'text-olive'}`}>
+                  {item.points > 0 ? '+' : ''}
+                  {item.points} Points
+                </span>
               </div>
             ))}
           </div>

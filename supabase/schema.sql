@@ -185,6 +185,16 @@ CREATE TABLE IF NOT EXISTS public.newsletter_subscribers (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 17. WISHLIST ITEMS TABLE
+-- product_id is text because the catalogue currently lives in the app (e.g. 'prod-1'),
+-- not in the products table.
+CREATE TABLE IF NOT EXISTS public.wishlist_items (
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  product_id TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (user_id, product_id)
+);
+
 -- ACCOUNT HELPERS & TRIGGERS
 
 -- True when the signed-in user has the admin role. SECURITY DEFINER so policies on
@@ -285,6 +295,7 @@ ALTER TABLE public.ambassadors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.referrals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notification_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.wishlist_items ENABLE ROW LEVEL SECURITY;
 
 -- Policies from earlier versions of this schema
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
@@ -383,6 +394,11 @@ CREATE POLICY "Admins manage referrals" ON public.referrals FOR ALL USING (publi
 -- Notification preferences: owner only
 DROP POLICY IF EXISTS "Users manage own notification preferences" ON public.notification_preferences;
 CREATE POLICY "Users manage own notification preferences" ON public.notification_preferences FOR ALL
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- Wishlist: owner only
+DROP POLICY IF EXISTS "Users manage own wishlist" ON public.wishlist_items;
+CREATE POLICY "Users manage own wishlist" ON public.wishlist_items FOR ALL
   USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 -- Newsletter: anyone can subscribe; only admins can read or manage the list

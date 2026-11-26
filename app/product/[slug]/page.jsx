@@ -10,6 +10,7 @@ import Button from '@/components/Button';
 import { SAMPLE_PRODUCTS } from '@/lib/data/sampleData';
 import { safeJsonParse } from '@/lib/utils/json';
 import { useCart } from '@/lib/context/CartContext';
+import { useWishlist } from '@/lib/context/WishlistContext';
 import { getProductSchema } from '@/lib/seo/structuredData';
 import { trackProductView } from '@/lib/analytics/analyticsService';
 import { formatPrice } from '@/lib/utils/formatCurrency';
@@ -41,28 +42,12 @@ export default function ProductDetailPage({ params }) {
   const [selectedSize, setSelectedSize] = useState('M');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('story');
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
-
-  // Sync wishlist state with localStorage (same key as WishlistButton)
-  useEffect(() => {
-    if (!product) return;
-    const savedWishlist = safeJsonParse(localStorage.getItem('abba_wishlist'), []);
-    setIsWishlisted(Array.isArray(savedWishlist) && savedWishlist.includes(product.id));
-  }, [product]);
+  const wishlist = useWishlist();
+  const isWishlisted = product ? wishlist.has(product.id) : false;
 
   const toggleWishlist = () => {
-    if (!product) return;
-    let savedWishlist = safeJsonParse(localStorage.getItem('abba_wishlist'), []);
-    if (!Array.isArray(savedWishlist)) savedWishlist = [];
-    if (savedWishlist.includes(product.id)) {
-      savedWishlist = savedWishlist.filter((id) => id !== product.id);
-      setIsWishlisted(false);
-    } else {
-      savedWishlist.push(product.id);
-      setIsWishlisted(true);
-    }
-    localStorage.setItem('abba_wishlist', JSON.stringify(savedWishlist));
+    if (product) wishlist.toggle(product.id);
   };
 
   useEffect(() => {

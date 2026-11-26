@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ProfileForm from '@/components/ProfileForm';
-import AddressForm from '@/components/AddressForm';
+import AddressBook from '@/components/AddressBook';
 import OrderCard from '@/components/OrderCard';
 import Button from '@/components/Button';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -123,7 +123,7 @@ export default function AccountPage() {
 
         {activeTab === 'addresses' && (
           <div className="space-y-6">
-            <AddressForm />
+            <AddressBook />
           </div>
         )}
 

@@ -1,40 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Heart } from 'lucide-react';
-import { safeJsonParse } from '@/lib/utils/json';
+import { useWishlist } from '@/lib/context/WishlistContext';
 
 export default function WishlistButton({ productId, className = '' }) {
-  const [isWishlisted, setIsWishlisted] = useState(false);
-
-  useEffect(() => {
-    try {
-      const savedWishlist = safeJsonParse(localStorage.getItem('abba_wishlist'), []);
-      setIsWishlisted(Array.isArray(savedWishlist) && savedWishlist.includes(productId));
-    } catch (e) {
-      // ignore
-    }
-  }, [productId]);
+  const { has, toggle } = useWishlist();
+  const isWishlisted = has(productId);
 
   const toggleWishlist = (e) => {
     e.preventDefault();
     e.stopPropagation();
-
-    try {
-      let savedWishlist = safeJsonParse(localStorage.getItem('abba_wishlist'), []);
-      if (!Array.isArray(savedWishlist)) savedWishlist = [];
-
-      if (savedWishlist.includes(productId)) {
-        savedWishlist = savedWishlist.filter((id) => id !== productId);
-        setIsWishlisted(false);
-      } else {
-        savedWishlist.push(productId);
-        setIsWishlisted(true);
-      }
-      localStorage.setItem('abba_wishlist', JSON.stringify(savedWishlist));
-    } catch (err) {
-      console.error(err);
-    }
+    toggle(productId);
   };
 
   return (

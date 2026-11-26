@@ -36,7 +36,7 @@ function initialDistrict(address) {
   return getProvinceForDistrict(address?.city) ? address.city : '';
 }
 
-export default function AddressForm({ initialAddress, onSave }) {
+export default function AddressForm({ initialAddress, onSave, onCancel, saving = false, children }) {
   const startDistrict = initialDistrict(initialAddress);
   const [firstName, setFirstName] = useState(initialAddress?.first_name || '');
   const [lastName, setLastName] = useState(initialAddress?.last_name || '');
@@ -284,12 +284,24 @@ export default function AddressForm({ initialAddress, onSave }) {
         We currently deliver within Rwanda only.
       </p>
 
-      <div className="pt-2 flex justify-end">
+      {children}
+
+      <div className="pt-2 flex justify-end gap-3">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-6 py-3 text-xs uppercase tracking-widest font-semibold text-charcoal/60 hover:text-charcoal"
+          >
+            Cancel
+          </button>
+        )}
         <button
           type="submit"
-          className="px-8 py-3 bg-charcoal text-ivory hover:bg-olive transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2 rounded-sm shadow-sm"
+          disabled={saving}
+          className="px-8 py-3 bg-charcoal text-ivory hover:bg-olive transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2 rounded-sm shadow-sm disabled:opacity-50"
         >
-          <Check size={16} /> Save Address
+          {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />} Save Address
         </button>
       </div>
     </form>

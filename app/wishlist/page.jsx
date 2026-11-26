@@ -1,30 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import ProductCard from '@/components/ProductCard';
 import Button from '@/components/Button';
 import { SAMPLE_PRODUCTS } from '@/lib/data/sampleData';
 import { useCart } from '@/lib/context/CartContext';
-import { safeJsonParse } from '@/lib/utils/json';
+import { useWishlist } from '@/lib/context/WishlistContext';
 import { Heart, ShoppingBag, ArrowRight } from 'lucide-react';
 
 export default function WishlistPage() {
   const { addItem } = useCart();
-  const [wishlistProducts, setWishlistProducts] = useState([]);
-
-  useEffect(() => {
-    try {
-      const savedWishlistIds = safeJsonParse(localStorage.getItem('abba_wishlist'), []);
-      if (Array.isArray(savedWishlistIds) && savedWishlistIds.length > 0) {
-        const filtered = SAMPLE_PRODUCTS.filter((p) => savedWishlistIds.includes(p.id));
-        setWishlistProducts(filtered);
-      } else {
-        setWishlistProducts([]);
-      }
-    } catch (e) {
-      setWishlistProducts([]);
-    }
-  }, []);
+  const { ids } = useWishlist();
+  const wishlistProducts = SAMPLE_PRODUCTS.filter((p) => ids.includes(p.id));
 
   const handleMoveToCart = (product) => {
     addItem(product, product.sizes?.[0] || 'M', product.colors?.[0] || 'Charcoal', 1);
