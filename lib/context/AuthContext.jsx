@@ -1,179 +1,170 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { getBrowserClient } from '@/lib/supabase';
-import { safeJsonParse } from '@/lib/utils/json';
 
 const AuthContext = createContext(null);
+
+// Supabase error messages mapped to wording for customers.
+function friendlyAuthError(error) {
+  const message = error?.message || '';
+  if (/invalid login credentials/i.test(message)) return 'Incorrect email or password.';
+  if (/email not confirmed/i.test(message)) return 'Please confirm your email first. Check your inbox for the confirmation link.';
+  if (/already registered|already exists/i.test(message)) return 'An account with this email already exists. Please sign in instead.';
+  if (/password should be|weak password/i.test(message)) return 'Please choose a stronger password (at least 6 characters).';
+  if (/rate limit|too many/i.test(message)) return 'Too many attempts. Please wait a few minutes and try again.';
+  if (/failed to fetch|network/i.test(message)) return 'Could not reach the server. Please check your connection and try again.';
+  return message || 'Something went wrong. Please try again.';
+}
+
+// Email links (confirmation, password reset) land on /auth/callback, which signs
+// the user in and forwards them to `next`.
+function callbackUrl(next) {
+  return `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // Initialize Session
-  useEffect(() => {
-    let mounted = true;
-
-    async function initAuth() {
-      try {
-        const supabase = getBrowserClient();
-        
-        // Race getSession with a 1 second timeout to prevent hanging on placeholder URLs
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((resolve) => 
-          setTimeout(() => resolve({ data: { session: null }, timeout: true }), 1000)
-        );
-        
-        const result = await Promise.race([sessionPromise, timeoutPromise]);
-
-        if (result?.data?.session?.user) {
-          setUser(result.data.session.user);
-          await fetchProfile(result.data.session.user.id);
-        } else {
-          // Check local demo user session safely
-          const parsed = safeJsonParse(localStorage.getItem('abba_demo_user'), null);
-          if (parsed) {
-            setUser(parsed);
-            setProfile(parsed.profile);
-          }
-        }
-      } catch (err) {
-        console.log('Auth init note:', err.message);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    initAuth();
-    return () => { mounted = false; };
-  }, []);
+  const profileUserId = useRef(null);
 
   const fetchProfile = async (userId) => {
-    try {
-      const supabase = getBrowserClient();
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (data) {
-        setProfile(data);
-      }
-    } catch (err) {
-      console.log('Fetch profile note:', err.message);
+    const supabase = getBrowserClient();
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    if (error) {
+      console.error('Could not load profile:', error.message);
+      return null;
     }
+    return data;
   };
 
-  const signUp = async (email, password, fullName) => {
-    setLoading(true);
+  // Session: INITIAL_SESSION on load, then sign-in/out, token refresh and changes made
+  // in other tabs. Loading stays true until the profile for the current user is known.
+  useEffect(() => {
+    const supabase = getBrowserClient();
+
+    // Remove sessions saved by the old demo login
     try {
-      const supabase = getBrowserClient();
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName },
-        },
-      });
+      localStorage.removeItem('abba_demo_user');
+    } catch {}
 
-      if (error) throw error;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const nextUser = session?.user ?? null;
+      setUser(nextUser);
 
-      const newUser = data.user || {
-        id: 'usr_' + Date.now(),
-        email,
-      };
-      const newProfile = {
-        id: newUser.id,
-        full_name: fullName,
-        email,
-        phone: '+1 (555) 234-5678',
-        role: 'customer',
-      };
+      if (!nextUser) {
+        profileUserId.current = null;
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
+      if (profileUserId.current === nextUser.id) {
+        setLoading(false);
+        return;
+      }
 
-      setUser(newUser);
-      setProfile(newProfile);
-      localStorage.setItem('abba_demo_user', JSON.stringify({ ...newUser, profile: newProfile }));
-      return { success: true };
-    } catch (err) {
-      const demoUser = { id: 'usr_' + Date.now(), email };
-      const demoProfile = { id: demoUser.id, full_name: fullName, email, phone: '+1 (555) 234-5678', role: 'customer' };
-      setUser(demoUser);
-      setProfile(demoProfile);
-      localStorage.setItem('abba_demo_user', JSON.stringify({ ...demoUser, profile: demoProfile }));
-      return { success: true };
-    } finally {
-      setLoading(false);
+      // Supabase calls must not be awaited inside this callback, so defer the fetch
+      setLoading(true);
+      setTimeout(async () => {
+        const data = await fetchProfile(nextUser.id);
+        profileUserId.current = nextUser.id;
+        setProfile(data);
+        setLoading(false);
+      }, 0);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signUp = async (email, password, fullName) => {
+    const supabase = getBrowserClient();
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: fullName },
+        emailRedirectTo: callbackUrl('/account'),
+      },
+    });
+
+    if (error) return { success: false, error: friendlyAuthError(error) };
+
+    // With email confirmation on, Supabase hides existing accounts by returning a user with no identities
+    if (data.user && data.user.identities?.length === 0) {
+      return { success: false, error: friendlyAuthError({ message: 'already registered' }) };
     }
+
+    return { success: true, needsConfirmation: !data.session };
   };
 
   const signIn = async (email, password) => {
-    setLoading(true);
-    try {
-      const supabase = getBrowserClient();
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    const supabase = getBrowserClient();
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-      if (error) throw error;
-
-      if (data.user) {
-        setUser(data.user);
-        await fetchProfile(data.user.id);
-      }
-      return { success: true, role: profile?.role || 'customer' };
-    } catch (err) {
-      const isAdmin = email === 'admin@abbacollective.com';
-      const demoUser = { id: isAdmin ? 'usr_admin_1' : 'usr_demo_101', email };
-      const demoProfile = { 
-        id: demoUser.id, 
-        full_name: isAdmin ? 'ABBA Admin' : 'Grace Heirs', 
-        email, 
-        phone: isAdmin ? '+250789284564' : '+250789284564', 
-        role: isAdmin ? 'admin' : 'customer' 
+    if (error) {
+      return {
+        success: false,
+        error: friendlyAuthError(error),
+        needsConfirmation: /email not confirmed/i.test(error.message || ''),
       };
-      setUser(demoUser);
-      setProfile(demoProfile);
-      localStorage.setItem('abba_demo_user', JSON.stringify({ ...demoUser, profile: demoProfile }));
-      return { success: true, role: demoProfile.role };
-    } finally {
-      setLoading(false);
     }
+
+    const signedInProfile = await fetchProfile(data.user.id);
+    profileUserId.current = data.user.id;
+    setUser(data.user);
+    setProfile(signedInProfile);
+    return { success: true, role: signedInProfile?.role || 'customer' };
   };
 
   const signOut = async () => {
-    try {
-      // Optimistically clear state
-      setUser(null);
-      setProfile(null);
-      localStorage.removeItem('abba_demo_user');
-      
-      const supabase = getBrowserClient();
-      await supabase.auth.signOut();
-    } catch (e) {
-      // ignore
-    }
+    const supabase = getBrowserClient();
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error('Sign out error:', error.message);
+    profileUserId.current = null;
+    setUser(null);
+    setProfile(null);
   };
 
   const resetPassword = async (email) => {
-    try {
-      const supabase = getBrowserClient();
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      if (error) throw error;
-      return { success: true };
-    } catch (err) {
-      return { success: true, message: 'Password reset instructions sent to your email.' };
-    }
+    const supabase = getBrowserClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: callbackUrl('/reset-password'),
+    });
+    if (error) return { success: false, error: friendlyAuthError(error) };
+    return { success: true };
   };
 
-  const updateProfile = async (updatedFields) => {
-    const newProfile = { ...profile, ...updatedFields };
-    setProfile(newProfile);
-    if (user) {
-      localStorage.setItem('abba_demo_user', JSON.stringify({ ...user, profile: newProfile }));
-    }
+  const resendConfirmation = async (email) => {
+    const supabase = getBrowserClient();
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: callbackUrl('/account') },
+    });
+    if (error) return { success: false, error: friendlyAuthError(error) };
+    return { success: true };
+  };
+
+  const updatePassword = async (newPassword) => {
+    const supabase = getBrowserClient();
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) return { success: false, error: friendlyAuthError(error) };
+    return { success: true };
+  };
+
+  // Saves the editable profile fields (name and phone) to the database.
+  const updateProfile = async ({ full_name, phone }) => {
+    if (!user) return { success: false, error: 'Please sign in again.' };
+    const supabase = getBrowserClient();
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ full_name, phone })
+      .eq('id', user.id)
+      .select()
+      .single();
+    if (error) return { success: false, error: friendlyAuthError(error) };
+    setProfile(data);
     return { success: true };
   };
 
@@ -187,6 +178,8 @@ export function AuthProvider({ children }) {
         signIn,
         signOut,
         resetPassword,
+        resendConfirmation,
+        updatePassword,
         updateProfile,
       }}
     >

@@ -26,9 +26,8 @@ export default function AccountPage() {
 
   const handleSignOut = async (e) => {
     if (e) e.preventDefault();
-    // Fire and forget the Supabase sign out to prevent hanging
-    signOut().catch(console.error);
-    // Immediately redirect the user
+    // Finish signing out before leaving, so the session cookie is cleared
+    await signOut().catch(console.error);
     window.location.href = '/login';
   };
 

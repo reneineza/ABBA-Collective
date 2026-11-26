@@ -11,21 +11,41 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { signIn } = useAuth();
-  
+  const [notice, setNotice] = useState(null);
+  const [canResend, setCanResend] = useState(false);
+  const { signIn, signOut, resendConfirmation } = useAuth();
+
+  const handleResend = async () => {
+    setError(null);
+    const res = await resendConfirmation(email);
+    if (!res.success) {
+      setError(res.error);
+      return;
+    }
+    setCanResend(false);
+    setNotice(`A new confirmation link has been sent to ${email}.`);
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setNotice(null);
+    setCanResend(false);
 
     try {
       const result = await signIn(email, password);
-      
-      if (result?.role === 'admin') {
+
+      if (!result.success) {
+        setError(result.error);
+        setCanResend(Boolean(result.needsConfirmation));
+      } else if (result.role === 'admin') {
         // Use hard redirect to force full page reload with new auth state
         window.location.href = '/admin';
       } else {
-        setError('Access denied. Admin credentials required.');
+        // Don't leave a customer signed in from the admin login page
+        await signOut();
+        setError('Access denied. This account does not have admin access.');
       }
     } catch (err) {
       setError(err.message || 'Failed to authenticate. Please check your credentials.');
@@ -58,6 +78,21 @@ export default function AdminLoginPage() {
           {error && (
             <div className="p-4 bg-red-900/20 border border-red-500/30 text-red-400 text-xs rounded-sm">
               {error}
+              {canResend && (
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  className="block mt-2 text-gold font-semibold uppercase tracking-wider hover:underline"
+                >
+                  Resend confirmation email
+                </button>
+              )}
+            </div>
+          )}
+
+          {notice && (
+            <div className="p-4 bg-olive/30 border border-gold/30 text-gold text-xs rounded-sm">
+              {notice}
             </div>
           )}
 

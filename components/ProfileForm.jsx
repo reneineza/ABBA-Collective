@@ -1,36 +1,48 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/context/AuthContext';
-import { User, Mail, Phone, CheckCircle2, Loader2 } from 'lucide-react';
+import { isValidRwandaPhone, formatRwandaPhone } from '@/lib/utils/rwanda';
+import { User, Mail, Phone, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 
 export default function ProfileForm() {
-  const { profile, updateProfile } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
 
   const [fullName, setFullName] = useState(profile?.full_name || '');
-  const [email, setEmail] = useState(profile?.email || '');
   const [phone, setPhone] = useState(profile?.phone || '');
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // The profile may finish loading after this form first renders
+  useEffect(() => {
+    setFullName(profile?.full_name || '');
+    setPhone(profile?.phone || '');
+  }, [profile?.id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setSaved(false);
+    setErrorMsg('');
 
-    try {
-      await updateProfile({
-        full_name: fullName,
-        email,
-        phone,
-      });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+    if (phone && !isValidRwandaPhone(phone)) {
+      setErrorMsg('Enter a Rwandan mobile number, e.g. 078 812 3456');
+      return;
     }
+
+    setLoading(true);
+    const res = await updateProfile({
+      full_name: fullName,
+      phone: phone ? formatRwandaPhone(phone) : null,
+    });
+    setLoading(false);
+
+    if (!res.success) {
+      setErrorMsg(res.error);
+      return;
+    }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
   };
 
   return (
@@ -50,6 +62,13 @@ export default function ProfileForm() {
           </span>
         )}
       </div>
+
+      {errorMsg && (
+        <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-sm flex items-center gap-2">
+          <AlertCircle size={16} className="flex-shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1">
@@ -74,12 +93,13 @@ export default function ProfileForm() {
           <div className="relative flex items-center">
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full py-3 pl-10 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
+              value={profile?.email || user?.email || ''}
+              readOnly
+              className="w-full py-3 pl-10 pr-4 text-xs bg-ivory-dark/50 border border-charcoal/10 text-charcoal/60 cursor-not-allowed focus:outline-none"
             />
             <Mail size={16} className="absolute left-3 text-charcoal/40" />
           </div>
+          <p className="text-[10px] text-charcoal/50">Your sign-in email. Contact us to change it.</p>
         </div>
 
         <div className="space-y-1 sm:col-span-2">
@@ -91,7 +111,7 @@ export default function ProfileForm() {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="+1 (555) 019-2831"
+              placeholder="078 812 3456"
               className="w-full py-3 pl-10 pr-4 text-xs bg-ivory border border-charcoal/20 focus:border-olive focus:outline-none"
             />
             <Phone size={16} className="absolute left-3 text-charcoal/40" />
@@ -102,8 +122,8 @@ export default function ProfileForm() {
       <div className="pt-2 flex justify-end">
         <button
           type="submit"
-          disabled={loading}
-          className="px-8 py-3 bg-charcoal text-ivory hover:bg-olive transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2"
+          disabled={loading || !user}
+          className="px-8 py-3 bg-charcoal text-ivory hover:bg-olive transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2 disabled:opacity-50"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : 'Save Changes'}
         </button>

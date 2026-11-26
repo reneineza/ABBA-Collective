@@ -13,7 +13,7 @@ export default function AdminSidebar() {
 
   const handleSignOut = async (e) => {
     if (e) e.preventDefault();
-    signOut().catch(console.error);
+    await signOut().catch(console.error);
     window.location.href = '/admin/login';
   };
 
