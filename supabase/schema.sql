@@ -10,13 +10,68 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   email TEXT NOT NULL,
   phone TEXT,
   avatar_url TEXT,
-  role TEXT DEFAULT 'customer' CHECK (role IN ('customer', 'admin', 'accountant', 'sales')),
+  role TEXT DEFAULT 'customer',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Staff roles: admin (owner), accountant, sales
+-- PERMISSIONS & ROLES
+-- Every action staff can be allowed to do. "implies" lists permissions that come with it
+-- (e.g. recording sales requires seeing them), added automatically when a role is saved.
+CREATE TABLE IF NOT EXISTS public.permissions (
+  key TEXT PRIMARY KEY,
+  label TEXT NOT NULL,
+  area TEXT NOT NULL,
+  implies TEXT[] DEFAULT '{}' NOT NULL,
+  sort_order INTEGER DEFAULT 0 NOT NULL
+);
+
+INSERT INTO public.permissions (key, label, area, implies, sort_order) VALUES
+  ('catalog.manage', 'Add and edit products, collections, categories and photos', 'Catalogue', '{}', 10),
+  ('catalog.delete', 'Delete products', 'Catalogue', '{catalog.manage}', 11),
+  ('orders.view', 'See website orders', 'Website orders', '{}', 20),
+  ('orders.update', 'Update order status (pack, ship, deliver, cancel)', 'Website orders', '{orders.view}', 21),
+  ('stock.view', 'See stock levels and stock history', 'Stock', '{}', 30),
+  ('stock.receive', 'Receive supplier deliveries', 'Stock', '{stock.view}', 31),
+  ('stock.adjust', 'Adjust stock (damaged, lost, found)', 'Stock', '{stock.view}', 32),
+  ('sales.view', 'See in-store sales and receipts', 'In-store sales', '{}', 40),
+  ('sales.record', 'Record in-store sales', 'In-store sales', '{sales.view}', 41),
+  ('costs.view', 'See item costs, deliveries and stock value', 'Money', '{stock.view}', 50),
+  ('costs.edit', 'Enter item and delivery costs', 'Money', '{costs.view}', 51),
+  ('expenses.view', 'See expenses', 'Money', '{}', 52),
+  ('expenses.record', 'Record expenses', 'Money', '{expenses.view}', 53),
+  ('reports.view', 'Financial reports, revenue and sales totals', 'Money', '{orders.view,sales.view,costs.view,expenses.view}', 54),
+  ('records.correct', 'Edit or delete saved sales, deliveries, expenses and costs', 'Money', '{sales.view,costs.view,expenses.view}', 55),
+  ('customers.view', 'See the customer directory', 'Website', '{}', 60),
+  ('reviews.manage', 'Approve, hide and delete reviews', 'Website', '{}', 61),
+  ('content.manage', 'Edit the journal, announcement bar and featured collection', 'Website', '{}', 62),
+  ('newsletter.manage', 'See and export newsletter subscribers', 'Website', '{}', 63)
+ON CONFLICT (key) DO UPDATE SET label = EXCLUDED.label, area = EXCLUDED.area, implies = EXCLUDED.implies, sort_order = EXCLUDED.sort_order;
+
+-- Roles. 'admin' (Owner) always has every permission and is the only role that manages
+-- staff and roles; 'customer' has none. Other roles are created and edited by the owner.
+CREATE TABLE IF NOT EXISTS public.roles (
+  key TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  permissions TEXT[] DEFAULT '{}' NOT NULL,
+  is_staff BOOLEAN DEFAULT TRUE NOT NULL,
+  is_system BOOLEAN DEFAULT FALSE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO public.roles (key, name, description, permissions, is_staff, is_system) VALUES
+  ('customer', 'Customer', 'Shops on the website', '{}', FALSE, TRUE),
+  ('admin', 'Owner', 'Full access, including staff and roles', '{}', TRUE, TRUE),
+  ('accountant', 'Accountant', 'Finances, costs, expenses and reports, plus operations',
+   '{catalog.manage,orders.view,orders.update,stock.view,stock.receive,stock.adjust,sales.view,sales.record,costs.view,costs.edit,expenses.view,expenses.record,reports.view}', TRUE, FALSE),
+  ('sales', 'Sales', 'Products, stock, in-store sales and order fulfilment',
+   '{catalog.manage,orders.view,orders.update,stock.view,stock.receive,stock.adjust,sales.view,sales.record}', TRUE, FALSE)
+ON CONFLICT (key) DO NOTHING;
+
+-- profiles.role now refers to a row in roles (replaces the fixed list of roles)
 ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
-ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check CHECK (role IN ('customer', 'admin', 'accountant', 'sales'));
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_fkey;
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_fkey FOREIGN KEY (role) REFERENCES public.roles(key) ON UPDATE CASCADE;
 
 -- 2. ADDRESSES TABLE
 CREATE TABLE IF NOT EXISTS public.addresses (
@@ -372,6 +427,103 @@ AS $$
   SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin');
 $$;
 
+-- True when the signed-in user is staff (any role marked is_staff, including the owner)
+CREATE OR REPLACE FUNCTION public.is_staff()
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles p JOIN public.roles r ON r.key = p.role
+     WHERE p.id = auth.uid() AND r.is_staff
+  );
+$$;
+
+-- True when the signed-in user may do something, e.g. public.has_permission('sales.record').
+-- The owner (admin) may do everything.
+CREATE OR REPLACE FUNCTION public.has_permission(perm TEXT)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles p JOIN public.roles r ON r.key = p.role
+     WHERE p.id = auth.uid() AND (p.role = 'admin' OR (r.is_staff AND perm = ANY (r.permissions)))
+  );
+$$;
+
+-- Roles: only known permissions; implied permissions are added; built-in roles keep their nature
+CREATE OR REPLACE FUNCTION public.prepare_role()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  expanded TEXT[];
+  previous INTEGER;
+BEGIN
+  IF TG_OP = 'UPDATE' AND OLD.is_system THEN
+    IF NEW.key <> OLD.key THEN
+      RAISE EXCEPTION 'Built-in roles cannot be renamed';
+    END IF;
+    NEW.is_system := TRUE;
+    NEW.is_staff := OLD.is_staff;
+  END IF;
+  IF TG_OP = 'INSERT' THEN
+    NEW.is_system := FALSE;
+    NEW.is_staff := TRUE;
+  END IF;
+  IF NEW.key IN ('admin', 'customer') THEN
+    NEW.permissions := '{}'; -- the owner has everything implicitly; customers have nothing
+    RETURN NEW;
+  END IF;
+  IF EXISTS (SELECT 1 FROM unnest(NEW.permissions) AS perm WHERE perm NOT IN (SELECT key FROM public.permissions)) THEN
+    RAISE EXCEPTION 'Unknown permission';
+  END IF;
+  expanded := COALESCE(NEW.permissions, '{}');
+  LOOP
+    previous := cardinality(expanded);
+    SELECT COALESCE(array_agg(DISTINCT perm ORDER BY perm), '{}') INTO expanded
+      FROM (
+        SELECT unnest(expanded) AS perm
+        UNION
+        SELECT unnest(implies) FROM public.permissions WHERE key = ANY (expanded)
+      ) all_perms;
+    EXIT WHEN cardinality(expanded) = previous;
+  END LOOP;
+  NEW.permissions := expanded;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS roles_prepare ON public.roles;
+CREATE TRIGGER roles_prepare
+  BEFORE INSERT OR UPDATE ON public.roles
+  FOR EACH ROW EXECUTE FUNCTION public.prepare_role();
+
+CREATE OR REPLACE FUNCTION public.protect_system_roles()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+BEGIN
+  IF OLD.is_system THEN
+    RAISE EXCEPTION 'Built-in roles cannot be deleted';
+  END IF;
+  RETURN OLD;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS roles_protect_system ON public.roles;
+CREATE TRIGGER roles_protect_system
+  BEFORE DELETE ON public.roles
+  FOR EACH ROW EXECUTE FUNCTION public.protect_system_roles();
+
 -- True when the signed-in user has one of the given roles, e.g. public.has_role('admin', 'sales')
 CREATE OR REPLACE FUNCTION public.has_role(VARIADIC roles TEXT[])
 RETURNS BOOLEAN
@@ -594,15 +746,15 @@ DECLARE
   item JSONB;
   qty INTEGER;
   cost NUMERIC;
-  can_cost BOOLEAN := public.has_role('admin', 'accountant');
+  can_cost BOOLEAN := public.has_permission('costs.edit');
   v_id UUID;
   v_color TEXT;
   v_size TEXT;
   v_stock INTEGER;
   v_name TEXT;
 BEGIN
-  IF NOT public.has_role('admin', 'accountant', 'sales') THEN
-    RAISE EXCEPTION 'Not allowed to receive stock';
+  IF NOT public.has_permission('stock.receive') THEN
+    RAISE EXCEPTION 'You do not have permission to receive stock';
   END IF;
   IF NULLIF(TRIM(supplier), '') IS NULL THEN
     RAISE EXCEPTION 'Please enter the supplier';
@@ -660,8 +812,8 @@ DECLARE
   qty INTEGER;
   current_stock INTEGER;
 BEGIN
-  IF NOT public.has_role('admin', 'accountant') THEN
-    RAISE EXCEPTION 'Not allowed to enter costs';
+  IF NOT public.has_permission('costs.edit') THEN
+    RAISE EXCEPTION 'You do not have permission to enter costs';
   END IF;
   IF unit_cost IS NULL OR unit_cost < 0 THEN
     RAISE EXCEPTION 'Enter a cost of 0 or more';
@@ -689,8 +841,8 @@ AS $$
 DECLARE
   current_stock INTEGER;
 BEGIN
-  IF NOT public.has_role('admin', 'accountant', 'sales') THEN
-    RAISE EXCEPTION 'Not allowed to adjust stock';
+  IF NOT public.has_permission('stock.adjust') THEN
+    RAISE EXCEPTION 'You do not have permission to adjust stock';
   END IF;
   IF change IS NULL OR change = 0 THEN
     RAISE EXCEPTION 'Enter how many items to add or remove';
@@ -720,8 +872,8 @@ AS $$
 DECLARE
   line RECORD;
 BEGIN
-  IF NOT public.is_admin() THEN
-    RAISE EXCEPTION 'Only the owner can delete a delivery';
+  IF NOT public.has_permission('records.correct') THEN
+    RAISE EXCEPTION 'You do not have permission to delete a delivery';
   END IF;
   PERFORM public.set_stock_context('purchase_deleted', purchase, NULL);
   FOR line IN SELECT i.variant_id, i.quantity, i.product_name, pv.stock_quantity
@@ -785,8 +937,8 @@ DECLARE
   v_name TEXT;
   v_price NUMERIC;
 BEGIN
-  IF NOT public.has_role('admin', 'accountant', 'sales') THEN
-    RAISE EXCEPTION 'Not allowed to record sales';
+  IF NOT public.has_permission('sales.record') THEN
+    RAISE EXCEPTION 'You do not have permission to record sales';
   END IF;
   IF items IS NULL OR jsonb_array_length(items) = 0 THEN
     RAISE EXCEPTION 'Add at least one item';
@@ -846,8 +998,8 @@ AS $$
 DECLARE
   line RECORD;
 BEGIN
-  IF NOT public.is_admin() THEN
-    RAISE EXCEPTION 'Only the owner can delete a sale';
+  IF NOT public.has_permission('records.correct') THEN
+    RAISE EXCEPTION 'You do not have permission to delete a sale';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.store_sales WHERE id = sale) THEN
     RAISE EXCEPTION 'Sale not found';
@@ -870,8 +1022,8 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
-  IF NOT public.has_role('admin', 'accountant') THEN
-    RAISE EXCEPTION 'Not allowed to enter costs';
+  IF NOT public.has_permission('costs.edit') THEN
+    RAISE EXCEPTION 'You do not have permission to enter costs';
   END IF;
   IF cost IS NULL OR cost < 0 THEN
     RAISE EXCEPTION 'Enter a cost of 0 or more';
@@ -879,8 +1031,8 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.product_variants WHERE id = variant) THEN
     RAISE EXCEPTION 'Unknown product variant';
   END IF;
-  IF EXISTS (SELECT 1 FROM public.variant_costs WHERE variant_id = variant) AND NOT public.is_admin() THEN
-    RAISE EXCEPTION 'This item already has a cost. Ask the owner to change it.';
+  IF EXISTS (SELECT 1 FROM public.variant_costs WHERE variant_id = variant) AND NOT public.has_permission('records.correct') THEN
+    RAISE EXCEPTION 'This item already has a cost. Someone allowed to correct records can change it.';
   END IF;
   INSERT INTO public.variant_costs (variant_id, avg_cost) VALUES (variant, cost)
   ON CONFLICT (variant_id) DO UPDATE SET avg_cost = EXCLUDED.avg_cost, updated_at = NOW();
@@ -1024,6 +1176,8 @@ ALTER TABLE public.sale_costs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.store_sales ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.store_sale_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.permissions ENABLE ROW LEVEL SECURITY;
 
 -- Policies from earlier versions of this schema
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
@@ -1038,7 +1192,8 @@ DROP POLICY IF EXISTS "Admins can manage newsletter subscribers" ON public.newsl
 -- Profiles: private to their owner; created only by the signup trigger
 DROP POLICY IF EXISTS "Users view own profile" ON public.profiles;
 CREATE POLICY "Users view own profile" ON public.profiles FOR SELECT USING (
-  auth.uid() = id OR public.is_admin() OR (role <> 'customer' AND public.has_role('admin', 'accountant', 'sales'))
+  auth.uid() = id OR public.is_admin() OR (role <> 'customer' AND public.is_staff())
+  OR (role = 'customer' AND public.has_permission('customers.view'))
 );
 DROP POLICY IF EXISTS "Users update own profile" ON public.profiles;
 CREATE POLICY "Users update own profile" ON public.profiles FOR UPDATE
@@ -1049,7 +1204,7 @@ DROP POLICY IF EXISTS "Users manage own addresses" ON public.addresses;
 CREATE POLICY "Users manage own addresses" ON public.addresses FOR ALL
   USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 DROP POLICY IF EXISTS "Admins view all addresses" ON public.addresses;
-CREATE POLICY "Admins view all addresses" ON public.addresses FOR SELECT USING (public.is_admin());
+CREATE POLICY "Admins view all addresses" ON public.addresses FOR SELECT USING (public.has_permission('customers.view'));
 
 -- Catalogue: public read, admin write
 DROP POLICY IF EXISTS "Catalogue is public" ON public.shipping_methods;
@@ -1060,33 +1215,35 @@ CREATE POLICY "Admins manage catalogue" ON public.shipping_methods FOR ALL USING
 DROP POLICY IF EXISTS "Catalogue is public" ON public.categories;
 CREATE POLICY "Catalogue is public" ON public.categories FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins manage catalogue" ON public.categories;
-CREATE POLICY "Admins manage catalogue" ON public.categories FOR ALL USING (public.has_role('admin', 'accountant', 'sales')) WITH CHECK (public.has_role('admin', 'accountant', 'sales'));
+CREATE POLICY "Admins manage catalogue" ON public.categories FOR ALL USING (public.has_permission('catalog.manage')) WITH CHECK (public.has_permission('catalog.manage'));
 
 DROP POLICY IF EXISTS "Catalogue is public" ON public.collections;
 CREATE POLICY "Catalogue is public" ON public.collections FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins manage catalogue" ON public.collections;
-CREATE POLICY "Admins manage catalogue" ON public.collections FOR ALL USING (public.has_role('admin', 'accountant', 'sales')) WITH CHECK (public.has_role('admin', 'accountant', 'sales'));
+CREATE POLICY "Admins manage catalogue" ON public.collections FOR ALL USING (public.has_permission('catalog.manage')) WITH CHECK (public.has_permission('catalog.manage'));
 
 DROP POLICY IF EXISTS "Catalogue is public" ON public.products;
-CREATE POLICY "Catalogue is public" ON public.products FOR SELECT USING (active = true OR public.has_role('admin', 'accountant', 'sales'));
+CREATE POLICY "Catalogue is public" ON public.products FOR SELECT USING (active = true OR public.is_staff());
 DROP POLICY IF EXISTS "Admins manage catalogue" ON public.products;
 CREATE POLICY "Admins manage catalogue" ON public.products FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+DROP POLICY IF EXISTS "Staff delete products" ON public.products;
+CREATE POLICY "Staff delete products" ON public.products FOR DELETE USING (public.has_permission('catalog.delete'));
 -- Staff create and edit products (and can hide them); only the owner deletes
 DROP POLICY IF EXISTS "Staff add products" ON public.products;
-CREATE POLICY "Staff add products" ON public.products FOR INSERT WITH CHECK (public.has_role('admin', 'accountant', 'sales'));
+CREATE POLICY "Staff add products" ON public.products FOR INSERT WITH CHECK (public.has_permission('catalog.manage'));
 DROP POLICY IF EXISTS "Staff edit products" ON public.products;
 CREATE POLICY "Staff edit products" ON public.products FOR UPDATE
-  USING (public.has_role('admin', 'accountant', 'sales')) WITH CHECK (public.has_role('admin', 'accountant', 'sales'));
+  USING (public.has_permission('catalog.manage')) WITH CHECK (public.has_permission('catalog.manage'));
 
 DROP POLICY IF EXISTS "Catalogue is public" ON public.product_variants;
 CREATE POLICY "Catalogue is public" ON public.product_variants FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins manage catalogue" ON public.product_variants;
-CREATE POLICY "Admins manage catalogue" ON public.product_variants FOR ALL USING (public.has_role('admin', 'accountant', 'sales')) WITH CHECK (public.has_role('admin', 'accountant', 'sales'));
+CREATE POLICY "Admins manage catalogue" ON public.product_variants FOR ALL USING (public.has_permission('catalog.manage')) WITH CHECK (public.has_permission('catalog.manage'));
 
 DROP POLICY IF EXISTS "Catalogue is public" ON public.product_images;
 CREATE POLICY "Catalogue is public" ON public.product_images FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins manage catalogue" ON public.product_images;
-CREATE POLICY "Admins manage catalogue" ON public.product_images FOR ALL USING (public.has_role('admin', 'accountant', 'sales')) WITH CHECK (public.has_role('admin', 'accountant', 'sales'));
+CREATE POLICY "Admins manage catalogue" ON public.product_images FOR ALL USING (public.has_permission('catalog.manage')) WITH CHECK (public.has_permission('catalog.manage'));
 
 -- Orders: customers read their own; orders are created server-side (service role),
 -- never directly from the browser, so totals and status can't be forged.
@@ -1095,9 +1252,9 @@ CREATE POLICY "Users view own orders" ON public.orders FOR SELECT USING (auth.ui
 DROP POLICY IF EXISTS "Admins manage orders" ON public.orders;
 CREATE POLICY "Admins manage orders" ON public.orders FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 DROP POLICY IF EXISTS "Staff view orders" ON public.orders;
-CREATE POLICY "Staff view orders" ON public.orders FOR SELECT USING (public.has_role('admin', 'accountant', 'sales'));
+CREATE POLICY "Staff view orders" ON public.orders FOR SELECT USING (public.has_permission('orders.view'));
 DROP POLICY IF EXISTS "Staff update orders" ON public.orders;
-CREATE POLICY "Staff update orders" ON public.orders FOR UPDATE USING (public.has_role('admin', 'accountant', 'sales')) WITH CHECK (public.has_role('admin', 'accountant', 'sales'));
+CREATE POLICY "Staff update orders" ON public.orders FOR UPDATE USING (public.has_permission('orders.update')) WITH CHECK (public.has_permission('orders.update'));
 
 -- Reviews: approved reviews are public; customers submit unapproved reviews only
 DROP POLICY IF EXISTS "Approved reviews are public" ON public.reviews;
@@ -1105,7 +1262,7 @@ CREATE POLICY "Approved reviews are public" ON public.reviews FOR SELECT USING (
 DROP POLICY IF EXISTS "Users submit own reviews" ON public.reviews;
 CREATE POLICY "Users submit own reviews" ON public.reviews FOR INSERT WITH CHECK (auth.uid() = user_id AND approved = false);
 DROP POLICY IF EXISTS "Admins manage reviews" ON public.reviews;
-CREATE POLICY "Admins manage reviews" ON public.reviews FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Admins manage reviews" ON public.reviews FOR ALL USING (public.has_permission('reviews.manage')) WITH CHECK (public.has_permission('reviews.manage'));
 
 -- Loyalty points: customers read their own ledger; only admins / server award points
 DROP POLICY IF EXISTS "Users view own points" ON public.loyalty_points;
@@ -1143,53 +1300,61 @@ CREATE POLICY "Users manage own wishlist" ON public.wishlist_items FOR ALL
 
 -- Journal: published posts are public; admins see drafts and manage all posts
 DROP POLICY IF EXISTS "Published posts are public" ON public.journal_posts;
-CREATE POLICY "Published posts are public" ON public.journal_posts FOR SELECT USING (published = true OR public.is_admin());
+CREATE POLICY "Published posts are public" ON public.journal_posts FOR SELECT USING (published = true OR public.has_permission('content.manage'));
 DROP POLICY IF EXISTS "Admins manage journal" ON public.journal_posts;
-CREATE POLICY "Admins manage journal" ON public.journal_posts FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Admins manage journal" ON public.journal_posts FOR ALL USING (public.has_permission('content.manage')) WITH CHECK (public.has_permission('content.manage'));
 
 -- Site settings: public read (the site shows them), admin write
 DROP POLICY IF EXISTS "Site settings are public" ON public.site_settings;
 CREATE POLICY "Site settings are public" ON public.site_settings FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins manage site settings" ON public.site_settings;
-CREATE POLICY "Admins manage site settings" ON public.site_settings FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Admins manage site settings" ON public.site_settings FOR ALL USING (public.has_permission('content.manage')) WITH CHECK (public.has_permission('content.manage'));
 
 -- Stock & costs: all staff see stock history; only the owner and accountant see costs
 -- and deliveries. Rows are written only by the stock functions above.
 DROP POLICY IF EXISTS "Staff view stock history" ON public.stock_movements;
-CREATE POLICY "Staff view stock history" ON public.stock_movements FOR SELECT USING (public.has_role('admin', 'accountant', 'sales'));
+CREATE POLICY "Staff view stock history" ON public.stock_movements FOR SELECT USING (public.has_permission('stock.view'));
 DROP POLICY IF EXISTS "Finance views costs" ON public.variant_costs;
-CREATE POLICY "Finance views costs" ON public.variant_costs FOR SELECT USING (public.has_role('admin', 'accountant'));
+CREATE POLICY "Finance views costs" ON public.variant_costs FOR SELECT USING (public.has_permission('costs.view'));
 DROP POLICY IF EXISTS "Finance views deliveries" ON public.stock_purchases;
-CREATE POLICY "Finance views deliveries" ON public.stock_purchases FOR SELECT USING (public.has_role('admin', 'accountant'));
+CREATE POLICY "Finance views deliveries" ON public.stock_purchases FOR SELECT USING (public.has_permission('costs.view'));
 DROP POLICY IF EXISTS "Owner edits deliveries" ON public.stock_purchases;
-CREATE POLICY "Owner edits deliveries" ON public.stock_purchases FOR UPDATE USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Owner edits deliveries" ON public.stock_purchases FOR UPDATE USING (public.has_permission('records.correct')) WITH CHECK (public.has_permission('records.correct'));
 DROP POLICY IF EXISTS "Finance views delivery items" ON public.stock_purchase_items;
-CREATE POLICY "Finance views delivery items" ON public.stock_purchase_items FOR SELECT USING (public.has_role('admin', 'accountant'));
+CREATE POLICY "Finance views delivery items" ON public.stock_purchase_items FOR SELECT USING (public.has_permission('costs.view'));
 DROP POLICY IF EXISTS "Finance views cost of sales" ON public.sale_costs;
-CREATE POLICY "Finance views cost of sales" ON public.sale_costs FOR SELECT USING (public.has_role('admin', 'accountant'));
+CREATE POLICY "Finance views cost of sales" ON public.sale_costs FOR SELECT USING (public.has_permission('costs.view'));
 
 -- In-store sales: all staff can see them (to issue receipts); written only by record_store_sale
 DROP POLICY IF EXISTS "Staff view store sales" ON public.store_sales;
-CREATE POLICY "Staff view store sales" ON public.store_sales FOR SELECT USING (public.has_role('admin', 'accountant', 'sales'));
+CREATE POLICY "Staff view store sales" ON public.store_sales FOR SELECT USING (public.has_permission('sales.view'));
 DROP POLICY IF EXISTS "Staff view store sale items" ON public.store_sale_items;
-CREATE POLICY "Staff view store sale items" ON public.store_sale_items FOR SELECT USING (public.has_role('admin', 'accountant', 'sales'));
+CREATE POLICY "Staff view store sale items" ON public.store_sale_items FOR SELECT USING (public.has_permission('sales.view'));
 
 -- Expenses: owner and accountant record and read them (as themselves); only the owner edits or deletes
 DROP POLICY IF EXISTS "Finance views expenses" ON public.expenses;
-CREATE POLICY "Finance views expenses" ON public.expenses FOR SELECT USING (public.has_role('admin', 'accountant'));
+CREATE POLICY "Finance views expenses" ON public.expenses FOR SELECT USING (public.has_permission('expenses.view'));
 DROP POLICY IF EXISTS "Finance records expenses" ON public.expenses;
 CREATE POLICY "Finance records expenses" ON public.expenses FOR INSERT
-  WITH CHECK (public.has_role('admin', 'accountant') AND created_by = auth.uid());
+  WITH CHECK (public.has_permission('expenses.record') AND created_by = auth.uid());
 DROP POLICY IF EXISTS "Owner edits expenses" ON public.expenses;
-CREATE POLICY "Owner edits expenses" ON public.expenses FOR UPDATE USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Owner edits expenses" ON public.expenses FOR UPDATE USING (public.has_permission('records.correct')) WITH CHECK (public.has_permission('records.correct'));
 DROP POLICY IF EXISTS "Owner deletes expenses" ON public.expenses;
-CREATE POLICY "Owner deletes expenses" ON public.expenses FOR DELETE USING (public.is_admin());
+CREATE POLICY "Owner deletes expenses" ON public.expenses FOR DELETE USING (public.has_permission('records.correct'));
+
+-- Roles & permissions: readable so the app can show each person's access; only the owner edits roles
+DROP POLICY IF EXISTS "Roles are readable" ON public.roles;
+CREATE POLICY "Roles are readable" ON public.roles FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Owner manages roles" ON public.roles;
+CREATE POLICY "Owner manages roles" ON public.roles FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+DROP POLICY IF EXISTS "Permissions are readable" ON public.permissions;
+CREATE POLICY "Permissions are readable" ON public.permissions FOR SELECT USING (true);
 
 -- Newsletter: anyone can subscribe; only admins can read or manage the list
 DROP POLICY IF EXISTS "Anyone can subscribe" ON public.newsletter_subscribers;
 CREATE POLICY "Anyone can subscribe" ON public.newsletter_subscribers FOR INSERT WITH CHECK (true);
 DROP POLICY IF EXISTS "Admins manage subscribers" ON public.newsletter_subscribers;
-CREATE POLICY "Admins manage subscribers" ON public.newsletter_subscribers FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Admins manage subscribers" ON public.newsletter_subscribers FOR ALL USING (public.has_permission('newsletter.manage')) WITH CHECK (public.has_permission('newsletter.manage'));
 
 -- STARTER CONTENT (only inserted if missing, so admin edits are never overwritten)
 INSERT INTO public.journal_posts (slug, title, category, author, published_on, read_time, image_url, excerpt, scripture, content) VALUES
@@ -1303,12 +1468,12 @@ INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', tru
 -- and each user manages files in their own avatars/<user id>/ folder.
 DROP POLICY IF EXISTS "Admins manage site images" ON storage.objects;
 CREATE POLICY "Admins manage site images" ON storage.objects FOR ALL
-  USING (bucket_id IN ('product-images', 'blog-images') AND public.is_admin())
-  WITH CHECK (bucket_id IN ('product-images', 'blog-images') AND public.is_admin());
+  USING (bucket_id = 'blog-images' AND public.has_permission('content.manage'))
+  WITH CHECK (bucket_id = 'blog-images' AND public.has_permission('content.manage'));
 DROP POLICY IF EXISTS "Staff manage product images" ON storage.objects;
 CREATE POLICY "Staff manage product images" ON storage.objects FOR ALL
-  USING (bucket_id = 'product-images' AND public.has_role('admin', 'accountant', 'sales'))
-  WITH CHECK (bucket_id = 'product-images' AND public.has_role('admin', 'accountant', 'sales'));
+  USING (bucket_id = 'product-images' AND public.has_permission('catalog.manage'))
+  WITH CHECK (bucket_id = 'product-images' AND public.has_permission('catalog.manage'));
 DROP POLICY IF EXISTS "Users manage own avatar" ON storage.objects;
 CREATE POLICY "Users manage own avatar" ON storage.objects FOR ALL
   USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text)

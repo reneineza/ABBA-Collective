@@ -5,6 +5,7 @@ import DataTable from '@/components/admin/DataTable';
 import ProductForm from '@/components/admin/ProductForm';
 import { useCatalog } from '@/lib/context/CatalogContext';
 import { useAuth } from '@/lib/context/AuthContext';
+import { hasPermission } from '@/lib/roles';
 import { saveProduct, deleteProduct, setProductActive } from '@/lib/adminCatalog';
 import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
@@ -144,7 +145,7 @@ export default function AdminProductsPage() {
           >
             {row.active ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
-          {profile?.role === 'admin' && (
+          {hasPermission(profile, 'catalog.delete') && (
             <button onClick={() => handleDeleteProduct(row)} className="p-1.5 text-red-400 hover:text-red-300" title="Delete Product">
               <Trash2 size={15} />
             </button>

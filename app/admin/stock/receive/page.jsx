@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useCatalog } from '@/lib/context/CatalogContext';
 import { useAuth } from '@/lib/context/AuthContext';
-import { canSeeFinance } from '@/lib/roles';
+import { hasPermission } from '@/lib/roles';
 import { recordDelivery, PAYMENT_METHODS } from '@/lib/stock';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { ArrowLeft, Plus, Trash2, CheckCircle2 } from 'lucide-react';
@@ -15,7 +15,7 @@ const emptyLine = () => ({ key: Math.random().toString(36).slice(2), productId: 
 export default function ReceiveDeliveryPage() {
   const { allProducts, reload } = useCatalog();
   const { profile } = useAuth();
-  const withCosts = canSeeFinance(profile?.role);
+  const withCosts = hasPermission(profile, 'costs.edit');
 
   const [supplier, setSupplier] = useState('');
   const [purchasedOn, setPurchasedOn] = useState(todayInKigali());
@@ -81,7 +81,7 @@ export default function ReceiveDeliveryPage() {
         <h2 className="font-serif-luxury text-2xl font-bold text-ivory">Receive a Delivery</h2>
         <p className="text-xs text-ivory/60 font-light">
           Record goods received from a supplier. Stock goes up as soon as you save.
-          {!withCosts && ' Costs are entered by the accountant.'}
+          {!withCosts && ' Costs are entered by someone allowed to enter costs.'}
         </p>
       </div>
 

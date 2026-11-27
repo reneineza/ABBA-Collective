@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Package, Layers, Tag, ShoppingBag, Users, FileText, Mail, Star, Megaphone, ExternalLink, LogOut, UserCog, Boxes, Truck, Store, Wallet, BarChart3 } from 'lucide-react';
-import { canAccessPage, ROLE_LABELS } from '@/lib/roles';
+import { canAccessPage, isOwner, roleName } from '@/lib/roles';
 import { useAuth } from '@/lib/context/AuthContext';
 import BrandLogo from '@/components/BrandLogo';
 
@@ -34,8 +34,8 @@ export default function AdminSidebar() {
     { name: 'Marketing', href: '/admin/marketing', icon: Megaphone },
     { name: 'Journal CMS', href: '/admin/blog', icon: FileText },
     { name: 'Newsletter', href: '/admin/newsletter', icon: Mail },
-    { name: 'Staff', href: '/admin/staff', icon: UserCog },
-  ].filter((item) => canAccessPage(profile?.role, item.href));
+    { name: 'Staff & Roles', href: '/admin/staff', icon: UserCog },
+  ].filter((item) => canAccessPage(profile, item.href));
 
   return (
     <aside className="no-print w-64 bg-charcoal-dark border-r border-gold/20 flex flex-col justify-between min-h-screen text-ivory flex-shrink-0">
@@ -45,7 +45,7 @@ export default function AdminSidebar() {
           <Link href="/admin" className="block">
             <BrandLogo className="h-9 w-auto" markClassName="text-gold" wordmarkClassName="text-ivory" />
             <span className="text-[9px] tracking-[0.35em] text-gold uppercase block mt-3 font-semibold">
-              {profile?.role === 'admin' ? 'Atelier Admin' : `${ROLE_LABELS[profile?.role] || 'Staff'} Portal`}
+              {isOwner(profile) ? 'Atelier Admin' : `${roleName(profile)} Portal`}
             </span>
           </Link>
         </div>

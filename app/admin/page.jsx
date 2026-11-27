@@ -9,15 +9,16 @@ import { orderNumber } from '@/lib/utils/orders';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { DollarSign, ShoppingBag, Package, Users, ArrowUpRight, AlertTriangle, Truck } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
-import { canSeeFinance } from '@/lib/roles';
+import { hasPermission } from '@/lib/roles';
 import Link from 'next/link';
 
 const LOW_STOCK = 5;
 
 export default function AdminDashboardPage() {
   const { profile } = useAuth();
-  const role = profile?.role;
-  const showFinance = canSeeFinance(role);
+  const showFinance = hasPermission(profile, 'reports.view');
+  const showClients = hasPermission(profile, 'customers.view');
+  const showSubscribers = hasPermission(profile, 'newsletter.manage');
   const [orders, setOrders] = useState([]);
 
   // Staff can read every order (database policies "Admins manage orders" / "Staff view orders")
@@ -35,15 +36,15 @@ export default function AdminDashboardPage() {
   const [counts, setCounts] = useState({ customers: null, subscribers: null });
 
   useEffect(() => {
-    if (role !== 'admin') return; // customer and subscriber lists are owner-only
+    if (!showClients) return; // the customer directory needs its own permission
     const supabase = getBrowserClient();
     Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'customer'),
-      supabase.from('newsletter_subscribers').select('id', { count: 'exact', head: true }),
+      showSubscribers ? supabase.from('newsletter_subscribers').select('id', { count: 'exact', head: true }) : null,
     ]).then(([customersRes, subscribersRes]) => {
-      setCounts({ customers: customersRes.count ?? 0, subscribers: subscribersRes.count ?? 0 });
+      setCounts({ customers: customersRes.count ?? 0, subscribers: subscribersRes ? subscribersRes.count ?? 0 : null });
     });
-  }, [role]);
+  }, [showClients, showSubscribers]);
 
   const countedOrders = orders.filter((o) => o.status !== 'Cancelled');
 
@@ -113,7 +114,7 @@ export default function AdminDashboardPage() {
           change={`${collectionCount} Collections`}
           icon={Package}
         />
-        {role === 'admin' ? (
+        {showClients ? (
           <StatCard
             title="Total Client Directory"
             value={counts.customers === null ? '…' : `${counts.customers} Clients`}

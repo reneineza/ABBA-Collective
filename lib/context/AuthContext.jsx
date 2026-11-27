@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { getBrowserClient } from '@/lib/supabase';
+import { PROFILE_SELECT } from '@/lib/roles';
 
 const AuthContext = createContext(null);
 
@@ -31,7 +32,7 @@ export function AuthProvider({ children }) {
 
   const fetchProfile = async (userId) => {
     const supabase = getBrowserClient();
-    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    const { data, error } = await supabase.from('profiles').select(PROFILE_SELECT).eq('id', userId).single();
     if (error) {
       console.error('Could not load profile:', error.message);
       return null;
@@ -114,7 +115,7 @@ export function AuthProvider({ children }) {
     profileUserId.current = data.user.id;
     setUser(data.user);
     setProfile(signedInProfile);
-    return { success: true, role: signedInProfile?.role || 'customer' };
+    return { success: true, profile: signedInProfile };
   };
 
   const signOut = async () => {
@@ -161,7 +162,7 @@ export function AuthProvider({ children }) {
       .from('profiles')
       .update({ full_name, phone })
       .eq('id', user.id)
-      .select()
+      .select(PROFILE_SELECT)
       .single();
     if (error) return { success: false, error: friendlyAuthError(error) };
     setProfile(data);

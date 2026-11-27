@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { isStaffRole } from '@/lib/roles';
+import { hasPermission, PROFILE_SELECT } from '@/lib/roles';
 
 // Returns one order to whoever is allowed to see it: the customer who placed it,
 // an admin, or anyone holding the private receipt token (guest checkout).
@@ -29,8 +29,8 @@ export async function GET(request, { params }) {
     if (user && order.user_id === user.id) {
       allowed = true;
     } else if (user) {
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-      allowed = isStaffRole(profile?.role);
+      const { data: profile } = await supabase.from('profiles').select(PROFILE_SELECT).eq('id', user.id).single();
+      allowed = hasPermission(profile, 'orders.view');
     }
   }
   if (!allowed) return notFound;

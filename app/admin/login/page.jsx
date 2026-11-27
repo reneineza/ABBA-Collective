@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { Lock, Mail, Loader2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import BrandLogo from '@/components/BrandLogo';
-import { isStaffRole } from '@/lib/roles';
+import { isStaff } from '@/lib/roles';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
       if (!result.success) {
         setError(result.error);
         setCanResend(Boolean(result.needsConfirmation));
-      } else if (isStaffRole(result.role)) {
+      } else if (isStaff(result.profile)) {
         // Use hard redirect to force full page reload with new auth state
         window.location.href = '/admin';
       } else {

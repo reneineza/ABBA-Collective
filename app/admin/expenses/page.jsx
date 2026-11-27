@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import DataTable from '@/components/admin/DataTable';
 import { useAuth } from '@/lib/context/AuthContext';
+import { hasPermission } from '@/lib/roles';
 import { listExpenses, addExpense, updateExpense, deleteExpense, EXPENSE_CATEGORIES, kigaliDate } from '@/lib/finance';
 import { PAYMENT_METHODS } from '@/lib/stock';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
@@ -22,7 +23,8 @@ const emptyForm = () => ({
 
 export default function ExpensesPage() {
   const { user, profile } = useAuth();
-  const isOwner = profile?.role === 'admin';
+  const canCorrect = hasPermission(profile, 'records.correct');
+  const canRecord = hasPermission(profile, 'expenses.record');
   const [from, setFrom] = useState(monthStart());
   const [to, setTo] = useState(kigaliDate());
   const [expenses, setExpenses] = useState([]);
@@ -96,11 +98,11 @@ export default function ExpensesPage() {
       cell: (row) => (
         <div className="text-[11px] text-ivory/60">
           <p>{row.created_by?.full_name || row.created_by?.email || '—'}</p>
-          {row.updated_at && <p className="text-[10px] text-yellow-300/80">edited by {row.updated_by?.full_name || 'owner'}</p>}
+          {row.updated_at && <p className="text-[10px] text-yellow-300/80">edited by {row.updated_by?.full_name || row.updated_by?.email || 'staff'}</p>}
         </div>
       ),
     },
-    ...(isOwner
+    ...(canCorrect
       ? [
           {
             header: 'Actions',
@@ -132,15 +134,17 @@ export default function ExpensesPage() {
           <h2 className="font-serif-luxury text-2xl font-bold text-ivory">Expenses</h2>
           <p className="text-xs text-ivory/60 font-light">
             Operating costs. Stock bought from suppliers is recorded under Deliveries, not here.
-            {!isOwner && ' Only the owner can change or delete a saved expense.'}
+            {!canCorrect && ' Saved expenses can only be changed by someone allowed to correct records.'}
           </p>
         </div>
+        {canRecord && (
         <button
           onClick={() => setForm(emptyForm())}
           className="px-5 py-2.5 bg-gold text-charcoal text-xs uppercase tracking-widest font-bold flex items-center gap-1.5 w-fit"
         >
           <Plus size={16} /> Record Expense
         </button>
+        )}
       </div>
 
       <div className="flex flex-wrap items-end gap-3 text-xs">

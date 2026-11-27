@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import BrandLogo from '@/components/BrandLogo';
 import { useAuth } from '@/lib/context/AuthContext';
+import { hasPermission } from '@/lib/roles';
 import { useCatalog } from '@/lib/context/CatalogContext';
 import { getStoreSale, deleteStoreSale } from '@/lib/storeSales';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
@@ -127,7 +128,7 @@ export default function StoreSaleReceiptPage({ params }) {
 
       {errorMsg && <div className="p-3 bg-red-900/20 border border-red-500/30 text-red-300 text-xs rounded-sm no-print">{errorMsg}</div>}
 
-      {profile?.role === 'admin' && (
+      {hasPermission(profile, 'records.correct') && (
         <button
           onClick={handleDelete}
           className="no-print text-[10px] uppercase tracking-widest font-semibold text-red-300 hover:text-red-200 flex items-center gap-1"

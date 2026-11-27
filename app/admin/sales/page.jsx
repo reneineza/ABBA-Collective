@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import DataTable from '@/components/admin/DataTable';
 import { useAuth } from '@/lib/context/AuthContext';
-import { canSeeFinance } from '@/lib/roles';
+import { hasPermission } from '@/lib/roles';
 import { listStoreSales } from '@/lib/storeSales';
 import { PAYMENT_METHODS } from '@/lib/stock';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
@@ -22,7 +22,7 @@ const RANGES = {
 
 export default function StoreSalesPage() {
   const { profile } = useAuth();
-  const showTotals = canSeeFinance(profile?.role);
+  const showTotals = hasPermission(profile, 'reports.view');
   const [range, setRange] = useState('today');
   const [sales, setSales] = useState([]);
   const [errorMsg, setErrorMsg] = useState('');
@@ -86,12 +86,14 @@ export default function StoreSalesPage() {
           <h2 className="font-serif-luxury text-2xl font-bold text-ivory">In-Store Sales</h2>
           <p className="text-xs text-ivory/60 font-light">Sales made in person, outside the website.</p>
         </div>
+        {hasPermission(profile, 'sales.record') && (
         <Link
           href="/admin/sales/new"
           className="px-5 py-2.5 bg-gold text-charcoal text-xs uppercase tracking-widest font-bold flex items-center gap-1.5 w-fit"
         >
           <Plus size={16} /> New Sale
         </Link>
+        )}
       </div>
 
       <div className="flex gap-2">

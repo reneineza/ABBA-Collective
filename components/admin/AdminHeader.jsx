@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/context/AuthContext';
-import { ROLE_LABELS } from '@/lib/roles';
+import { roleName } from '@/lib/roles';
 import { ShieldCheck, User, Search, Bell } from 'lucide-react';
 
 export default function AdminHeader({ title = 'Dashboard Overview' }) {
@@ -24,7 +24,7 @@ export default function AdminHeader({ title = 'Dashboard Overview' }) {
         {/* Role Badge */}
         <div className="hidden sm:flex items-center space-x-2 bg-olive/20 text-olive border border-olive/40 px-3 py-1 rounded-sm text-[10px] uppercase tracking-widest font-bold">
           <ShieldCheck size={14} className="text-gold" />
-          <span className="text-gold uppercase">{ROLE_LABELS[profile?.role] || 'Staff'}</span>
+          <span className="text-gold uppercase">{roleName(profile)}</span>
         </div>
 
         {/* User Info */}

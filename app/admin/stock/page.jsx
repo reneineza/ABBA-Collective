@@ -5,7 +5,7 @@ import Link from 'next/link';
 import DataTable from '@/components/admin/DataTable';
 import { useCatalog } from '@/lib/context/CatalogContext';
 import { useAuth } from '@/lib/context/AuthContext';
-import { canSeeFinance } from '@/lib/roles';
+import { hasPermission } from '@/lib/roles';
 import { adjustStock, listMovements, listVariantCosts, STOCK_REASONS } from '@/lib/stock';
 import { setVariantCost } from '@/lib/storeSales';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
@@ -23,7 +23,9 @@ function formatDateTime(value) {
 export default function AdminStockPage() {
   const { allProducts, reload } = useCatalog();
   const { profile } = useAuth();
-  const showCosts = canSeeFinance(profile?.role);
+  const showCosts = hasPermission(profile, 'costs.view');
+  const canEnterCosts = hasPermission(profile, 'costs.edit');
+  const canAdjust = hasPermission(profile, 'stock.adjust');
   const [tab, setTab] = useState('levels');
   const [costs, setCosts] = useState({});
   const [movements, setMovements] = useState([]);
@@ -83,14 +85,18 @@ export default function AdminStockPage() {
             header: 'Avg. Cost / Stock Value',
             cell: (row) =>
               row.avg_cost == null ? (
+                !canEnterCosts ? (
+                  <span className="text-[10px] text-yellow-300">No cost yet</span>
+                ) : (
                 <button onClick={() => setCosting(row)} className="text-[10px] text-yellow-300 hover:text-gold underline">
                   No cost yet · Set cost
                 </button>
+                )
               ) : (
                 <div className="text-xs">
                   <p className="text-ivory/80">
                     {formatCurrency(row.avg_cost)}
-                    {profile?.role === 'admin' && (
+                    {hasPermission(profile, 'records.correct') && (
                       <button onClick={() => setCosting(row)} className="ml-2 text-[10px] text-ivory/40 hover:text-gold underline">
                         change
                       </button>
@@ -102,6 +108,8 @@ export default function AdminStockPage() {
           },
         ]
       : []),
+    ...(canAdjust
+      ? [
     {
       header: 'Actions',
       cell: (row) => (
@@ -113,6 +121,8 @@ export default function AdminStockPage() {
         </button>
       ),
     },
+        ]
+      : []),
   ];
 
   const historyColumns = [
@@ -172,12 +182,14 @@ export default function AdminStockPage() {
             {showCosts && <> · stock value {formatCurrency(stockValue)}{uncosted > 0 && ` (${uncosted} items without a cost)`}</>}
           </p>
         </div>
+        {hasPermission(profile, 'stock.receive') && (
         <Link
           href="/admin/stock/receive"
           className="px-5 py-2.5 bg-gold text-charcoal hover:bg-gold-light transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-1.5 w-fit"
         >
           <PackagePlus size={16} /> Receive Delivery
         </Link>
+        )}
       </div>
 
       <div className="flex gap-6 border-b border-gold/20 text-xs uppercase tracking-widest font-semibold">

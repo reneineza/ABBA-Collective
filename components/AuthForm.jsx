@@ -4,12 +4,13 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
+import { isStaff } from '@/lib/roles';
 import { Mail, Lock, User, ArrowRight, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Button from './Button';
 
 export default function AuthForm({ mode = 'login' }) {
   const router = useRouter();
-  const { user, loading: authLoading, signIn, signUp, resetPassword, resendConfirmation, updatePassword } = useAuth();
+  const { user, profile, loading: authLoading, signIn, signUp, resetPassword, resendConfirmation, updatePassword } = useAuth();
   const [canResend, setCanResend] = useState(false);
   const [resending, setResending] = useState(false);
 
@@ -117,7 +118,8 @@ export default function AuthForm({ mode = 'login' }) {
         setPassword('');
         setConfirmPassword('');
         setSuccessMsg('Your password has been updated.');
-        setTimeout(() => router.push('/account'), 1500);
+        // New staff set their first password here, then go to their portal
+        setTimeout(() => router.push(isStaff(profile) ? '/admin' : '/account'), 1500);
       }
     } catch (err) {
       setErrorMsg(err.message || 'An error occurred. Please try again.');

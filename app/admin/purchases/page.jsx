@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/context/AuthContext';
+import { hasPermission } from '@/lib/roles';
 import { useCatalog } from '@/lib/context/CatalogContext';
 import { listDeliveries, setItemCost, deleteDelivery } from '@/lib/stock';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
@@ -12,7 +13,8 @@ import { PackagePlus, Trash2, ChevronDown, ChevronUp, AlertCircle } from 'lucide
 export default function DeliveriesPage() {
   const { profile } = useAuth();
   const { reload } = useCatalog();
-  const isOwner = profile?.role === 'admin';
+  const canCorrect = hasPermission(profile, 'records.correct');
+  const canEnterCosts = hasPermission(profile, 'costs.edit');
   const [deliveries, setDeliveries] = useState([]);
   const [open, setOpen] = useState(null);
   const [costInputs, setCostInputs] = useState({});
@@ -123,6 +125,8 @@ export default function DeliveriesPage() {
                         <span className="col-span-5 text-right text-ivory/80">
                           {formatCurrency(i.unit_cost)} each = <strong className="text-gold">{formatCurrency(i.unit_cost * i.quantity)}</strong>
                         </span>
+                      ) : !canEnterCosts ? (
+                        <span className="col-span-5 text-right text-yellow-300/80">No cost yet</span>
                       ) : (
                         <div className="col-span-5 flex gap-2 justify-end">
                           <input
@@ -141,7 +145,7 @@ export default function DeliveriesPage() {
                     </div>
                   ))}
                   {d.notes && <p className="text-[11px] text-ivory/50 italic">Notes: {d.notes}</p>}
-                  {isOwner && (
+                  {canCorrect && (
                     <button
                       onClick={() => handleDelete(d)}
                       className="text-[10px] uppercase tracking-widest font-semibold text-red-300 hover:text-red-200 flex items-center gap-1"
