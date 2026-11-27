@@ -249,6 +249,68 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 20. STOCK LEDGER & COSTS (back office)
+-- Average unit cost per variant. Kept out of product_variants so costs are never
+-- visible to website visitors or sales staff.
+CREATE TABLE IF NOT EXISTS public.variant_costs (
+  variant_id UUID PRIMARY KEY REFERENCES public.product_variants(id) ON DELETE CASCADE,
+  avg_cost NUMERIC(12, 2) NOT NULL CHECK (avg_cost >= 0),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Supplier deliveries ("receive stock")
+CREATE TABLE IF NOT EXISTS public.stock_purchases (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  supplier TEXT NOT NULL,
+  purchased_on DATE DEFAULT CURRENT_DATE NOT NULL,
+  reference TEXT,
+  payment_method TEXT,
+  notes TEXT,
+  created_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.stock_purchase_items (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  purchase_id UUID REFERENCES public.stock_purchases(id) ON DELETE CASCADE NOT NULL,
+  variant_id UUID REFERENCES public.product_variants(id) ON DELETE SET NULL,
+  product_name TEXT NOT NULL,
+  color TEXT NOT NULL,
+  size TEXT NOT NULL,
+  quantity INTEGER NOT NULL CHECK (quantity > 0),
+  unit_cost NUMERIC(12, 2) CHECK (unit_cost >= 0) -- NULL = cost not entered yet
+);
+
+-- Every change to stock, written automatically by a trigger on product_variants
+CREATE TABLE IF NOT EXISTS public.stock_movements (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  variant_id UUID REFERENCES public.product_variants(id) ON DELETE SET NULL,
+  product_name TEXT,
+  color TEXT,
+  size TEXT,
+  change INTEGER NOT NULL,
+  stock_after INTEGER NOT NULL,
+  reason TEXT NOT NULL,
+  reference_id UUID,
+  note TEXT,
+  created_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS stock_movements_created_idx ON public.stock_movements (created_at DESC);
+
+-- What each sold item cost the business (cost of goods sold), per order or store sale
+CREATE TABLE IF NOT EXISTS public.sale_costs (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  source TEXT NOT NULL CHECK (source IN ('online', 'store')),
+  reference_id UUID NOT NULL,
+  variant_id UUID REFERENCES public.product_variants(id) ON DELETE SET NULL,
+  product_name TEXT,
+  quantity INTEGER NOT NULL,
+  unit_cost NUMERIC(12, 2), -- NULL = cost unknown at the time of sale
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS sale_costs_reference_idx ON public.sale_costs (reference_id);
+
 -- ACCOUNT HELPERS & TRIGGERS
 
 -- True when the signed-in user has the admin role. SECURITY DEFINER so policies on
@@ -343,9 +405,73 @@ INSERT INTO public.profiles (id, email, full_name)
 SELECT id, email, raw_user_meta_data ->> 'full_name' FROM auth.users
 ON CONFLICT (id) DO NOTHING;
 
--- STOCK: reserved when an order is placed, returned when it is cancelled.
--- items is the order's items array: [{product_id, color, size, quantity, name}, ...]
-CREATE OR REPLACE FUNCTION public.reserve_stock(items JSONB)
+-- STOCK: every stock change is logged in stock_movements by a trigger. Functions that
+-- change stock first describe why (reason, reference, note) for that transaction;
+-- any other change (e.g. editing stock on the product form) is logged as 'manual_edit'.
+CREATE OR REPLACE FUNCTION public.set_stock_context(reason TEXT, ref UUID DEFAULT NULL, note TEXT DEFAULT NULL)
+RETURNS VOID
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+BEGIN
+  PERFORM set_config('abba.stock_reason', COALESCE(reason, ''), true);
+  PERFORM set_config('abba.stock_ref', COALESCE(ref::TEXT, ''), true);
+  PERFORM set_config('abba.stock_note', COALESCE(note, ''), true);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.log_stock_change()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  product_title TEXT;
+  previous INTEGER := CASE WHEN TG_OP = 'INSERT' THEN 0 ELSE OLD.stock_quantity END;
+BEGIN
+  IF NEW.stock_quantity = previous THEN
+    RETURN NEW;
+  END IF;
+  SELECT name INTO product_title FROM public.products WHERE id = NEW.product_id;
+  INSERT INTO public.stock_movements (variant_id, product_name, color, size, change, stock_after, reason, reference_id, note, created_by)
+  VALUES (
+    NEW.id, product_title, NEW.color, NEW.size,
+    NEW.stock_quantity - previous,
+    NEW.stock_quantity,
+    COALESCE(NULLIF(current_setting('abba.stock_reason', true), ''), CASE WHEN TG_OP = 'INSERT' THEN 'opening_stock' ELSE 'manual_edit' END),
+    NULLIF(current_setting('abba.stock_ref', true), '')::UUID,
+    NULLIF(current_setting('abba.stock_note', true), ''),
+    auth.uid()
+  );
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS product_variants_log_stock ON public.product_variants;
+CREATE TRIGGER product_variants_log_stock
+  AFTER INSERT OR UPDATE OF stock_quantity ON public.product_variants
+  FOR EACH ROW EXECUTE FUNCTION public.log_stock_change();
+
+-- Weighted average cost: (existing units x old cost + new units x new cost) / total units
+CREATE OR REPLACE FUNCTION public.apply_unit_cost(target UUID, existing_qty INTEGER, added_qty INTEGER, unit_cost NUMERIC)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  INSERT INTO public.variant_costs (variant_id, avg_cost) VALUES (target, unit_cost)
+  ON CONFLICT (variant_id) DO UPDATE
+    SET avg_cost = ROUND((public.variant_costs.avg_cost * existing_qty + unit_cost * added_qty) / (existing_qty + added_qty), 2),
+        updated_at = NOW();
+END;
+$$;
+
+-- Website orders: reserve stock (all items or none) and record the cost of each item sold.
+-- items: [{product_id, color, size, quantity, name}, ...]; ref: the order id
+DROP FUNCTION IF EXISTS public.reserve_stock(JSONB);
+CREATE OR REPLACE FUNCTION public.reserve_stock(items JSONB, ref UUID DEFAULT NULL)
 RETURNS VOID
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -353,25 +479,34 @@ SET search_path = ''
 AS $$
 DECLARE
   item JSONB;
-  changed INTEGER;
+  reserved UUID;
 BEGIN
+  PERFORM public.set_stock_context('online_order', ref, NULL);
   FOR item IN SELECT * FROM jsonb_array_elements(items) LOOP
+    reserved := NULL;
     UPDATE public.product_variants
        SET stock_quantity = stock_quantity - (item ->> 'quantity')::INTEGER
      WHERE product_id = (item ->> 'product_id')::UUID
        AND color = item ->> 'color'
        AND size = item ->> 'size'
-       AND stock_quantity >= (item ->> 'quantity')::INTEGER;
-    GET DIAGNOSTICS changed = ROW_COUNT;
-    IF changed = 0 THEN
+       AND stock_quantity >= (item ->> 'quantity')::INTEGER
+    RETURNING id INTO reserved;
+    IF reserved IS NULL THEN
       -- Aborts the whole call, so no stock is taken for any item
       RAISE EXCEPTION 'OUT_OF_STOCK:%', COALESCE(item ->> 'name', 'item') || ' (' || (item ->> 'color') || ', ' || (item ->> 'size') || ')';
+    END IF;
+    IF ref IS NOT NULL THEN
+      INSERT INTO public.sale_costs (source, reference_id, variant_id, product_name, quantity, unit_cost)
+      VALUES ('online', ref, reserved, item ->> 'name', (item ->> 'quantity')::INTEGER,
+              (SELECT avg_cost FROM public.variant_costs WHERE variant_id = reserved));
     END IF;
   END LOOP;
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.release_stock(items JSONB)
+-- Returns an order's items to stock (cancellation or failed payment) and drops their cost records
+DROP FUNCTION IF EXISTS public.release_stock(JSONB);
+CREATE OR REPLACE FUNCTION public.release_stock(items JSONB, ref UUID DEFAULT NULL, reason TEXT DEFAULT 'order_cancelled')
 RETURNS VOID
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -380,6 +515,7 @@ AS $$
 DECLARE
   item JSONB;
 BEGIN
+  PERFORM public.set_stock_context(reason, ref, NULL);
   FOR item IN SELECT * FROM jsonb_array_elements(items) LOOP
     IF (item ->> 'product_id') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
       UPDATE public.product_variants
@@ -389,14 +525,193 @@ BEGIN
          AND size = item ->> 'size';
     END IF;
   END LOOP;
+  IF ref IS NOT NULL THEN
+    DELETE FROM public.sale_costs WHERE reference_id = ref AND source = 'online';
+  END IF;
 END;
 $$;
 
--- Only the server (secret key) may reserve or release stock
-REVOKE EXECUTE ON FUNCTION public.reserve_stock(JSONB) FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.release_stock(JSONB) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.reserve_stock(JSONB) TO service_role;
-GRANT EXECUTE ON FUNCTION public.release_stock(JSONB) TO service_role;
+-- Receive a supplier delivery. Sales staff record quantities only; the owner and the
+-- accountant also record the cost per unit, which updates each item's average cost.
+-- items: [{variant_id, quantity, unit_cost}, ...]
+CREATE OR REPLACE FUNCTION public.record_stock_purchase(
+  supplier TEXT, purchased_on DATE, reference TEXT, payment_method TEXT, notes TEXT, items JSONB
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  new_purchase UUID;
+  item JSONB;
+  qty INTEGER;
+  cost NUMERIC;
+  can_cost BOOLEAN := public.has_role('admin', 'accountant');
+  v_id UUID;
+  v_color TEXT;
+  v_size TEXT;
+  v_stock INTEGER;
+  v_name TEXT;
+BEGIN
+  IF NOT public.has_role('admin', 'accountant', 'sales') THEN
+    RAISE EXCEPTION 'Not allowed to receive stock';
+  END IF;
+  IF NULLIF(TRIM(supplier), '') IS NULL THEN
+    RAISE EXCEPTION 'Please enter the supplier';
+  END IF;
+  IF items IS NULL OR jsonb_array_length(items) = 0 THEN
+    RAISE EXCEPTION 'Add at least one item';
+  END IF;
+
+  INSERT INTO public.stock_purchases (supplier, purchased_on, reference, payment_method, notes, created_by)
+  VALUES (TRIM(supplier), COALESCE(purchased_on, CURRENT_DATE), NULLIF(TRIM(reference), ''),
+          CASE WHEN can_cost THEN NULLIF(payment_method, '') END, NULLIF(TRIM(notes), ''), auth.uid())
+  RETURNING id INTO new_purchase;
+
+  PERFORM public.set_stock_context('purchase', new_purchase, NULL);
+  FOR item IN SELECT * FROM jsonb_array_elements(items) LOOP
+    qty := (item ->> 'quantity')::INTEGER;
+    cost := CASE WHEN can_cost THEN NULLIF(item ->> 'unit_cost', '')::NUMERIC END;
+    IF qty IS NULL OR qty <= 0 THEN
+      RAISE EXCEPTION 'Quantities must be at least 1';
+    END IF;
+    IF cost IS NOT NULL AND cost < 0 THEN
+      RAISE EXCEPTION 'Costs cannot be negative';
+    END IF;
+
+    SELECT pv.id, pv.color, pv.size, pv.stock_quantity, p.name
+      INTO v_id, v_color, v_size, v_stock, v_name
+      FROM public.product_variants pv JOIN public.products p ON p.id = pv.product_id
+     WHERE pv.id = (item ->> 'variant_id')::UUID
+       FOR UPDATE OF pv;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'Unknown product variant';
+    END IF;
+
+    INSERT INTO public.stock_purchase_items (purchase_id, variant_id, product_name, color, size, quantity, unit_cost)
+    VALUES (new_purchase, v_id, v_name, v_color, v_size, qty, cost);
+    IF cost IS NOT NULL THEN
+      PERFORM public.apply_unit_cost(v_id, GREATEST(v_stock, 0), qty, cost);
+    END IF;
+    UPDATE public.product_variants SET stock_quantity = stock_quantity + qty WHERE id = v_id;
+  END LOOP;
+
+  RETURN new_purchase;
+END;
+$$;
+
+-- Fill in the cost of a delivery line recorded without one ("cost pending")
+CREATE OR REPLACE FUNCTION public.set_purchase_item_cost(item_id UUID, unit_cost NUMERIC)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_id UUID;
+  qty INTEGER;
+  current_stock INTEGER;
+BEGIN
+  IF NOT public.has_role('admin', 'accountant') THEN
+    RAISE EXCEPTION 'Not allowed to enter costs';
+  END IF;
+  IF unit_cost IS NULL OR unit_cost < 0 THEN
+    RAISE EXCEPTION 'Enter a cost of 0 or more';
+  END IF;
+  UPDATE public.stock_purchase_items i SET unit_cost = set_purchase_item_cost.unit_cost
+   WHERE i.id = item_id AND i.unit_cost IS NULL
+  RETURNING i.variant_id, i.quantity INTO v_id, qty;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'This item already has a cost. Ask the owner to correct it.';
+  END IF;
+  IF v_id IS NOT NULL THEN
+    SELECT stock_quantity INTO current_stock FROM public.product_variants WHERE id = v_id;
+    PERFORM public.apply_unit_cost(v_id, GREATEST(current_stock - qty, 0), qty, set_purchase_item_cost.unit_cost);
+  END IF;
+END;
+$$;
+
+-- Manual correction (damaged, lost, found, returned...), always with a reason
+CREATE OR REPLACE FUNCTION public.adjust_stock(variant UUID, change INTEGER, note TEXT)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  current_stock INTEGER;
+BEGIN
+  IF NOT public.has_role('admin', 'accountant', 'sales') THEN
+    RAISE EXCEPTION 'Not allowed to adjust stock';
+  END IF;
+  IF change IS NULL OR change = 0 THEN
+    RAISE EXCEPTION 'Enter how many items to add or remove';
+  END IF;
+  IF NULLIF(TRIM(note), '') IS NULL THEN
+    RAISE EXCEPTION 'Please give a reason for the adjustment';
+  END IF;
+  SELECT stock_quantity INTO current_stock FROM public.product_variants WHERE id = variant FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Unknown product variant';
+  END IF;
+  IF current_stock + change < 0 THEN
+    RAISE EXCEPTION 'Only % in stock, cannot remove %', current_stock, -change;
+  END IF;
+  PERFORM public.set_stock_context('adjustment', NULL, TRIM(note));
+  UPDATE public.product_variants SET stock_quantity = stock_quantity + change WHERE id = variant;
+END;
+$$;
+
+-- Owner only: delete a delivery recorded by mistake, taking its stock back out
+CREATE OR REPLACE FUNCTION public.delete_stock_purchase(purchase UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  line RECORD;
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Only the owner can delete a delivery';
+  END IF;
+  PERFORM public.set_stock_context('purchase_deleted', purchase, NULL);
+  FOR line IN SELECT i.variant_id, i.quantity, i.product_name, pv.stock_quantity
+                FROM public.stock_purchase_items i
+                LEFT JOIN public.product_variants pv ON pv.id = i.variant_id
+               WHERE i.purchase_id = purchase LOOP
+    IF line.variant_id IS NOT NULL THEN
+      IF line.stock_quantity < line.quantity THEN
+        RAISE EXCEPTION 'Some of this delivery (%) has already been sold. Use a stock adjustment instead.', line.product_name;
+      END IF;
+      UPDATE public.product_variants SET stock_quantity = stock_quantity - line.quantity WHERE id = line.variant_id;
+    END IF;
+  END LOOP;
+  DELETE FROM public.stock_purchases WHERE id = purchase;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Delivery not found';
+  END IF;
+END;
+$$;
+
+-- Internal helpers: not callable directly
+REVOKE EXECUTE ON FUNCTION public.set_stock_context(TEXT, UUID, TEXT) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.apply_unit_cost(UUID, INTEGER, INTEGER, NUMERIC) FROM PUBLIC, anon, authenticated;
+-- Website order stock: the server (secret key) only
+REVOKE EXECUTE ON FUNCTION public.reserve_stock(JSONB, UUID) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.release_stock(JSONB, UUID, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.reserve_stock(JSONB, UUID) TO service_role;
+GRANT EXECUTE ON FUNCTION public.release_stock(JSONB, UUID, TEXT) TO service_role;
+-- Staff functions check the caller's role themselves; visitors may not call them
+REVOKE EXECUTE ON FUNCTION public.record_stock_purchase(TEXT, DATE, TEXT, TEXT, TEXT, JSONB) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.set_purchase_item_cost(UUID, NUMERIC) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.adjust_stock(UUID, INTEGER, TEXT) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.delete_stock_purchase(UUID) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.record_stock_purchase(TEXT, DATE, TEXT, TEXT, TEXT, JSONB) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.set_purchase_item_cost(UUID, NUMERIC) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.adjust_stock(UUID, INTEGER, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.delete_stock_purchase(UUID) TO authenticated;
 
 -- Cancelling an order returns its items to stock; a cancelled order can't be reopened
 -- (its stock may already have been sold again).
@@ -411,7 +726,7 @@ BEGIN
     RAISE EXCEPTION 'A cancelled order cannot be reopened. Please place a new order instead.';
   END IF;
   IF NEW.status = 'Cancelled' AND OLD.status <> 'Cancelled' THEN
-    PERFORM public.release_stock(NEW.items);
+    PERFORM public.release_stock(NEW.items, NEW.id, 'order_cancelled');
   END IF;
   RETURN NEW;
 END;
@@ -500,6 +815,11 @@ ALTER TABLE public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wishlist_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.journal_posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.variant_costs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.stock_purchases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.stock_purchase_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.stock_movements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sale_costs ENABLE ROW LEVEL SECURITY;
 
 -- Policies from earlier versions of this schema
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
@@ -628,6 +948,21 @@ DROP POLICY IF EXISTS "Site settings are public" ON public.site_settings;
 CREATE POLICY "Site settings are public" ON public.site_settings FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins manage site settings" ON public.site_settings;
 CREATE POLICY "Admins manage site settings" ON public.site_settings FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- Stock & costs: all staff see stock history; only the owner and accountant see costs
+-- and deliveries. Rows are written only by the stock functions above.
+DROP POLICY IF EXISTS "Staff view stock history" ON public.stock_movements;
+CREATE POLICY "Staff view stock history" ON public.stock_movements FOR SELECT USING (public.has_role('admin', 'accountant', 'sales'));
+DROP POLICY IF EXISTS "Finance views costs" ON public.variant_costs;
+CREATE POLICY "Finance views costs" ON public.variant_costs FOR SELECT USING (public.has_role('admin', 'accountant'));
+DROP POLICY IF EXISTS "Finance views deliveries" ON public.stock_purchases;
+CREATE POLICY "Finance views deliveries" ON public.stock_purchases FOR SELECT USING (public.has_role('admin', 'accountant'));
+DROP POLICY IF EXISTS "Owner edits deliveries" ON public.stock_purchases;
+CREATE POLICY "Owner edits deliveries" ON public.stock_purchases FOR UPDATE USING (public.is_admin()) WITH CHECK (public.is_admin());
+DROP POLICY IF EXISTS "Finance views delivery items" ON public.stock_purchase_items;
+CREATE POLICY "Finance views delivery items" ON public.stock_purchase_items FOR SELECT USING (public.has_role('admin', 'accountant'));
+DROP POLICY IF EXISTS "Finance views cost of sales" ON public.sale_costs;
+CREATE POLICY "Finance views cost of sales" ON public.sale_costs FOR SELECT USING (public.has_role('admin', 'accountant'));
 
 -- Newsletter: anyone can subscribe; only admins can read or manage the list
 DROP POLICY IF EXISTS "Anyone can subscribe" ON public.newsletter_subscribers;

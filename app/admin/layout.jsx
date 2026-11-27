@@ -46,6 +46,9 @@ export default function AdminLayout({ children }) {
     '/admin/reviews': 'Product Review Moderation',
     '/admin/marketing': 'Marketing & Brand Campaign Tools',
     '/admin/staff': 'Staff Accounts & Roles',
+    '/admin/stock': 'Stock Levels & History',
+    '/admin/stock/receive': 'Receive a Supplier Delivery',
+    '/admin/purchases': 'Supplier Deliveries & Costs',
   };
 
   // If the user is on the admin login page, don't show the sidebar or header

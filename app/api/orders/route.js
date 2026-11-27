@@ -92,8 +92,9 @@ export async function POST(request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Reserve stock before payment; the call takes all items or none
-  const { error: stockError } = await admin.rpc('reserve_stock', { items: lineItems });
+  // Reserve stock before payment; the call takes all items or none and records their cost
+  const orderId = randomUUID();
+  const { error: stockError } = await admin.rpc('reserve_stock', { items: lineItems, ref: orderId });
   if (stockError) {
     if (/OUT_OF_STOCK/.test(stockError.message)) {
       const what = stockError.message.split('OUT_OF_STOCK:')[1] || 'an item in your bag';
@@ -103,11 +104,10 @@ export async function POST(request) {
     return fail('Checkout is temporarily unavailable. Please try again shortly.', 503);
   }
   const releaseStock = () =>
-    admin.rpc('release_stock', { items: lineItems }).then(({ error }) => {
+    admin.rpc('release_stock', { items: lineItems, ref: orderId, reason: 'checkout_failed' }).then(({ error }) => {
       if (error) console.error('Stock release failed:', error.message);
     });
 
-  const orderId = randomUUID();
   const payment = await createPayment({
     orderId,
     provider: paymentProvider,

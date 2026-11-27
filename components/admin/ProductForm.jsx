@@ -28,6 +28,8 @@ export default function ProductForm({ initialProduct, onSave, onCancel, saving =
   // Copies, so editing in the form doesn't change the shared catalogue before saving
   const [variants, setVariants] = useState(() => (initialProduct?.variants || []).map((v) => ({ ...v })));
 
+  const savedVariantIds = new Set((initialProduct?.variants || []).map((v) => v.id));
+
   const handleAddVariant = () => {
     const newVariant = {
       id: 'v_' + Date.now(),
@@ -44,6 +46,11 @@ export default function ProductForm({ initialProduct, onSave, onCancel, saving =
   };
 
   const handleRemoveVariant = (index) => {
+    const v = variants[index];
+    if (savedVariantIds.has(v.id) && v.stock_quantity > 0 &&
+        !confirm(`${v.color} ${v.size} still has ${v.stock_quantity} in stock. Remove it from this product anyway?`)) {
+      return;
+    }
     setVariants(variants.filter((_, idx) => idx !== index));
   };
 
@@ -274,7 +281,13 @@ export default function ProductForm({ initialProduct, onSave, onCancel, saving =
         </div>
 
         <div className="space-y-2">
-          {variants.map((varItem, idx) => (
+          <p className="text-[11px] text-ivory/50">
+            New variants start with the stock you enter here. To change stock of existing variants, use Stock (Receive Delivery or Adjust), so every change is recorded.
+          </p>
+          {variants.map((varItem, idx) => {
+            // Saved variants keep their colour, size and stock here (stock changes go through the Stock page)
+            const saved = savedVariantIds.has(varItem.id);
+            return (
             <div key={varItem.id || idx} className="grid grid-cols-12 gap-2 items-center bg-charcoal-dark p-3 border border-gold/20 text-xs">
               <div className="col-span-3">
                 <input
@@ -282,14 +295,16 @@ export default function ProductForm({ initialProduct, onSave, onCancel, saving =
                   value={varItem.color}
                   onChange={(e) => handleUpdateVariant(idx, 'color', e.target.value)}
                   placeholder="Color (e.g. Charcoal)"
-                  className="w-full p-2 bg-charcoal border border-gold/20 text-xs text-ivory"
+                  readOnly={saved}
+                  className="w-full p-2 bg-charcoal border border-gold/20 text-xs text-ivory read-only:opacity-60"
                 />
               </div>
               <div className="col-span-2">
                 <select
                   value={varItem.size}
                   onChange={(e) => handleUpdateVariant(idx, 'size', e.target.value)}
-                  className="w-full p-2 bg-charcoal border border-gold/20 text-xs text-ivory"
+                  disabled={saved}
+                  className="w-full p-2 bg-charcoal border border-gold/20 text-xs text-ivory disabled:opacity-60"
                 >
                   <option value="S">S</option>
                   <option value="M">M</option>
@@ -314,7 +329,9 @@ export default function ProductForm({ initialProduct, onSave, onCancel, saving =
                   value={varItem.stock_quantity}
                   onChange={(e) => handleUpdateVariant(idx, 'stock_quantity', Number(e.target.value))}
                   placeholder="Stock"
-                  className="w-full p-2 bg-charcoal border border-gold/20 text-xs text-ivory"
+                  readOnly={saved}
+                  title={saved ? 'Change stock on the Stock page' : 'Opening stock'}
+                  className="w-full p-2 bg-charcoal border border-gold/20 text-xs text-ivory read-only:opacity-60"
                 />
               </div>
               <div className="col-span-1 text-right">
@@ -327,7 +344,8 @@ export default function ProductForm({ initialProduct, onSave, onCancel, saving =
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

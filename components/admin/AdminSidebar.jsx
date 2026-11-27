@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, Layers, Tag, ShoppingBag, Users, FileText, Mail, Star, Megaphone, ExternalLink, LogOut, UserCog } from 'lucide-react';
+import { LayoutDashboard, Package, Layers, Tag, ShoppingBag, Users, FileText, Mail, Star, Megaphone, ExternalLink, LogOut, UserCog, Boxes, Truck } from 'lucide-react';
 import { canAccessPage, ROLE_LABELS } from '@/lib/roles';
 import { useAuth } from '@/lib/context/AuthContext';
 import BrandLogo from '@/components/BrandLogo';
@@ -24,6 +24,8 @@ export default function AdminSidebar() {
     { name: 'Collections', href: '/admin/collections', icon: Layers },
     { name: 'Categories', href: '/admin/categories', icon: Tag },
     { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+    { name: 'Stock', href: '/admin/stock', icon: Boxes },
+    { name: 'Deliveries & Costs', href: '/admin/purchases', icon: Truck },
     { name: 'Customers', href: '/admin/customers', icon: Users },
     { name: 'Reviews', href: '/admin/reviews', icon: Star },
     { name: 'Marketing', href: '/admin/marketing', icon: Megaphone },
