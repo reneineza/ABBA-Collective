@@ -7,7 +7,7 @@ import AddressBook from '@/components/AddressBook';
 import OrderCard from '@/components/OrderCard';
 import Button from '@/components/Button';
 import { useAuth } from '@/lib/context/AuthContext';
-import { safeJsonParse } from '@/lib/utils/json';
+import { listMyOrders } from '@/lib/orders';
 import { User, Package, Heart, LogOut, MapPin, ShieldCheck, ArrowRight } from 'lucide-react';
 
 export default function AccountPage() {
@@ -16,13 +16,11 @@ export default function AccountPage() {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    try {
-      const savedOrders = safeJsonParse(localStorage.getItem('abba_orders_history'), []);
-      setOrders(Array.isArray(savedOrders) ? savedOrders : []);
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
+    if (!user) return;
+    listMyOrders()
+      .then(setOrders)
+      .catch((err) => console.error('Could not load orders:', err.message));
+  }, [user?.id]);
 
   const handleSignOut = async (e) => {
     if (e) e.preventDefault();

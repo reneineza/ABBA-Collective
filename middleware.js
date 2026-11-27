@@ -50,7 +50,9 @@ export async function middleware(request) {
     return response;
   }
 
-  if (pathname.startsWith('/account')) {
+  // Order history needs an account. Single receipts (/orders/<id>) are checked by
+  // /api/orders/<id>, which also accepts a guest's private receipt link.
+  if (pathname.startsWith('/account') || pathname === '/orders') {
     if (!user) return redirectTo('/login', { next: pathname + search });
     return response;
   }
@@ -64,5 +66,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/account/:path*', '/login', '/register'],
+  matcher: ['/admin/:path*', '/account/:path*', '/orders', '/login', '/register'],
 };

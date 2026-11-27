@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { formatPrice } from '@/lib/utils/formatCurrency';
 import { formatDate } from '@/lib/utils/formatDate';
+import { orderNumber } from '@/lib/utils/orders';
 import { Package, ArrowRight, CheckCircle2, Clock, Truck } from 'lucide-react';
 
 export default function OrderCard({ order }) {
@@ -26,7 +27,7 @@ export default function OrderCard({ order }) {
             Order Reference
           </span>
           <h4 className="font-serif-luxury text-lg font-bold text-charcoal">
-            #{order.id}
+            #{orderNumber(order.id)}
           </h4>
           <p className="text-[10px] text-charcoal/50">
             Placed on {formatDate(order.created_at, 'short')}

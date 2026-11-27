@@ -5,69 +5,67 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Button from '@/components/Button';
 import BrandLogo from '@/components/BrandLogo';
-import { safeJsonParse } from '@/lib/utils/json';
+import { orderNumber } from '@/lib/utils/orders';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { formatDate } from '@/lib/utils/formatDate';
-import { Package, CheckCircle2, ArrowLeft, Printer, ShieldCheck, MapPin, Truck } from 'lucide-react';
+import { Package, CheckCircle2, ArrowLeft, Printer, Loader2 } from 'lucide-react';
+
+const STATUS_STEPS = ['Confirmed', 'Processing', 'Shipped', 'Delivered'];
+const STEP_LABELS = ['Order Placed', 'Processing', 'In Transit', 'Delivered'];
 
 export default function OrderDetailPage({ params }) {
   const resolvedParams = params && typeof params.then === 'function' ? React.use(params) : params;
   const id = resolvedParams?.id || '';
 
   const [order, setOrder] = useState(null);
+  const [status, setStatus] = useState('loading'); // loading | ready | missing
+  const [isGuestLink, setIsGuestLink] = useState(false);
 
+  // Signed-in customers see their own orders; guests use the private ?token= receipt link
   useEffect(() => {
-    try {
-      const savedOrders = safeJsonParse(localStorage.getItem('abba_orders_history'), []);
-      const found = Array.isArray(savedOrders) ? savedOrders.find((o) => o.id === id) : null;
-      if (found) {
-        setOrder(found);
-      } else {
-        setOrder({
-          id: id || 'ord_demo',
-          created_at: new Date().toISOString(),
-          status: 'Confirmed',
-          total_amount: 130000,
-          payment_provider: 'MTN MoMo',
-          shipping_address: {
-            first_name: 'Grace',
-            last_name: 'Heirs',
-            phone: '+250 789 284 564',
-            country: 'Rwanda',
-            province: 'Kigali City',
-            district: 'Gasabo',
-            city: 'Gasabo',
-            address_line: 'KG 7 Ave, Kigali Heights, Kimihurura',
-            landmark: 'Main entrance, ground floor reception',
-          },
-          items: [
-            {
-              name: 'Adoption Hoodie',
-              slug: 'adoption-hoodie',
-              price: 85000,
-              quantity: 1,
-              size: 'L',
-              color: 'Charcoal',
-              image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=600',
-            },
-            {
-              name: 'ABBA Signature Tee',
-              slug: 'abba-signature-tee',
-              price: 45000,
-              quantity: 1,
-              size: 'M',
-              color: 'Ivory',
-              image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=600',
-            },
-          ],
-        });
-      }
-    } catch (e) {
-      console.error(e);
-    }
+    const token = new URLSearchParams(window.location.search).get('token');
+    setIsGuestLink(Boolean(token));
+    fetch(`/api/orders/${id}${token ? `?token=${encodeURIComponent(token)}` : ''}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.order) {
+          setOrder(data.order);
+          setStatus('ready');
+        } else {
+          setStatus('missing');
+        }
+      })
+      .catch(() => setStatus('missing'));
   }, [id]);
 
-  if (!order) return null;
+  if (status === 'loading') {
+    return (
+      <div className="bg-ivory py-32 flex justify-center">
+        <Loader2 size={28} className="animate-spin text-gold" />
+      </div>
+    );
+  }
+
+  if (status === 'missing') {
+    return (
+      <div className="bg-ivory text-charcoal py-24">
+        <div className="max-w-md mx-auto px-4 text-center space-y-4">
+          <Package size={32} className="mx-auto text-gold" />
+          <h1 className="font-serif-luxury text-3xl font-bold">Order not found</h1>
+          <p className="text-xs text-charcoal/70">
+            This order doesn't exist, or you don't have access to it. If you placed it with an account, please sign in.
+            If you checked out as a guest, use the receipt link from your confirmation page.
+          </p>
+          <div className="flex justify-center gap-3 pt-2">
+            <Button href={`/login?next=/orders/${id}`} variant="primary" size="md">Sign In</Button>
+            <Button href="/contact" variant="secondary" size="md">Contact Us</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const progress = STATUS_STEPS.indexOf(order.status === 'Pending' ? 'Confirmed' : order.status);
 
   return (
     <div className="bg-ivory text-charcoal py-16 sm:py-24">
@@ -76,10 +74,10 @@ export default function OrderDetailPage({ params }) {
         {/* Navigation back */}
         <div className="flex justify-between items-center border-b border-charcoal/10 pb-4 no-print">
           <Link
-            href="/orders"
+            href={isGuestLink ? '/shop' : '/orders'}
             className="text-xs uppercase tracking-widest font-semibold text-charcoal hover:text-gold flex items-center gap-1.5"
           >
-            <ArrowLeft size={16} /> Back to Orders
+            <ArrowLeft size={16} /> {isGuestLink ? 'Continue Shopping' : 'Back to Orders'}
           </Link>
           <button
             onClick={() => window.print()}
@@ -107,7 +105,7 @@ export default function OrderDetailPage({ params }) {
                 ✦ Confirmed Order Receipt ✦
               </span>
               <h1 className="font-serif-luxury text-3xl font-bold text-charcoal">
-                Order #{order.id}
+                Order #{orderNumber(order.id)}
               </h1>
               <p className="text-xs text-charcoal/60">
                 Placed on {formatDate(order.created_at)}
@@ -125,12 +123,22 @@ export default function OrderDetailPage({ params }) {
             <h4 className="text-xs uppercase tracking-widest font-semibold text-charcoal">
               Order Status & Shipment Tracking
             </h4>
-            <div className="grid grid-cols-4 gap-2 text-center text-[10px] uppercase tracking-wider font-semibold">
-              <div className="p-2 bg-gold/20 text-gold-dark rounded-sm border border-gold/30">1. Order Placed</div>
-              <div className="p-2 bg-gold/20 text-gold-dark rounded-sm border border-gold/30">2. Processing</div>
-              <div className="p-2 bg-ivory text-charcoal/40 rounded-sm border border-charcoal/10">3. In Transit</div>
-              <div className="p-2 bg-ivory text-charcoal/40 rounded-sm border border-charcoal/10">4. Delivered</div>
-            </div>
+            {order.status === 'Cancelled' ? (
+              <p className="text-xs text-red-700 font-semibold">This order was cancelled.</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-2 text-center text-[10px] uppercase tracking-wider font-semibold">
+                {STEP_LABELS.map((label, idx) => (
+                  <div
+                    key={label}
+                    className={`p-2 rounded-sm border ${
+                      idx <= progress ? 'bg-gold/20 text-gold-dark border-gold/30' : 'bg-ivory text-charcoal/40 border-charcoal/10'
+                    }`}
+                  >
+                    {idx + 1}. {label}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Items List */}
@@ -143,7 +151,7 @@ export default function OrderDetailPage({ params }) {
                 <div key={idx} className="flex items-center justify-between py-2 border-b border-charcoal/10 text-xs">
                   <div className="flex items-center space-x-4">
                     <div className="relative w-12 h-16 bg-ivory border border-charcoal/10 rounded-sm overflow-hidden flex-shrink-0 no-print">
-                      <Image src={item.image} alt={item.name} fill sizes="50px" className="object-cover" />
+                      {item.image && <Image src={item.image} alt={item.name} fill sizes="50px" className="object-cover" />}
                     </div>
                     <div>
                       <p className="font-serif-luxury text-base font-bold text-charcoal">{item.name}</p>
@@ -180,6 +188,10 @@ export default function OrderDetailPage({ params }) {
             <div className="space-y-2 text-xs text-right">
               <span className="text-gold font-semibold uppercase tracking-wider block">Payment Summary</span>
               <p className="text-charcoal/80">Method: <strong>{order.payment_provider || 'Mobile Money / Card'}</strong></p>
+              {order.subtotal != null && <p className="text-charcoal/80">Subtotal: {formatCurrency(order.subtotal)}</p>}
+              <p className="text-charcoal/80">
+                Delivery: {Number(order.shipping_fee) === 0 ? 'Complimentary' : formatCurrency(order.shipping_fee)}
+              </p>
               <p className="text-lg font-bold text-olive">Total Paid: {formatCurrency(order.total_amount)}</p>
             </div>
           </div>

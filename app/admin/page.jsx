@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import StatCard from '@/components/admin/StatCard';
 import OrderStatusBadge from '@/components/admin/OrderStatusBadge';
-import { safeJsonParse } from '@/lib/utils/json';
+import { getBrowserClient } from '@/lib/supabase';
+import { orderNumber } from '@/lib/utils/orders';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { DollarSign, ShoppingBag, Package, Users, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
@@ -11,36 +12,21 @@ import Link from 'next/link';
 export default function AdminDashboardPage() {
   const [orders, setOrders] = useState([]);
 
+  // Admins can read every order (database policy "Admins manage orders")
   useEffect(() => {
-    try {
-      const savedOrders = safeJsonParse(localStorage.getItem('abba_orders_history'), []);
-      setOrders(Array.isArray(savedOrders) && savedOrders.length > 0 ? savedOrders : [
-        {
-          id: 'ord_9x28v',
-          created_at: new Date().toISOString(),
-          status: 'Confirmed',
-          total_amount: 130000,
-          payment_provider: 'Card',
-          shipping_address: { first_name: 'Grace', last_name: 'Heirs', city: 'Kigali' },
-          items: [{ name: 'Adoption Hoodie', quantity: 1, price: 85000 }, { name: 'ABBA Signature Tee', quantity: 1, price: 45000 }]
-        },
-        {
-          id: 'ord_3k71p',
-          created_at: new Date(Date.now() - 86400000).toISOString(),
-          status: 'Shipped',
-          total_amount: 180000,
-          payment_provider: 'MTN MoMo',
-          shipping_address: { first_name: 'David', last_name: 'Covenant', city: 'Kigali' },
-          items: [{ name: 'Covenant Tailored Overcoat', quantity: 1, price: 180000 }]
-        }
-      ]);
-    } catch (e) {
-      console.error(e);
-    }
+    getBrowserClient()
+      .from('orders')
+      .select('id, status, total_amount, items, customer_name, shipping_address, created_at')
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) console.error('Could not load orders:', error.message);
+        setOrders(data || []);
+      });
   }, []);
 
-  const totalSales = orders.reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
-  const avgOrderValue = orders.length > 0 ? totalSales / orders.length : 0;
+  const countedOrders = orders.filter((o) => o.status !== 'Cancelled');
+  const totalSales = countedOrders.reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
+  const avgOrderValue = countedOrders.length > 0 ? totalSales / countedOrders.length : 0;
 
   return (
     <div className="space-y-8">
@@ -54,8 +40,8 @@ export default function AdminDashboardPage() {
         />
         <StatCard
           title="Total Orders Executed"
-          value={`${orders.length} Orders`}
-          change={orders.length > 0 ? `Avg. Value: ${formatCurrency(avgOrderValue)}` : 'No orders yet'}
+          value={`${countedOrders.length} Orders`}
+          change={countedOrders.length > 0 ? `Avg. Value: ${formatCurrency(avgOrderValue)}` : 'No orders yet'}
           icon={ShoppingBag}
         />
         <StatCard
@@ -95,12 +81,12 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="divide-y divide-gold/10">
-            {orders.map((ord) => (
+            {orders.slice(0, 5).map((ord) => (
               <div key={ord.id} className="py-3.5 flex items-center justify-between text-xs">
                 <div className="space-y-0.5">
                   <div className="flex items-center space-x-2">
-                    <span className="font-bold text-ivory">#{ord.id}</span>
-                    <span className="text-ivory/60">• {ord.shipping_address?.first_name} {ord.shipping_address?.last_name} ({ord.shipping_address?.city})</span>
+                    <span className="font-bold text-ivory">#{orderNumber(ord.id)}</span>
+                    <span className="text-ivory/60">• {ord.shipping_address?.first_name} {ord.shipping_address?.last_name} ({ord.shipping_address?.district || ord.shipping_address?.city})</span>
                   </div>
                   <p className="text-[10px] text-ivory/50">
                     {ord.items ? ord.items.map(i => `${i.name} (${i.quantity})`).join(', ') : 'Garment Order'}

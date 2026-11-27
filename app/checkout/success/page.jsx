@@ -1,11 +1,24 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { orderNumber } from '@/lib/utils/orders';
 import Link from 'next/link';
 import Button from '@/components/Button';
 import { CheckCircle2, ArrowRight, ShieldCheck, Mail, Package } from 'lucide-react';
 
 export default function CheckoutSuccessPage() {
+  const [order, setOrder] = useState({ id: null, token: null });
+
+  // ?order=<id>&token=<receipt token> (token only for guest checkouts)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setOrder({ id: params.get('order'), token: params.get('token') });
+  }, []);
+
+  const receiptHref = order.id
+    ? `/orders/${order.id}${order.token ? `?token=${order.token}` : ''}`
+    : '/orders';
+
   return (
     <div className="bg-ivory text-charcoal py-20 sm:py-28">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
@@ -25,6 +38,16 @@ export default function CheckoutSuccessPage() {
           <p className="text-sm sm:text-base text-charcoal/80 font-light max-w-xl mx-auto leading-relaxed">
             Your purchase has been received. A digital order receipt and confirmation has been dispatched to your email address.
           </p>
+          {order.id && (
+            <p className="text-sm text-charcoal">
+              Order reference: <strong className="tracking-wider">#{orderNumber(order.id)}</strong>
+            </p>
+          )}
+          {order.token && (
+            <p className="text-xs text-charcoal/60 max-w-md mx-auto">
+              Bookmark your receipt page: it's your private link to this order, since you checked out without an account.
+            </p>
+          )}
         </div>
 
         {/* Callout Box */}
@@ -48,7 +71,7 @@ export default function CheckoutSuccessPage() {
 
         {/* Buttons */}
         <div className="pt-4 flex justify-center gap-4">
-          <Button href="/orders" variant="primary" size="lg">
+          <Button href={receiptHref} variant="primary" size="lg">
             View Order Receipt <ArrowRight size={15} className="ml-2" />
           </Button>
           <Button href="/shop" variant="secondary" size="lg">

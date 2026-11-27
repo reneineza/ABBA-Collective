@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import DataTable from '@/components/admin/DataTable';
 import OrderStatusBadge from '@/components/admin/OrderStatusBadge';
-import { safeJsonParse } from '@/lib/utils/json';
+import { getBrowserClient } from '@/lib/supabase';
+import { orderNumber } from '@/lib/utils/orders';
 import { sendShippingUpdate } from '@/lib/email/emailService';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { ShoppingBag, Eye, Search } from 'lucide-react';
@@ -13,53 +14,44 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [search, setSearch] = useState('');
 
+  const [loadError, setLoadError] = useState('');
+
+  // Admins can read every order (database policy "Admins manage orders")
   useEffect(() => {
-    try {
-      const savedOrders = safeJsonParse(localStorage.getItem('abba_orders_history'), []);
-      setOrders(Array.isArray(savedOrders) && savedOrders.length > 0 ? savedOrders : [
-        {
-          id: 'ord_9x28v',
-          created_at: new Date().toISOString(),
-          status: 'Confirmed',
-          total_amount: 130000,
-          payment_provider: 'Card',
-          shipping_address: { first_name: 'Grace', last_name: 'Heirs', email: 'grace@example.com', city: 'Kigali' },
-          items: [{ name: 'Adoption Hoodie', quantity: 1 }, { name: 'ABBA Signature Tee', quantity: 1 }]
-        },
-        {
-          id: 'ord_3k71p',
-          created_at: new Date(Date.now() - 86400000).toISOString(),
-          status: 'Shipped',
-          total_amount: 180000,
-          payment_provider: 'MTN MoMo',
-          shipping_address: { first_name: 'David', last_name: 'Covenant', email: 'david@example.com', city: 'Kigali' },
-          items: [{ name: 'Covenant Tailored Overcoat', quantity: 1 }]
-        }
-      ]);
-    } catch (e) {
-      console.error(e);
-    }
+    getBrowserClient()
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) setLoadError('Could not load orders: ' + error.message);
+        setOrders(data || []);
+      });
   }, []);
 
   const handleStatusChange = async (orderId, newStatus) => {
-    const updated = orders.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o));
-    setOrders(updated);
-    localStorage.setItem('abba_orders_history', JSON.stringify(updated));
+    const previous = orders;
+    setOrders(orders.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
+
+    const { error } = await getBrowserClient().from('orders').update({ status: newStatus }).eq('id', orderId);
+    if (error) {
+      setOrders(previous);
+      setLoadError('Could not update the order status: ' + error.message);
+      return;
+    }
 
     const targetOrder = orders.find((o) => o.id === orderId);
-    if (targetOrder) {
-      await sendShippingUpdate({
-        order: targetOrder,
-        status: newStatus,
-        customerEmail: targetOrder.shipping_address?.email || 'customer@example.com',
-      });
+    if (targetOrder?.customer_email) {
+      await sendShippingUpdate({ order: targetOrder, status: newStatus, customerEmail: targetOrder.customer_email });
     }
   };
 
+  const query = search.toLowerCase();
   const filteredOrders = orders.filter((o) =>
-    o.id.toLowerCase().includes(search.toLowerCase()) ||
-    (o.shipping_address?.first_name || '').toLowerCase().includes(search.toLowerCase()) ||
-    (o.shipping_address?.last_name || '').toLowerCase().includes(search.toLowerCase())
+    orderNumber(o.id).toLowerCase().includes(query) ||
+    (o.customer_name || '').toLowerCase().includes(query) ||
+    (o.customer_phone || '').replace(/\s/g, '').includes(query.replace(/\s/g, '')) ||
+    (o.shipping_address?.first_name || '').toLowerCase().includes(query) ||
+    (o.shipping_address?.last_name || '').toLowerCase().includes(query)
   );
 
   const columns = [
@@ -67,7 +59,7 @@ export default function AdminOrdersPage() {
       header: 'Order Reference',
       accessor: (row) => (
         <span className="font-bold text-ivory flex items-center gap-1.5">
-          <ShoppingBag size={14} className="text-gold" /> #{row.id}
+          <ShoppingBag size={14} className="text-gold" /> #{orderNumber(row.id)}
         </span>
       ),
     },
@@ -76,7 +68,9 @@ export default function AdminOrdersPage() {
       accessor: (row) => (
         <div>
           <p className="font-semibold text-ivory">{row.shipping_address?.first_name} {row.shipping_address?.last_name}</p>
-          <p className="text-[10px] text-ivory/50">{row.shipping_address?.city}</p>
+          <p className="text-[10px] text-ivory/50">
+            {row.shipping_address?.district || row.shipping_address?.city} · {row.customer_phone || row.shipping_address?.phone}
+          </p>
         </div>
       ),
     },
@@ -139,6 +133,9 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
+      {loadError && (
+        <div className="p-3 bg-red-900/20 border border-red-500/30 text-red-300 text-xs rounded-sm">{loadError}</div>
+      )}
       <DataTable columns={columns} data={filteredOrders} />
     </div>
   );

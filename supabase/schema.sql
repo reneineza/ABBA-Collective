@@ -120,6 +120,15 @@ ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS payment_provider TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS transaction_id TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'RWF' NOT NULL;
 
+-- Order contents and contact details, written by the server when an order is placed.
+-- receipt_token lets guests (no account) open their own receipt via a private link.
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS items JSONB DEFAULT '[]' NOT NULL;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS subtotal NUMERIC(12, 2);
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS customer_name TEXT;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS customer_email TEXT;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS customer_phone TEXT;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS receipt_token TEXT;
+
 -- 10. REVIEWS TABLE
 CREATE TABLE IF NOT EXISTS public.reviews (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,

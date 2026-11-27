@@ -4,13 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/context/CartContext';
 import { useAuth } from '@/lib/context/AuthContext';
-import { createPayment } from '@/lib/payments/paymentService';
-import { sendOrderConfirmation } from '@/lib/email/emailService';
 import { trackCheckoutStarted, trackPurchase } from '@/lib/analytics/analyticsService';
-import { safeJsonParse } from '@/lib/utils/json';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { getDeliveryFee, getDeliveryZone } from '@/lib/utils/delivery';
-import { isValidRwandaPhone, isPhoneOnNetwork, formatRwandaPhone } from '@/lib/utils/rwanda';
+import { isValidRwandaPhone, isPhoneOnNetwork } from '@/lib/utils/rwanda';
 import { Lock, ArrowRight, ArrowLeft, CreditCard, Smartphone, Loader2 } from 'lucide-react';
 import AddressForm from './AddressForm';
 import { listAddresses, saveAddress } from '@/lib/addresses';
@@ -85,49 +82,43 @@ export default function CheckoutForm() {
     setLoading(true);
 
     try {
-      const newOrderId = 'ord_' + Math.random().toString(36).substr(2, 9);
-      
-      const paymentRes = await createPayment({
-        orderId: newOrderId,
-        provider: paymentProvider,
-        amount: grandTotal,
-        customerEmail: email,
-        phoneNumber: isMobileMoney ? formatRwandaPhone(momoNumber) : undefined,
+      // The server re-prices the items and calculates delivery; only choices are sent
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cart.map((item) => ({
+            productId: item.productId,
+            size: item.size,
+            color: item.color,
+            quantity: item.quantity,
+          })),
+          contact: { email, fullName, phone },
+          shippingAddress,
+          paymentProvider,
+          momoNumber: isMobileMoney ? momoNumber : undefined,
+        }),
       });
+      const result = await res.json().catch(() => ({}));
 
-      const newOrder = {
-        id: newOrderId,
-        user_id: user?.id || 'usr_guest',
-        status: 'Confirmed',
-        total_amount: grandTotal,
-        shipping_fee: shippingCost,
-        shipping_address: shippingAddress,
-        payment_provider: paymentProvider,
-        transaction_id: paymentRes.transactionId,
-        created_at: new Date().toISOString(),
-        items: cart.map((item) => ({
-          name: item.name,
-          slug: item.slug,
-          price: item.price,
-          quantity: item.quantity,
-          size: item.size,
-          color: item.color,
-          image: item.image,
-        })),
-      };
+      if (!res.ok) {
+        // A declined payment goes to the failure page; other problems are shown here
+        if (res.status === 402) {
+          router.push('/checkout/failed');
+          return;
+        }
+        setPaymentError(result.error || 'Something went wrong placing your order. Please try again.');
+        return;
+      }
 
-      await sendOrderConfirmation({ order: newOrder, customerEmail: email });
-      trackPurchase(newOrderId, grandTotal);
-
-      const existingOrders = safeJsonParse(localStorage.getItem('abba_orders_history'), []);
-      const validOrders = Array.isArray(existingOrders) ? existingOrders : [];
-      localStorage.setItem('abba_orders_history', JSON.stringify([newOrder, ...validOrders]));
-
+      trackPurchase(result.orderId, result.total);
       clearCart();
-      router.push('/checkout/success');
+      const params = new URLSearchParams({ order: result.orderId });
+      if (!user) params.set('token', result.receiptToken);
+      router.push(`/checkout/success?${params}`);
     } catch (err) {
       console.error('Order creation error:', err);
-      router.push('/checkout/failed');
+      setPaymentError('Could not reach the server. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
