@@ -78,7 +78,7 @@ export default function LoyaltyRewardsPage() {
             <div className="bg-ivory-light border border-charcoal/10 p-6 rounded-sm space-y-2">
               <Star size={24} className="text-gold" />
               <h4 className="font-serif-luxury text-lg font-bold text-charcoal">Product Reviews</h4>
-              <p className="text-xs text-charcoal/70 font-light">Earn 100 points for submitting verified purchaser testimonials.</p>
+              <p className="text-xs text-charcoal/70 font-light">Earn 100 points when your review of a garment you bought is approved.</p>
             </div>
             <div className="bg-ivory-light border border-charcoal/10 p-6 rounded-sm space-y-2">
               <Users size={24} className="text-gold" />

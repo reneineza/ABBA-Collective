@@ -2,38 +2,40 @@
 
 import React, { useState, useEffect } from 'react';
 import DataTable from '@/components/admin/DataTable';
-import { Star, CheckCircle2, Trash2, ShieldCheck } from 'lucide-react';
+import { Star, CheckCircle2, Trash2 } from 'lucide-react';
+import { listAllReviews, setReviewApproved, deleteReview } from '@/lib/reviews';
+import { formatDate } from '@/lib/utils/formatDate';
 
 export default function AdminReviewsPage() {
-  const [reviews, setReviews] = useState([
-    {
-      id: 'rev_101',
-      product_name: 'Adoption Hoodie',
-      author_name: 'Grace Heirs',
-      rating: 5,
-      title: 'Uncompromising Textile Weight',
-      comment: 'Dense 480 GSM French terry. Wearing this hoodie provides a quiet confidence throughout the day.',
-      approved: true,
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: 'rev_102',
-      product_name: 'ABBA Signature Tee',
-      author_name: 'David Covenant',
-      rating: 5,
-      title: 'Excellence in Tailoring',
-      comment: 'Discreet Galatians 4:6 inner neck tape embroidered beautifully.',
-      approved: false,
-      created_at: new Date(Date.now() - 86400000).toISOString(),
-    },
-  ]);
+  const [reviews, setReviews] = useState([]);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleApprove = (id) => {
-    setReviews((prev) => prev.map((r) => (r.id === id ? { ...r, approved: true } : r)));
+  const load = () =>
+    listAllReviews()
+      .then((rows) =>
+        setReviews(rows.map((r) => ({ ...r, product_name: r.product?.name || 'Deleted product', product_slug: r.product?.slug })))
+      )
+      .catch((err) => setErrorMsg('Could not load reviews: ' + err.message));
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const run = async (action, failure) => {
+    setErrorMsg('');
+    try {
+      await action();
+      await load();
+    } catch (err) {
+      setErrorMsg(`${failure}: ${err.message}`);
+    }
   };
 
+  const handleApprove = (id) => run(() => setReviewApproved(id, true), 'Could not approve the review');
+  const handleUnapprove = (id) => run(() => setReviewApproved(id, false), 'Could not hide the review');
   const handleDelete = (id) => {
-    setReviews((prev) => prev.filter((r) => r.id !== id));
+    if (!confirm('Delete this review permanently?')) return;
+    run(() => deleteReview(id), 'Could not delete the review');
   };
 
   const columns = [
@@ -42,7 +44,11 @@ export default function AdminReviewsPage() {
       accessor: (row) => (
         <div>
           <p className="font-bold text-ivory">{row.product_name}</p>
-          <p className="text-[10px] text-gold">{row.author_name}</p>
+          <p className="text-[10px] text-gold">
+            {row.reviewer_name}
+            {row.verified_purchase && <span className="ml-1.5 text-emerald-400">· Verified purchase</span>}
+          </p>
+          <p className="text-[10px] text-ivory/40">{formatDate(row.created_at, 'short')}</p>
         </div>
       ),
     },
@@ -77,12 +83,19 @@ export default function AdminReviewsPage() {
       header: 'Actions',
       accessor: (row) => (
         <div className="flex items-center space-x-2">
-          {!row.approved && (
+          {!row.approved ? (
             <button
               onClick={() => handleApprove(row.id)}
               className="px-2.5 py-1 bg-gold text-charcoal font-bold text-[10px] uppercase rounded-sm hover:bg-ivory transition-colors flex items-center gap-1"
             >
               <CheckCircle2 size={12} /> Approve
+            </button>
+          ) : (
+            <button
+              onClick={() => handleUnapprove(row.id)}
+              className="px-2.5 py-1 border border-ivory/30 text-ivory/70 font-bold text-[10px] uppercase rounded-sm hover:text-ivory transition-colors"
+            >
+              Hide
             </button>
           )}
           <button
@@ -108,7 +121,15 @@ export default function AdminReviewsPage() {
         </h1>
       </div>
 
-      <DataTable columns={columns} data={reviews} />
+      <p className="text-xs text-ivory/60">
+        New reviews stay hidden until approved. Approving a verified purchaser's review gives them 100 loyalty points (once).
+      </p>
+
+      {errorMsg && (
+        <div className="p-3 bg-red-900/20 border border-red-500/30 text-red-300 text-xs rounded-sm">{errorMsg}</div>
+      )}
+
+      <DataTable columns={columns} data={reviews} searchPlaceholder="Search reviews..." />
     </div>
   );
 }

@@ -344,7 +344,7 @@ export default function ProductDetailPage({ params }) {
         </div>
 
         {/* CUSTOMER REVIEWS & STAR RATINGS */}
-        <ProductReviews productId={product.id} productName={product.name} />
+        <ProductReviews productId={product.id} productName={product.name} productSlug={product.slug} />
 
         {/* RELATED GARMENT RECOMMENDATIONS */}
         <ProductRecommendations currentProduct={product} />

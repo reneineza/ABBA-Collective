@@ -149,6 +149,13 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Review details shown on product pages
+ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS title TEXT;
+ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS reviewer_name TEXT;
+ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS verified_purchase BOOLEAN DEFAULT FALSE NOT NULL;
+ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS points_awarded BOOLEAN DEFAULT FALSE NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS reviews_one_per_customer ON public.reviews (product_id, user_id);
+
 -- 11. LOYALTY POINTS TABLE
 CREATE TABLE IF NOT EXISTS public.loyalty_points (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -399,6 +406,64 @@ DROP TRIGGER IF EXISTS orders_status_change ON public.orders;
 CREATE TRIGGER orders_status_change
   BEFORE UPDATE OF status ON public.orders
   FOR EACH ROW EXECUTE FUNCTION public.handle_order_status_change();
+
+-- REVIEWS: the database decides "verified purchase" (the reviewer has a non-cancelled
+-- order containing the product) and fills a display name, so neither can be faked.
+CREATE OR REPLACE FUNCTION public.prepare_review()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  profile_name TEXT;
+BEGIN
+  NEW.verified_purchase := EXISTS (
+    SELECT 1 FROM public.orders o
+     WHERE o.user_id = NEW.user_id
+       AND o.status <> 'Cancelled'
+       AND o.items @> jsonb_build_array(jsonb_build_object('product_id', NEW.product_id::TEXT))
+  );
+  NEW.points_awarded := FALSE;
+  NEW.reviewer_name := NULLIF(LEFT(TRIM(COALESCE(NEW.reviewer_name, '')), 40), '');
+  IF NEW.reviewer_name IS NULL THEN
+    SELECT split_part(TRIM(full_name), ' ', 1) INTO profile_name FROM public.profiles WHERE id = NEW.user_id;
+    NEW.reviewer_name := COALESCE(NULLIF(profile_name, ''), 'ABBA Customer');
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS reviews_prepare ON public.reviews;
+CREATE TRIGGER reviews_prepare
+  BEFORE INSERT ON public.reviews
+  FOR EACH ROW EXECUTE FUNCTION public.prepare_review();
+
+-- 100 loyalty points the first time a verified purchaser's review is approved
+CREATE OR REPLACE FUNCTION public.award_review_points()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF NEW.approved AND NOT OLD.approved AND NEW.verified_purchase AND NOT OLD.points_awarded THEN
+    INSERT INTO public.loyalty_points (user_id, points, transaction_type, description)
+    SELECT NEW.user_id, 100, 'Review', 'Review of ' || p.name || ' approved'
+      FROM public.products p WHERE p.id = NEW.product_id;
+    NEW.points_awarded := TRUE;
+  ELSE
+    NEW.points_awarded := OLD.points_awarded;
+  END IF;
+  NEW.verified_purchase := OLD.verified_purchase;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS reviews_award_points ON public.reviews;
+CREATE TRIGGER reviews_award_points
+  BEFORE UPDATE ON public.reviews
+  FOR EACH ROW EXECUTE FUNCTION public.award_review_points();
 
 -- ROW LEVEL SECURITY (RLS) FOR ALL PUBLIC TABLES
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
