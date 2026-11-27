@@ -9,17 +9,28 @@ import CollectionCard from '@/components/CollectionCard';
 import StorySection from '@/components/StorySection';
 import Button from '@/components/Button';
 import { SAMPLE_COLLECTIONS, SAMPLE_PRODUCTS } from '@/lib/data/sampleData';
-import { getStoredBlogPosts } from '@/lib/utils/blogStore';
+import { listPosts } from '@/lib/journal';
+import { getSettings } from '@/lib/siteSettings';
 import { ArrowRight } from 'lucide-react';
 
 export default function HomePage() {
   const [blogPosts, setBlogPosts] = useState([]);
+  const [featuredSlug, setFeaturedSlug] = useState(null);
+
+  // The collection chosen on the admin Marketing page is shown first
+  useEffect(() => {
+    getSettings()
+      .then((settings) => setFeaturedSlug(settings.featured_collection))
+      .catch(() => {});
+  }, []);
+  const orderedCollections = [...SAMPLE_COLLECTIONS].sort(
+    (a, b) => (b.slug === featuredSlug) - (a.slug === featuredSlug)
+  );
 
   useEffect(() => {
-    setBlogPosts(getStoredBlogPosts());
-    const handleUpdate = () => setBlogPosts(getStoredBlogPosts());
-    window.addEventListener('abba_blog_posts_updated', handleUpdate);
-    return () => window.removeEventListener('abba_blog_posts_updated', handleUpdate);
+    listPosts()
+      .then((all) => setBlogPosts(all.filter((p) => p.published)))
+      .catch((err) => console.error('Could not load journal:', err.message));
   }, []);
 
   return (
@@ -100,7 +111,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {SAMPLE_COLLECTIONS.map((collection) => (
+            {orderedCollections.map((collection) => (
               <CollectionCard key={collection.id} collection={collection} />
             ))}
           </div>

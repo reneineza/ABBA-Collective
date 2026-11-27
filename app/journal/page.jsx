@@ -3,17 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getStoredBlogPosts } from '@/lib/utils/blogStore';
+import { listPosts } from '@/lib/journal';
 
 export default function JournalPage() {
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-    setPosts(getStoredBlogPosts());
-
-    const handleUpdate = () => setPosts(getStoredBlogPosts());
-    window.addEventListener('abba_blog_posts_updated', handleUpdate);
-    return () => window.removeEventListener('abba_blog_posts_updated', handleUpdate);
+    // Admins can read drafts too, so only list published posts here
+    listPosts()
+      .then((all) => setPosts(all.filter((p) => p.published)))
+      .catch((err) => console.error('Could not load journal:', err.message));
   }, []);
 
   return (

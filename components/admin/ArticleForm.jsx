@@ -2,16 +2,17 @@
 
 import React, { useState } from 'react';
 import { X, Image as ImageIcon, Sparkles, BookOpen, User, Calendar, Clock, FileText } from 'lucide-react';
-import { formatDate } from '@/lib/utils/formatDate';
 
 export default function ArticleForm({ initialArticle, onSave, onCancel }) {
   const [title, setTitle] = useState(initialArticle?.title || '');
   const [slug, setSlug] = useState(initialArticle?.slug || '');
   const [category, setCategory] = useState(initialArticle?.category || 'Theological Identity');
   const [author, setAuthor] = useState(initialArticle?.author || 'ABBA Editorial Team');
+  // YYYY-MM-DD for the date picker; defaults to today in Kigali
   const [date, setDate] = useState(
-    initialArticle?.date || formatDate(new Date())
+    initialArticle?.published_on || new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Kigali' })
   );
+  const [published, setPublished] = useState(initialArticle?.published ?? true);
   const [readTime, setReadTime] = useState(initialArticle?.readTime || '5 min read');
   const [imageUrl, setImageUrl] = useState(
     initialArticle?.image_url || 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=800&auto=format&fit=crop'
@@ -42,12 +43,12 @@ export default function ArticleForm({ initialArticle, onSave, onCancel }) {
       : title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
 
     const articleData = {
-      id: initialArticle?.id || 'blog_' + Date.now(),
       title,
       slug: generatedSlug,
       category,
       author,
-      date,
+      published_on: date,
+      published,
       readTime,
       image_url: imageUrl,
       excerpt,
@@ -153,11 +154,11 @@ export default function ArticleForm({ initialArticle, onSave, onCancel }) {
               <Calendar size={12} className="text-gold" /> Published Date
             </label>
             <input
-              type="text"
+              type="date"
+              required
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              placeholder="July 24, 2026"
-              className="w-full p-3 text-xs bg-charcoal-dark border border-gold/30 text-ivory focus:border-gold focus:outline-none"
+              className="w-full p-3 text-xs bg-charcoal-dark border border-gold/30 text-ivory focus:border-gold focus:outline-none [color-scheme:dark]"
             />
           </div>
           <div>
@@ -245,6 +246,15 @@ export default function ArticleForm({ initialArticle, onSave, onCancel }) {
 
       {/* Action Buttons */}
       <div className="flex items-center justify-end gap-3 pt-4 border-t border-gold/20">
+        <label className="mr-auto flex items-center gap-2 text-xs text-ivory/80 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={published}
+            onChange={(e) => setPublished(e.target.checked)}
+            className="accent-gold w-4 h-4"
+          />
+          Published (uncheck to save as a draft only admins can see)
+        </label>
         {onCancel && (
           <button
             type="button"
@@ -258,7 +268,7 @@ export default function ArticleForm({ initialArticle, onSave, onCancel }) {
           type="submit"
           className="px-6 py-2.5 bg-gold text-charcoal hover:bg-gold-light transition-colors text-xs font-bold uppercase tracking-widest flex items-center gap-2"
         >
-          <Sparkles size={14} /> {initialArticle ? 'Save Article Changes' : 'Publish Journal Entry'}
+          <Sparkles size={14} /> {initialArticle ? 'Save Article Changes' : published ? 'Publish Journal Entry' : 'Save Draft'}
         </button>
       </div>
     </form>

@@ -7,9 +7,17 @@ import { ShoppingBag, Search, User, Heart, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/lib/context/CartContext';
 import BrandLogo from './BrandLogo';
+import { getSettings, DEFAULT_SETTINGS } from '@/lib/siteSettings';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [announcement, setAnnouncement] = useState(DEFAULT_SETTINGS.announcement);
+
+  useEffect(() => {
+    getSettings()
+      .then((settings) => setAnnouncement(settings.announcement))
+      .catch(() => {}); // keep the default banner if settings can't be loaded
+  }, []);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const { toggleCart, totalItems } = useCart();
@@ -42,12 +50,14 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Top Banner */}
-      <div className="bg-charcoal text-ivory text-[10px] sm:text-xs py-2 tracking-[0.25em] text-center uppercase border-b border-gold/30 font-medium">
-        <span className="text-gold font-semibold tracking-widest mr-2">✦</span>
-        Identity Received. Grace Revealed.
-        <span className="text-gold font-semibold tracking-widest ml-2">✦</span>
-      </div>
+      {/* Top Banner (text and visibility set on the admin Marketing page) */}
+      {announcement.active && announcement.text && (
+        <div className="bg-charcoal text-ivory text-[10px] sm:text-xs py-2 px-4 tracking-[0.25em] text-center uppercase border-b border-gold/30 font-medium">
+          <span className="text-gold font-semibold tracking-widest mr-2">✦</span>
+          {announcement.text}
+          <span className="text-gold font-semibold tracking-widest ml-2">✦</span>
+        </div>
+      )}
 
       {/* Main Sticky Navbar */}
       <header

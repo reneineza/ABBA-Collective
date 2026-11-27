@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import DataTable from '@/components/admin/DataTable';
 import ArticleForm from '@/components/admin/ArticleForm';
-import { getStoredBlogPosts, saveStoredBlogPosts } from '@/lib/utils/blogStore';
+import { listPosts, savePost, deletePost } from '@/lib/journal';
 import { Plus, Edit, Trash2, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
@@ -12,8 +12,12 @@ export default function AdminBlogPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
 
+  const [errorMsg, setErrorMsg] = useState('');
+
   useEffect(() => {
-    setPosts(getStoredBlogPosts());
+    listPosts()
+      .then(setPosts)
+      .catch((err) => setErrorMsg('Could not load articles: ' + err.message));
   }, []);
 
   const openCreate = () => {
@@ -26,24 +30,28 @@ export default function AdminBlogPage() {
     setShowModal(true);
   };
 
-  const handleSave = (articleData) => {
-    let updated;
-    if (editingPost) {
-      updated = posts.map((p) => (p.id === editingPost.id ? articleData : p));
-    } else {
-      updated = [articleData, ...posts];
+  const handleSave = async (articleData) => {
+    setErrorMsg('');
+    try {
+      const saved = await savePost(articleData, editingPost?.id);
+      setPosts((current) =>
+        editingPost ? current.map((p) => (p.id === saved.id ? saved : p)) : [saved, ...current]
+      );
+      setShowModal(false);
+      setEditingPost(null);
+    } catch (err) {
+      setErrorMsg('Could not save the article: ' + err.message);
     }
-    setPosts(updated);
-    saveStoredBlogPosts(updated);
-    setShowModal(false);
-    setEditingPost(null);
   };
 
-  const handleDelete = (id) => {
-    if (confirm('Are you sure you want to delete this journal article?')) {
-      const updated = posts.filter((p) => p.id !== id);
-      setPosts(updated);
-      saveStoredBlogPosts(updated);
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to delete this journal article?')) return;
+    setErrorMsg('');
+    try {
+      await deletePost(id);
+      setPosts((current) => current.filter((p) => p.id !== id));
+    } catch (err) {
+      setErrorMsg('Could not delete the article: ' + err.message);
     }
   };
 
@@ -67,7 +75,14 @@ export default function AdminBlogPage() {
                 <ExternalLink size={12} />
               </Link>
             </p>
-            <p className="text-[10px] text-gold font-mono">{row.slug}</p>
+            <p className="text-[10px] text-gold font-mono">
+              {row.slug}
+              {!row.published && (
+                <span className="ml-2 uppercase tracking-widest text-ivory/70 border border-ivory/30 px-1.5 py-0.5 rounded-sm">
+                  Draft
+                </span>
+              )}
+            </p>
           </div>
         </div>
       ),
@@ -148,6 +163,10 @@ export default function AdminBlogPage() {
             }}
           />
         </div>
+      )}
+
+      {errorMsg && (
+        <div className="p-3 bg-red-900/20 border border-red-500/30 text-red-300 text-xs rounded-sm">{errorMsg}</div>
       )}
 
       <DataTable columns={columns} data={posts} searchPlaceholder="Search journal articles..." />

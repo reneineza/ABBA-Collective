@@ -204,6 +204,31 @@ CREATE TABLE IF NOT EXISTS public.wishlist_items (
   PRIMARY KEY (user_id, product_id)
 );
 
+-- 18. JOURNAL POSTS TABLE (Journal CMS)
+CREATE TABLE IF NOT EXISTS public.journal_posts (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  slug TEXT UNIQUE NOT NULL,
+  title TEXT NOT NULL,
+  category TEXT,
+  author TEXT,
+  published_on DATE DEFAULT CURRENT_DATE NOT NULL,
+  read_time TEXT,
+  image_url TEXT,
+  excerpt TEXT,
+  scripture TEXT,
+  content TEXT[] DEFAULT '{}' NOT NULL,
+  published BOOLEAN DEFAULT TRUE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 19. SITE SETTINGS TABLE (Marketing CMS: announcement bar, featured collection)
+CREATE TABLE IF NOT EXISTS public.site_settings (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ACCOUNT HELPERS & TRIGGERS
 
 -- True when the signed-in user has the admin role. SECURITY DEFINER so policies on
@@ -305,6 +330,8 @@ ALTER TABLE public.referrals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notification_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wishlist_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.journal_posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 
 -- Policies from earlier versions of this schema
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
@@ -410,11 +437,56 @@ DROP POLICY IF EXISTS "Users manage own wishlist" ON public.wishlist_items;
 CREATE POLICY "Users manage own wishlist" ON public.wishlist_items FOR ALL
   USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
+-- Journal: published posts are public; admins see drafts and manage all posts
+DROP POLICY IF EXISTS "Published posts are public" ON public.journal_posts;
+CREATE POLICY "Published posts are public" ON public.journal_posts FOR SELECT USING (published = true OR public.is_admin());
+DROP POLICY IF EXISTS "Admins manage journal" ON public.journal_posts;
+CREATE POLICY "Admins manage journal" ON public.journal_posts FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- Site settings: public read (the site shows them), admin write
+DROP POLICY IF EXISTS "Site settings are public" ON public.site_settings;
+CREATE POLICY "Site settings are public" ON public.site_settings FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admins manage site settings" ON public.site_settings;
+CREATE POLICY "Admins manage site settings" ON public.site_settings FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+
 -- Newsletter: anyone can subscribe; only admins can read or manage the list
 DROP POLICY IF EXISTS "Anyone can subscribe" ON public.newsletter_subscribers;
 CREATE POLICY "Anyone can subscribe" ON public.newsletter_subscribers FOR INSERT WITH CHECK (true);
 DROP POLICY IF EXISTS "Admins manage subscribers" ON public.newsletter_subscribers;
 CREATE POLICY "Admins manage subscribers" ON public.newsletter_subscribers FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- STARTER CONTENT (only inserted if missing, so admin edits are never overwritten)
+INSERT INTO public.journal_posts (slug, title, category, author, published_on, read_time, image_url, excerpt, scripture, content) VALUES
+  ($q$understanding-sonship-beyond-performance$q$,
+   $q$Understanding Sonship: Beyond Performance and Approval$q$,
+   $q$Theological Identity$q$,
+   $q$ABBA Editorial Team$q$,
+   '2026-07-24',
+   $q$6 min read$q$,
+   $q$https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=800&auto=format&fit=crop$q$,
+   $q$True identity is never earned; it is received. Exploring the spiritual revolution of Galatians 4:6 and how sonship transforms our creative calling.$q$,
+   $q$Galatians 4:6 — 'And because you are sons, God has sent the Spirit of his Son into our hearts, crying, ABBA! Father!'$q$,
+   ARRAY[$q$In a culture obsessed with performance, personal branding, and endless self-validation, the human soul is constantly enticed to measure worth by productivity. We build identities out of achievements, wardrobe aesthetics, and social approval, only to find that striving yields an anxious posture.$q$,
+    $q$The gospel of divine adoption introduces an entirely opposite paradigm: identity is not achieved through human striving; it is sovereignly received. When Paul writes in Galatians 4:6 that God has sent the Spirit of His Son into our hearts crying 'ABBA! Father!', he highlights a structural shift in our spiritual reality. We move from the posture of an orphan performing for acceptance to a beloved child standing in secure inheritance.$q$,
+    $q$At ABBA, this revelation is at the heart of everything we craft. Our apparel is designed not as a mask to impress the world, but as a subtle daily reminder of the security already secured for us in Christ. When your posture shifts from slave to son or daughter, rest replaces anxiety, and stewardship replaces striving.$q$]),
+  ($q$architecture-of-grace-craftsmanship-matters$q$,
+   $q$The Architecture of Grace: Why Craftsmanship Matters$q$,
+   $q$Design Journal$q$,
+   $q$ABBA Design Studio$q$,
+   '2026-07-12',
+   $q$4 min read$q$,
+   $q$https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=800&auto=format&fit=crop$q$,
+   $q$Excellence is not vanity; it is an echo of divine creation. Behind the scenes of our 480 GSM custom milling process in Portugal.$q$,
+   $q$Colossians 3:23 — 'Whatever you do, work heartily, as for the Lord and not for men.'$q$,
+   ARRAY[$q$Why invest in 480 GSM organic french terry, double-needle reinforced stitching, and custom brass aglets for streetwear? For ABBA, craftsmanship is not about luxury ostentation; it is an act of theological worship and creative stewardship.$q$,
+    $q$When God called craftsmen in Exodus like Bezalel, He filled them with the Spirit of wisdom and artistic craftsmanship to build the Tabernacle. Divine order and beauty reflect the God who speaks light out of darkness and forms all things with infinite precision.$q$,
+    $q$Every piece in our collections is milled custom in Portugal using 100% organic Supima and heavy jersey cottons. We believe that garments designed to honor God's word should endure both in material structure and timeless design.$q$])
+ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO public.site_settings (key, value) VALUES
+  ('announcement', '{"active": true, "text": "Identity Received. Grace Revealed."}'),
+  ('featured_collection', '"adoption"')
+ON CONFLICT (key) DO NOTHING;
 
 -- STORAGE BUCKET CREATION
 INSERT INTO storage.buckets (id, name, public) VALUES ('product-images', 'product-images', true) ON CONFLICT (id) DO NOTHING;

@@ -1,18 +1,44 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getSettings, saveSettings, DEFAULT_SETTINGS } from '@/lib/siteSettings';
+import { SAMPLE_COLLECTIONS } from '@/lib/data/sampleData';
 import { Megaphone, Save, Check, Sparkles, Image as ImageIcon } from 'lucide-react';
 
 export default function AdminMarketingPage() {
-  const [announcementText, setAnnouncementText] = useState('✦ Identity Received. Grace Revealed. ✦ Complimentary Delivery across Rwanda on Orders over 200,000 RWF');
-  const [announcementActive, setAnnouncementActive] = useState(true);
-  const [featuredCollection, setFeaturedCollection] = useState('adoption');
+  const [announcementText, setAnnouncementText] = useState(DEFAULT_SETTINGS.announcement.text);
+  const [announcementActive, setAnnouncementActive] = useState(DEFAULT_SETTINGS.announcement.active);
+  const [featuredCollection, setFeaturedCollection] = useState(DEFAULT_SETTINGS.featured_collection);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSave = (e) => {
+  useEffect(() => {
+    getSettings()
+      .then((settings) => {
+        setAnnouncementText(settings.announcement.text);
+        setAnnouncementActive(settings.announcement.active);
+        setFeaturedCollection(settings.featured_collection);
+      })
+      .catch((err) => setErrorMsg('Could not load settings: ' + err.message));
+  }, []);
+
+  const handleSave = async (e) => {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setSaving(true);
+    setErrorMsg('');
+    try {
+      await saveSettings({
+        announcement: { active: announcementActive, text: announcementText.trim() },
+        featured_collection: featuredCollection,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setErrorMsg('Could not save settings: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -77,23 +103,28 @@ export default function AdminMarketingPage() {
               onChange={(e) => setFeaturedCollection(e.target.value)}
               className="w-full p-3 text-xs bg-charcoal-light border border-gold/20 text-ivory focus:border-gold focus:outline-none rounded-sm"
             >
-              <option value="adoption">Collection 001: ADOPTION</option>
-              <option value="grace-revealed">Collection 002: GRACE REVEALED</option>
-              <option value="sovereign-essentials">Collection 003: SOVEREIGN ESSENTIALS</option>
+              {SAMPLE_COLLECTIONS.map((collection) => (
+                <option key={collection.slug} value={collection.slug}>
+                  {collection.name}
+                </option>
+              ))}
             </select>
           </div>
         </div>
 
         <div className="pt-4 flex justify-between items-center border-t border-gold/10">
-          {saved ? (
+          {errorMsg ? (
+            <span className="text-xs text-red-300">{errorMsg}</span>
+          ) : saved ? (
             <span className="text-xs text-gold font-semibold flex items-center gap-1.5">
-              <Check size={16} /> Campaign preferences saved successfully!
+              <Check size={16} /> Saved. The website now shows these settings.
             </span>
           ) : <span />}
 
           <button
             type="submit"
-            className="px-6 py-3 bg-gold text-charcoal hover:bg-ivory transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2 rounded-sm"
+            disabled={saving}
+            className="disabled:opacity-50 px-6 py-3 bg-gold text-charcoal hover:bg-ivory transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2 rounded-sm"
           >
             <Save size={15} /> Save Campaign Settings
           </button>

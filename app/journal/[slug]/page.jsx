@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getStoredBlogPosts } from '@/lib/utils/blogStore';
+import { listPosts } from '@/lib/journal';
 import { ArrowLeft, Calendar, Clock, Share2, BookOpen } from 'lucide-react';
 
 export default function JournalDetailPage({ params }) {
@@ -12,21 +12,19 @@ export default function JournalDetailPage({ params }) {
   const slug = decodeURIComponent(rawSlug).toLowerCase();
 
   const [posts, setPosts] = useState([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    setPosts(getStoredBlogPosts());
-
-    const handleUpdate = () => setPosts(getStoredBlogPosts());
-    window.addEventListener('abba_blog_posts_updated', handleUpdate);
-    return () => window.removeEventListener('abba_blog_posts_updated', handleUpdate);
+    listPosts()
+      .then(setPosts)
+      .catch((err) => console.error('Could not load journal:', err.message))
+      .finally(() => setLoaded(true));
   }, []);
 
-  // Find blog post by slug or matching title
-  const post = posts.find(
-    (p) => p.slug.toLowerCase() === slug || slug.includes(p.slug.toLowerCase()) || p.id.toLowerCase() === slug
-  ) || posts[0];
+  const post = posts.find((p) => p.slug.toLowerCase() === slug);
+  const relatedPosts = posts.filter((p) => p.published && post && p.id !== post.id);
 
-  const relatedPosts = posts.filter((p) => p && post && p.id !== post.id);
+  if (!loaded) return <div className="bg-ivory min-h-screen" />;
 
   if (!post) {
     return (
