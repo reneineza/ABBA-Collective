@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import StatCard from '@/components/admin/StatCard';
 import OrderStatusBadge from '@/components/admin/OrderStatusBadge';
 import { getBrowserClient } from '@/lib/supabase';
+import { SAMPLE_PRODUCTS, SAMPLE_COLLECTIONS } from '@/lib/data/sampleData';
 import { orderNumber } from '@/lib/utils/orders';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { DollarSign, ShoppingBag, Package, Users, ArrowUpRight } from 'lucide-react';
@@ -24,7 +25,32 @@ export default function AdminDashboardPage() {
       });
   }, []);
 
+  const [counts, setCounts] = useState({ customers: null, subscribers: null });
+
+  useEffect(() => {
+    const supabase = getBrowserClient();
+    Promise.all([
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'customer'),
+      supabase.from('newsletter_subscribers').select('id', { count: 'exact', head: true }),
+    ]).then(([customersRes, subscribersRes]) => {
+      setCounts({ customers: customersRes.count ?? 0, subscribers: subscribersRes.count ?? 0 });
+    });
+  }, []);
+
   const countedOrders = orders.filter((o) => o.status !== 'Cancelled');
+
+  // Best sellers by units across all non-cancelled orders
+  const unitsByProduct = {};
+  for (const order of countedOrders) {
+    for (const item of order.items || []) {
+      const key = item.product_id || item.name;
+      const entry = (unitsByProduct[key] ||= { name: item.name, units: 0, revenue: 0 });
+      entry.units += Number(item.quantity || 0);
+      entry.revenue += Number(item.price || 0) * Number(item.quantity || 0);
+    }
+  }
+  const topProducts = Object.values(unitsByProduct).sort((a, b) => b.units - a.units).slice(0, 3);
+  const collectionCount = SAMPLE_COLLECTIONS.length;
   const totalSales = countedOrders.reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
   const avgOrderValue = countedOrders.length > 0 ? totalSales / countedOrders.length : 0;
 
@@ -45,15 +71,15 @@ export default function AdminDashboardPage() {
           icon={ShoppingBag}
         />
         <StatCard
-          title="Active Garment SKUs"
-          value="16 Active SKUs"
-          change="3 Featured Collections"
+          title="Catalogue"
+          value={`${SAMPLE_PRODUCTS.length} Products`}
+          change={`${collectionCount} Collections`}
           icon={Package}
         />
         <StatCard
           title="Total Client Directory"
-          value="28 Clients"
-          change="100% Opt-in Email Roster"
+          value={counts.customers === null ? '…' : `${counts.customers} Clients`}
+          change={counts.subscribers === null ? '' : `${counts.subscribers} Newsletter Subscribers`}
           icon={Users}
         />
       </div>
@@ -113,29 +139,16 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="space-y-4 text-xs">
-            <div className="flex justify-between items-center border-b border-gold/10 pb-2">
-              <div>
-                <p className="font-bold text-ivory">Abba Heir Hoodie</p>
-                <p className="text-[10px] text-gold font-mono">480 GSM French Terry</p>
+            {topProducts.length === 0 && <p className="text-ivory/50 italic">No sales yet.</p>}
+            {topProducts.map((product) => (
+              <div key={product.name} className="flex justify-between items-center border-b border-gold/10 pb-2">
+                <div>
+                  <p className="font-bold text-ivory">{product.name}</p>
+                  <p className="text-[10px] text-gold">{formatCurrency(product.revenue)}</p>
+                </div>
+                <span className="font-semibold text-ivory">{product.units} Units Sold</span>
               </div>
-              <span className="font-semibold text-ivory">24 Units Sold</span>
-            </div>
-
-            <div className="flex justify-between items-center border-b border-gold/10 pb-2">
-              <div>
-                <p className="font-bold text-ivory">ABBA Signature Tee</p>
-                <p className="text-[10px] text-gold font-mono">280 GSM Supima Cotton</p>
-              </div>
-              <span className="font-semibold text-ivory">18 Units Sold</span>
-            </div>
-
-            <div className="flex justify-between items-center border-b border-gold/10 pb-2">
-              <div>
-                <p className="font-bold text-ivory">Grace Crewneck</p>
-                <p className="text-[10px] text-gold font-mono">400 GSM Fleece</p>
-              </div>
-              <span className="font-semibold text-ivory">14 Units Sold</span>
-            </div>
+            ))}
           </div>
         </div>
 

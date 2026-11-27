@@ -24,9 +24,10 @@ export default function NewsletterForm({ darkTheme = false }) {
       const supabase = createClient();
       const { error } = await supabase
         .from('newsletter_subscribers')
-        .insert([{ email }]);
+        .insert([{ email: email.trim().toLowerCase() }]);
 
-      if (error && error.code !== '23505') { // 23505 is unique constraint error
+      // 23505 = already subscribed, which is fine to treat as success
+      if (error && error.code !== '23505') {
         throw error;
       }
 
@@ -34,11 +35,9 @@ export default function NewsletterForm({ darkTheme = false }) {
       setMessage('Welcome to ABBA. You are subscribed.');
       setEmail('');
     } catch (err) {
-      console.log('Newsletter subscription note:', err.message);
-      // Fallback clean confirmation for frontend demo
-      setStatus('success');
-      setMessage('Thank you for joining. Grace & peace be with you.');
-      setEmail('');
+      console.error('Newsletter subscription failed:', err.message);
+      setStatus('error');
+      setMessage('We could not subscribe you right now. Please try again in a moment.');
     }
   };
 
