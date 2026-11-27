@@ -1,46 +1,55 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import DataTable from '@/components/admin/DataTable';
 import ProductForm from '@/components/admin/ProductForm';
-import { SAMPLE_PRODUCTS } from '@/lib/data/sampleData';
-import { safeJsonParse } from '@/lib/utils/json';
-import { Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { useCatalog } from '@/lib/context/CatalogContext';
+import { saveProduct, deleteProduct, setProductActive } from '@/lib/adminCatalog';
+import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState([]);
+  // allProducts includes hidden products (admins only)
+  const { allProducts: products, reload } = useCatalog();
   const [editingProduct, setEditingProduct] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  useEffect(() => {
+  const handleSaveProduct = async (productData) => {
+    setSaving(true);
+    setErrorMsg('');
     try {
-      const saved = safeJsonParse(localStorage.getItem('abba_products'), []);
-      setProducts(Array.isArray(saved) && saved.length > 0 ? saved : SAMPLE_PRODUCTS);
-    } catch (e) {
-      setProducts(SAMPLE_PRODUCTS);
+      await saveProduct(productData, editingProduct?.id);
+      await reload();
+      setEditingProduct(null);
+      setIsCreating(false);
+    } catch (err) {
+      setErrorMsg('Could not save the product: ' + err.message);
+    } finally {
+      setSaving(false);
     }
-  }, []);
-
-  const handleSaveProduct = (productData) => {
-    let updated;
-    if (editingProduct) {
-      updated = products.map((p) => (p.id === productData.id ? productData : p));
-    } else {
-      updated = [productData, ...products];
-    }
-    setProducts(updated);
-    localStorage.setItem('abba_products', JSON.stringify(updated));
-    setEditingProduct(null);
-    setIsCreating(false);
   };
 
-  const handleDeleteProduct = (id) => {
-    if (confirm('Are you sure you want to delete this product?')) {
-      const updated = products.filter((p) => p.id !== id);
-      setProducts(updated);
-      localStorage.setItem('abba_products', JSON.stringify(updated));
+  const handleDeleteProduct = async (product) => {
+    if (!confirm(`Delete "${product.name}" permanently? To take it off the shop but keep it, edit it and untick "Visible in the shop" instead.`)) return;
+    setErrorMsg('');
+    try {
+      await deleteProduct(product.id);
+      await reload();
+    } catch (err) {
+      setErrorMsg('Could not delete the product: ' + err.message);
+    }
+  };
+
+  const handleToggleActive = async (product) => {
+    setErrorMsg('');
+    try {
+      await setProductActive(product.id, !product.active);
+      await reload();
+    } catch (err) {
+      setErrorMsg('Could not update the product: ' + err.message);
     }
   };
 
@@ -79,26 +88,41 @@ export default function AdminProductsPage() {
     {
       header: 'Variants & Stock',
       cell: (row) => {
-        const totalStock = row.variants ? row.variants.reduce((sum, v) => sum + v.stock_quantity, 0) : 48;
-        const variantCount = row.variants ? row.variants.length : 4;
+        const totalStock = row.variants.reduce((sum, v) => sum + v.stock_quantity, 0);
+        const soldOut = row.variants.filter((v) => v.stock_quantity <= 0).length;
         return (
           <div>
-            <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-sm border border-emerald-500/30">
-              {totalStock} in stock
+            <span
+              className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-sm border ${
+                totalStock > 0
+                  ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
+                  : 'text-red-300 bg-red-500/10 border-red-500/30'
+              }`}
+            >
+              {totalStock > 0 ? `${totalStock} in stock` : 'Sold out'}
             </span>
-            <p className="text-[10px] text-ivory/50 mt-1">{variantCount} Size/Color variants</p>
+            <p className="text-[10px] text-ivory/50 mt-1">
+              {row.variants.length} size/colour variants{soldOut > 0 && totalStock > 0 ? ` · ${soldOut} sold out` : ''}
+            </p>
           </div>
         );
       },
     },
     {
-      header: 'Featured',
+      header: 'Status',
       cell: (row) => (
-        <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-sm font-semibold border ${
-          row.featured ? 'bg-gold/20 text-gold border-gold/40' : 'bg-charcoal text-ivory/40 border-ivory/20'
-        }`}>
-          {row.featured ? 'Featured' : 'Standard'}
-        </span>
+        <div className="space-y-1">
+          <span className={`block w-fit text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-sm font-semibold border ${
+            row.active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-charcoal text-ivory/50 border-ivory/20'
+          }`}>
+            {row.active ? 'Visible' : 'Hidden'}
+          </span>
+          {row.featured && (
+            <span className="block w-fit text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-sm font-semibold border bg-gold/20 text-gold border-gold/40">
+              Featured
+            </span>
+          )}
+        </div>
       ),
     },
     {
@@ -111,7 +135,14 @@ export default function AdminProductsPage() {
           <button onClick={() => setEditingProduct(row)} className="p-1.5 text-ivory/60 hover:text-gold" title="Edit Product">
             <Edit size={15} />
           </button>
-          <button onClick={() => handleDeleteProduct(row.id)} className="p-1.5 text-red-400 hover:text-red-300" title="Delete Product">
+          <button
+            onClick={() => handleToggleActive(row)}
+            className="p-1.5 text-ivory/60 hover:text-gold"
+            title={row.active ? 'Hide from shop' : 'Show in shop'}
+          >
+            {row.active ? <EyeOff size={15} /> : <Eye size={15} />}
+          </button>
+          <button onClick={() => handleDeleteProduct(row)} className="p-1.5 text-red-400 hover:text-red-300" title="Delete Product">
             <Trash2 size={15} />
           </button>
         </div>
@@ -142,11 +173,17 @@ export default function AdminProductsPage() {
         </button>
       </div>
 
+      {errorMsg && (
+        <div className="p-3 bg-red-900/20 border border-red-500/30 text-red-300 text-xs rounded-sm">{errorMsg}</div>
+      )}
+
       {/* Form Modal or View */}
       {(isCreating || editingProduct) ? (
         <ProductForm
+          key={editingProduct?.id || 'new'}
           initialProduct={editingProduct}
           onSave={handleSaveProduct}
+          saving={saving}
           onCancel={() => {
             setIsCreating(false);
             setEditingProduct(null);

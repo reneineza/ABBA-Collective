@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import StatCard from '@/components/admin/StatCard';
 import OrderStatusBadge from '@/components/admin/OrderStatusBadge';
 import { getBrowserClient } from '@/lib/supabase';
-import { SAMPLE_PRODUCTS, SAMPLE_COLLECTIONS } from '@/lib/data/sampleData';
+import { useCatalog } from '@/lib/context/CatalogContext';
 import { orderNumber } from '@/lib/utils/orders';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { DollarSign, ShoppingBag, Package, Users, ArrowUpRight } from 'lucide-react';
@@ -50,7 +50,8 @@ export default function AdminDashboardPage() {
     }
   }
   const topProducts = Object.values(unitsByProduct).sort((a, b) => b.units - a.units).slice(0, 3);
-  const collectionCount = SAMPLE_COLLECTIONS.length;
+  const { allProducts, collections } = useCatalog();
+  const collectionCount = collections.length;
   const totalSales = countedOrders.reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
   const avgOrderValue = countedOrders.length > 0 ? totalSales / countedOrders.length : 0;
 
@@ -72,7 +73,7 @@ export default function AdminDashboardPage() {
         />
         <StatCard
           title="Catalogue"
-          value={`${SAMPLE_PRODUCTS.length} Products`}
+          value={`${allProducts.filter((p) => p.active).length} Products`}
           change={`${collectionCount} Collections`}
           icon={Package}
         />

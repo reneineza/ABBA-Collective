@@ -1,6 +1,5 @@
 import React from 'react';
-import CollectionCard from '@/components/CollectionCard';
-import { SAMPLE_COLLECTIONS } from '@/lib/data/sampleData';
+import CollectionsGrid from '@/components/CollectionsGrid';
 
 export const metadata = {
   title: 'Collections | ABBA',
@@ -23,11 +22,7 @@ export default function CollectionsPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {SAMPLE_COLLECTIONS.map((col) => (
-            <CollectionCard key={col.id} collection={col} />
-          ))}
-        </div>
+        <CollectionsGrid />
       </div>
     </div>
   );

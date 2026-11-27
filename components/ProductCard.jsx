@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { firstAvailableVariant } from '@/lib/catalog';
 import Link from 'next/link';
 import WishlistButton from './WishlistButton';
 import { useCart } from '@/lib/context/CartContext';
@@ -20,10 +21,13 @@ export default function ProductCard({ product }) {
     ? product.images[1].image_url 
     : mainImage;
 
+  // Quick Add uses the first colour/size that is in stock
+  const available = firstAvailableVariant(product);
+
   const handleQuickAdd = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    addItem(product, product.sizes?.[0] || 'M', product.colors?.[0] || 'Charcoal', 1);
+    if (available) addItem(product, available.size, available.color, 1);
   };
 
   return (
@@ -60,9 +64,10 @@ export default function ProductCard({ product }) {
         <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-charcoal/80 via-charcoal/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-2">
           <button
             onClick={handleQuickAdd}
-            className="flex-1 py-2.5 bg-gold text-charcoal text-[11px] uppercase tracking-widest font-bold flex items-center justify-center gap-1.5 hover:bg-ivory transition-colors shadow-md"
+            disabled={!available}
+            className="flex-1 py-2.5 bg-gold text-charcoal text-[11px] uppercase tracking-widest font-bold flex items-center justify-center gap-1.5 hover:bg-ivory transition-colors shadow-md disabled:bg-ivory/80 disabled:text-charcoal/50 disabled:cursor-not-allowed"
           >
-            <ShoppingBag size={14} /> Quick Add
+            <ShoppingBag size={14} /> {available ? 'Quick Add' : 'Sold Out'}
           </button>
           
           <Link
@@ -102,7 +107,7 @@ export default function ProductCard({ product }) {
           </span>
 
           <span className="text-[10px] uppercase tracking-wider text-charcoal/50 font-medium">
-            {product.colors ? `${product.colors.length} Colors` : 'In Stock'}
+            {!available ? 'Sold Out' : `${product.colors.length} ${product.colors.length === 1 ? 'Colour' : 'Colours'}`}
           </span>
         </div>
       </div>

@@ -3,10 +3,12 @@
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Upload, X, Plus, Image as ImageIcon, Star } from 'lucide-react';
+import { uploadCatalogImage } from '@/lib/adminCatalog';
 
-export default function ImageUploader({ images = [], onChange }) {
+export default function ImageUploader({ images = [], onChange, bucket = 'product-images' }) {
   const [urlInput, setUrlInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   const addImageToList = (imageUrl, alt = 'Product Garment Image') => {
@@ -29,27 +31,40 @@ export default function ImageUploader({ images = [], onChange }) {
     }
 
     let finalUrl = trimmed;
-    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://') && !trimmed.startsWith('data:')) {
+    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
       finalUrl = 'https://' + trimmed;
+    }
+
+    // The site can only display images from the hosts allowed in next.config.js
+    let host = '';
+    try {
+      host = new URL(finalUrl).hostname;
+    } catch {}
+    if (host !== 'images.unsplash.com' && !host.endsWith('.supabase.co')) {
+      setErrorMsg('Links are only supported from Unsplash. For other photos, use "Upload Photo" instead.');
+      return;
     }
 
     addImageToList(finalUrl);
     setUrlInput('');
   };
 
-  const handleFileSelect = (e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    const file = files[0];
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        addImageToList(event.target.result, file.name);
-      }
-    };
-    reader.readAsDataURL(file);
+  // Photos are uploaded to Supabase Storage; the product stores the public link
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
     e.target.value = '';
+    if (!file) return;
+
+    setUploading(true);
+    setErrorMsg('');
+    try {
+      const url = await uploadCatalogImage(file, bucket);
+      addImageToList(url, file.name.replace(/\.[^.]+$/, ''));
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleRemove = (idToRemove) => {
@@ -114,9 +129,10 @@ export default function ImageUploader({ images = [], onChange }) {
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="px-4 py-3 bg-charcoal-light text-ivory border border-gold/30 hover:border-gold hover:text-gold transition-colors text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 rounded-sm whitespace-nowrap"
+          disabled={uploading}
+          className="px-4 py-3 bg-charcoal-light text-ivory border border-gold/30 hover:border-gold hover:text-gold transition-colors text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 rounded-sm whitespace-nowrap disabled:opacity-50"
         >
-          <Upload size={14} /> Upload Local File
+          <Upload size={14} /> {uploading ? 'Uploading…' : 'Upload Photo'}
         </button>
       </div>
 

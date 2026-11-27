@@ -3,7 +3,8 @@
 import React from 'react';
 import ProductCard from '@/components/ProductCard';
 import Button from '@/components/Button';
-import { SAMPLE_PRODUCTS } from '@/lib/data/sampleData';
+import { useCatalog } from '@/lib/context/CatalogContext';
+import { firstAvailableVariant } from '@/lib/catalog';
 import { useCart } from '@/lib/context/CartContext';
 import { useWishlist } from '@/lib/context/WishlistContext';
 import { Heart, ShoppingBag, ArrowRight } from 'lucide-react';
@@ -11,10 +12,12 @@ import { Heart, ShoppingBag, ArrowRight } from 'lucide-react';
 export default function WishlistPage() {
   const { addItem } = useCart();
   const { ids } = useWishlist();
-  const wishlistProducts = SAMPLE_PRODUCTS.filter((p) => ids.includes(p.id));
+  const { products } = useCatalog();
+  const wishlistProducts = products.filter((p) => ids.includes(p.id));
 
   const handleMoveToCart = (product) => {
-    addItem(product, product.sizes?.[0] || 'M', product.colors?.[0] || 'Charcoal', 1);
+    const available = firstAvailableVariant(product);
+    if (available) addItem(product, available.size, available.color, 1);
   };
 
   return (

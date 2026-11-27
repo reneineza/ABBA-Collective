@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, use } from 'react';
 import ProductCard from '@/components/ProductCard';
-import { SAMPLE_PRODUCTS } from '@/lib/data/sampleData';
+import { useCatalog } from '@/lib/context/CatalogContext';
 import { Search, RotateCcw } from 'lucide-react';
 
 export default function AdvancedSearchPage({ searchParams }) {
@@ -10,11 +10,12 @@ export default function AdvancedSearchPage({ searchParams }) {
   const initialQuery = resolvedSearchParams?.q || '';
 
   const [query, setQuery] = useState(initialQuery);
+  const { products } = useCatalog();
 
   const searchResults = useMemo(() => {
-    if (!query || query.trim() === '') return SAMPLE_PRODUCTS;
+    if (!query || query.trim() === '') return products;
     const lower = query.toLowerCase();
-    return SAMPLE_PRODUCTS.filter((p) =>
+    return products.filter((p) =>
       p.name.toLowerCase().includes(lower) ||
       p.description.toLowerCase().includes(lower) ||
       (p.tagline && p.tagline.toLowerCase().includes(lower)) ||
@@ -22,7 +23,7 @@ export default function AdvancedSearchPage({ searchParams }) {
       (p.collection && p.collection.toLowerCase().includes(lower)) ||
       (p.story && p.story.toLowerCase().includes(lower))
     );
-  }, [query]);
+  }, [query, products]);
 
   return (
     <div className="bg-ivory text-charcoal py-16 sm:py-24">

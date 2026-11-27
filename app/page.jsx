@@ -8,7 +8,7 @@ import ProductCard from '@/components/ProductCard';
 import CollectionCard from '@/components/CollectionCard';
 import StorySection from '@/components/StorySection';
 import Button from '@/components/Button';
-import { SAMPLE_COLLECTIONS, SAMPLE_PRODUCTS } from '@/lib/data/sampleData';
+import { useCatalog } from '@/lib/context/CatalogContext';
 import { listPosts } from '@/lib/journal';
 import { getSettings } from '@/lib/siteSettings';
 import { ArrowRight } from 'lucide-react';
@@ -16,6 +16,7 @@ import { ArrowRight } from 'lucide-react';
 export default function HomePage() {
   const [blogPosts, setBlogPosts] = useState([]);
   const [featuredSlug, setFeaturedSlug] = useState(null);
+  const { products, collections } = useCatalog();
 
   // The collection chosen on the admin Marketing page is shown first
   useEffect(() => {
@@ -23,7 +24,7 @@ export default function HomePage() {
       .then((settings) => setFeaturedSlug(settings.featured_collection))
       .catch(() => {});
   }, []);
-  const orderedCollections = [...SAMPLE_COLLECTIONS].sort(
+  const orderedCollections = [...collections].sort(
     (a, b) => (b.slug === featuredSlug) - (a.slug === featuredSlug)
   );
 
@@ -88,7 +89,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {SAMPLE_PRODUCTS.filter((p) => p.featured).map((product) => (
+            {products.filter((p) => p.featured).map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

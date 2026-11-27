@@ -7,8 +7,8 @@ import ProductRecommendations from '@/components/ProductRecommendations';
 import SocialShareButtons from '@/components/SocialShareButtons';
 import SizeGuideModal from '@/components/SizeGuideModal';
 import Button from '@/components/Button';
-import { SAMPLE_PRODUCTS } from '@/lib/data/sampleData';
-import { safeJsonParse } from '@/lib/utils/json';
+import { useCatalog } from '@/lib/context/CatalogContext';
+import { stockFor } from '@/lib/catalog';
 import { useCart } from '@/lib/context/CartContext';
 import { useWishlist } from '@/lib/context/WishlistContext';
 import { getProductSchema } from '@/lib/seo/structuredData';
@@ -21,21 +21,10 @@ export default function ProductDetailPage({ params }) {
   const resolvedParams = params && typeof params.then === 'function' ? React.use(params) : params;
   const slug = resolvedParams?.slug || '';
 
-  const [product, setProduct] = useState(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    try {
-      const stored = safeJsonParse(localStorage.getItem('abba_products'), []);
-      const allProducts = Array.isArray(stored) && stored.length > 0 ? stored : SAMPLE_PRODUCTS;
-      const found = allProducts.find((p) => p.slug === slug || p.id === slug);
-      setProduct(found || null);
-    } catch (e) {
-      setProduct(SAMPLE_PRODUCTS.find((p) => p.slug === slug || p.id === slug) || null);
-    } finally {
-      setIsLoaded(true);
-    }
-  }, [slug]);
+  // allProducts includes hidden products for admins (visitors never receive them)
+  const { allProducts, loading } = useCatalog();
+  const product = allProducts.find((p) => p.slug === slug) || null;
+  const isLoaded = !loading;
 
   const { addItem } = useCart();
   const [selectedColor, setSelectedColor] = useState('Charcoal');
@@ -52,10 +41,14 @@ export default function ProductDetailPage({ params }) {
 
   useEffect(() => {
     if (product) {
-      if (product.colors && product.colors.length > 0) setSelectedColor(product.colors[0]);
-      if (product.sizes && product.sizes.length > 0) setSelectedSize(product.sizes[0]);
+      // Start on the first combination that is in stock
+      const firstAvailable = product.variants.find((v) => v.stock_quantity > 0) || product.variants[0];
+      if (firstAvailable) {
+        setSelectedColor(firstAvailable.color);
+        setSelectedSize(firstAvailable.size);
+      }
     }
-  }, [product]);
+  }, [product?.id]);
 
   // Track Product View Analytics
   React.useEffect(() => {
@@ -66,11 +59,8 @@ export default function ProductDetailPage({ params }) {
 
   const productSchema = getProductSchema(product);
 
-  const currentVariant = product?.variants ? product.variants.find(
-    (v) => v.color.toLowerCase() === selectedColor.toLowerCase() && v.size.toLowerCase() === selectedSize.toLowerCase()
-  ) : null;
-
-  const stockQuantity = currentVariant ? currentVariant.stock_quantity : 15;
+  // Combinations without a stock record count as unavailable
+  const stockQuantity = stockFor(product, selectedColor, selectedSize);
   const isOutOfStock = stockQuantity <= 0;
 
   const handleAddToCart = () => {

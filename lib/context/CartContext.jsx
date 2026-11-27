@@ -15,7 +15,8 @@ export function CartProvider({ children }) {
     try {
       const savedCart = safeJsonParse(localStorage.getItem('abba_collective_cart'), []);
       if (Array.isArray(savedCart)) {
-        setCart(savedCart);
+        // Drop items saved before the catalogue moved to the database (ids like 'prod-1')
+        setCart(savedCart.filter((item) => /^[0-9a-f-]{36}$/i.test(item.productId || '')));
       }
     } catch (e) {
       console.error('Failed to load cart from localStorage:', e);

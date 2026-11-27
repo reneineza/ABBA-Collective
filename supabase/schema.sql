@@ -99,6 +99,15 @@ CREATE TABLE IF NOT EXISTS public.product_images (
   alt_text TEXT
 );
 
+-- Catalogue fields shown on the website, and stock options per product
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS tagline TEXT;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS details TEXT;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS reflection TEXT;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE NOT NULL;
+ALTER TABLE public.product_images ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0 NOT NULL;
+ALTER TABLE public.collections ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0 NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS product_variants_option_key ON public.product_variants (product_id, color, size);
+
 -- 9. ORDERS TABLE
 CREATE TABLE IF NOT EXISTS public.orders (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -312,6 +321,85 @@ INSERT INTO public.profiles (id, email, full_name)
 SELECT id, email, raw_user_meta_data ->> 'full_name' FROM auth.users
 ON CONFLICT (id) DO NOTHING;
 
+-- STOCK: reserved when an order is placed, returned when it is cancelled.
+-- items is the order's items array: [{product_id, color, size, quantity, name}, ...]
+CREATE OR REPLACE FUNCTION public.reserve_stock(items JSONB)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  item JSONB;
+  changed INTEGER;
+BEGIN
+  FOR item IN SELECT * FROM jsonb_array_elements(items) LOOP
+    UPDATE public.product_variants
+       SET stock_quantity = stock_quantity - (item ->> 'quantity')::INTEGER
+     WHERE product_id = (item ->> 'product_id')::UUID
+       AND color = item ->> 'color'
+       AND size = item ->> 'size'
+       AND stock_quantity >= (item ->> 'quantity')::INTEGER;
+    GET DIAGNOSTICS changed = ROW_COUNT;
+    IF changed = 0 THEN
+      -- Aborts the whole call, so no stock is taken for any item
+      RAISE EXCEPTION 'OUT_OF_STOCK:%', COALESCE(item ->> 'name', 'item') || ' (' || (item ->> 'color') || ', ' || (item ->> 'size') || ')';
+    END IF;
+  END LOOP;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.release_stock(items JSONB)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  item JSONB;
+BEGIN
+  FOR item IN SELECT * FROM jsonb_array_elements(items) LOOP
+    IF (item ->> 'product_id') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
+      UPDATE public.product_variants
+         SET stock_quantity = stock_quantity + (item ->> 'quantity')::INTEGER
+       WHERE product_id = (item ->> 'product_id')::UUID
+         AND color = item ->> 'color'
+         AND size = item ->> 'size';
+    END IF;
+  END LOOP;
+END;
+$$;
+
+-- Only the server (secret key) may reserve or release stock
+REVOKE EXECUTE ON FUNCTION public.reserve_stock(JSONB) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.release_stock(JSONB) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.reserve_stock(JSONB) TO service_role;
+GRANT EXECUTE ON FUNCTION public.release_stock(JSONB) TO service_role;
+
+-- Cancelling an order returns its items to stock; a cancelled order can't be reopened
+-- (its stock may already have been sold again).
+CREATE OR REPLACE FUNCTION public.handle_order_status_change()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF OLD.status = 'Cancelled' AND NEW.status <> 'Cancelled' THEN
+    RAISE EXCEPTION 'A cancelled order cannot be reopened. Please place a new order instead.';
+  END IF;
+  IF NEW.status = 'Cancelled' AND OLD.status <> 'Cancelled' THEN
+    PERFORM public.release_stock(NEW.items);
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS orders_status_change ON public.orders;
+CREATE TRIGGER orders_status_change
+  BEFORE UPDATE OF status ON public.orders
+  FOR EACH ROW EXECUTE FUNCTION public.handle_order_status_change();
+
 -- ROW LEVEL SECURITY (RLS) FOR ALL PUBLIC TABLES
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.addresses ENABLE ROW LEVEL SECURITY;
@@ -374,7 +462,7 @@ DROP POLICY IF EXISTS "Admins manage catalogue" ON public.collections;
 CREATE POLICY "Admins manage catalogue" ON public.collections FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 DROP POLICY IF EXISTS "Catalogue is public" ON public.products;
-CREATE POLICY "Catalogue is public" ON public.products FOR SELECT USING (true);
+CREATE POLICY "Catalogue is public" ON public.products FOR SELECT USING (active = true OR public.is_admin());
 DROP POLICY IF EXISTS "Admins manage catalogue" ON public.products;
 CREATE POLICY "Admins manage catalogue" ON public.products FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
@@ -482,6 +570,76 @@ INSERT INTO public.journal_posts (slug, title, category, author, published_on, r
     $q$When God called craftsmen in Exodus like Bezalel, He filled them with the Spirit of wisdom and artistic craftsmanship to build the Tabernacle. Divine order and beauty reflect the God who speaks light out of darkness and forms all things with infinite precision.$q$,
     $q$Every piece in our collections is milled custom in Portugal using 100% organic Supima and heavy jersey cottons. We believe that garments designed to honor God's word should endure both in material structure and timeless design.$q$])
 ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO public.categories (name, slug) VALUES
+  ($q$Outerwear$q$, $q$outerwear$q$),
+  ($q$Tops & Tees$q$, $q$tops-tees$q$),
+  ($q$Knitwear & Hoodies$q$, $q$knitwear-hoodies$q$),
+  ($q$Trousers$q$, $q$trousers$q$)
+ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO public.collections (name, slug, description, image_url, sort_order) VALUES
+  ($q$Collection 001: ADOPTION$q$, $q$adoption$q$, $q$Tailored heavy-weight organic cotton pieces crafted around the profound truth of Galatians 4:6 and Romans 8:15.$q$, $q$https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200&auto=format&fit=crop$q$, 1),
+  ($q$Collection 002: GRACE REVEALED$q$, $q$grace-revealed$q$, $q$Minimalist outerwear and unstructured tailoring with subtle embroidered scripture references.$q$, $q$https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=1200&auto=format&fit=crop$q$, 2),
+  ($q$Collection 003: SOVEREIGN ESSENTIALS$q$, $q$sovereign-essentials$q$, $q$Elevated foundational wardrobe staples built for endurance, mindfulness, and everyday quiet elegance.$q$, $q$https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?q=80&w=1200&auto=format&fit=crop$q$, 3)
+ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO public.products (name, slug, tagline, description, story, details, reflection, price, featured, category_id, collection_id) VALUES
+  ($q$ABBA Signature Tee$q$, $q$abba-signature-tee$q$, $q$Identity received, not achieved.$q$, $q$280 GSM Supima organic cotton t-shirt featuring a relaxed drop-shoulder silhouette, blind-stitched hem, and discreetly embroidered 'Galatians 4:6' on the inner neck tape.$q$, $q$Identity is never constructed through human performance, social status, or striving; it is received as a sovereign gift through divine adoption in Christ.$q$, $q$100% Organic Supima Cotton. 280 GSM heavy jersey weight. Custom milled in Portugal. Pre-shrunk with organic enzyme wash for ultra-soft hand-feel.$q$, $q$Galatians 4:6 — 'And because you are sons, God has sent the Spirit of his Son into our hearts, crying, ABBA! Father!'$q$, 45000, TRUE,
+   (SELECT id FROM public.categories WHERE slug = $q$tops-tees$q$),
+   (SELECT id FROM public.collections WHERE slug = $q$adoption$q$)),
+  ($q$Adoption Hoodie$q$, $q$adoption-hoodie$q$, $q$A reminder of belonging to the Father's family.$q$, $q$480 GSM organic french terry hoodie featuring double-layered hood, custom gold aglets, and discreetly embroidered 'Romans 8:15' on the inner left cuff.$q$, $q$Conceived as a tactile armor of divine security. When you wear the Adoption Hoodie, you are enveloped in the warmth and posture of royal sonship.$q$, $q$100% Organic French Terry Cotton. 480 GSM heavyweight fleece. Double-needle stitch construction. Custom solid brass antique gold aglets.$q$, $q$Romans 8:15 — 'For you did not receive the spirit of slavery to fall back into fear, but you have received the Spirit of adoption by whom we cry, ABBA! Father!'$q$, 85000, TRUE,
+   (SELECT id FROM public.categories WHERE slug = $q$knitwear-hoodies$q$),
+   (SELECT id FROM public.collections WHERE slug = $q$adoption$q$)),
+  ($q$Grace Crewneck$q$, $q$grace-crewneck$q$, $q$Salvation is received through grace.$q$, $q$400 GSM brushed fleece cotton crewneck sweatshirt with relaxed shoulders, custom tonal chest embroidery, and thick ribbed collar.$q$, $q$Crafted around the foundational gospel doctrine of unearned, unmerited favor. Grace is not just a concept; it is the atmosphere of the Kingdom.$q$, $q$100% Ring-spun Organic Cotton. 400 GSM brushed fleece interior. Ribbed cuffs, neckline, and waistband with shape-retention memory knit.$q$, $q$Ephesians 2:8 — 'For by grace you have been saved through faith. And this is not your own doing; it is the gift of God, not a result of works.'$q$, 65000, TRUE,
+   (SELECT id FROM public.categories WHERE slug = $q$knitwear-hoodies$q$),
+   (SELECT id FROM public.collections WHERE slug = $q$adoption$q$)),
+  ($q$Covenant Tailored Overcoat$q$, $q$covenant-tailored-overcoat$q$, $q$Sheltered under the covering of the covenant.$q$, $q$Double-breasted virgin wool blend coat with genuine horn buttons, peaked lapels, and silk lining debossed with covenant cross motifs.$q$, $q$Designed for posture, presence, and quiet dignity. Represents the unyielding shelter of God's covenant love.$q$, $q$80% Virgin Wool, 20% Cashmere Blend. Fully lined in silk cupro. Double horn closure. Tailored fit in Italy.$q$, $q$Isaiah 54:10 — 'My steadfast love shall not depart from you, and my covenant of peace shall not be removed, says the Lord.'$q$, 180000, FALSE,
+   (SELECT id FROM public.categories WHERE slug = $q$outerwear$q$),
+   (SELECT id FROM public.collections WHERE slug = $q$grace-revealed$q$))
+ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO public.product_variants (product_id, color, size, sku, stock_quantity)
+SELECT p.id, v.color, v.size, v.sku, v.stock
+FROM (VALUES
+  ($q$abba-signature-tee$q$, $q$Charcoal$q$, $q$S$q$, $q$AST-CHR-S$q$, 15),
+  ($q$abba-signature-tee$q$, $q$Charcoal$q$, $q$M$q$, $q$AST-CHR-M$q$, 24),
+  ($q$abba-signature-tee$q$, $q$Charcoal$q$, $q$L$q$, $q$AST-CHR-L$q$, 18),
+  ($q$abba-signature-tee$q$, $q$Charcoal$q$, $q$XL$q$, $q$AST-CHR-XL$q$, 10),
+  ($q$abba-signature-tee$q$, $q$Ivory$q$, $q$S$q$, $q$AST-IVR-S$q$, 12),
+  ($q$abba-signature-tee$q$, $q$Ivory$q$, $q$M$q$, $q$AST-IVR-M$q$, 20),
+  ($q$abba-signature-tee$q$, $q$Ivory$q$, $q$L$q$, $q$AST-IVR-L$q$, 14),
+  ($q$abba-signature-tee$q$, $q$Forest Green$q$, $q$M$q$, $q$AST-FST-M$q$, 8),
+  ($q$adoption-hoodie$q$, $q$Charcoal$q$, $q$S$q$, $q$ADH-CHR-S$q$, 10),
+  ($q$adoption-hoodie$q$, $q$Charcoal$q$, $q$M$q$, $q$ADH-CHR-M$q$, 20),
+  ($q$adoption-hoodie$q$, $q$Charcoal$q$, $q$L$q$, $q$ADH-CHR-L$q$, 16),
+  ($q$adoption-hoodie$q$, $q$Ivory$q$, $q$M$q$, $q$ADH-IVR-M$q$, 15),
+  ($q$adoption-hoodie$q$, $q$Forest Green$q$, $q$L$q$, $q$ADH-FST-L$q$, 9),
+  ($q$grace-crewneck$q$, $q$Ivory$q$, $q$S$q$, $q$GRC-IVR-S$q$, 14),
+  ($q$grace-crewneck$q$, $q$Ivory$q$, $q$M$q$, $q$GRC-IVR-M$q$, 22),
+  ($q$grace-crewneck$q$, $q$Charcoal$q$, $q$L$q$, $q$GRC-CHR-L$q$, 18),
+  ($q$covenant-tailored-overcoat$q$, $q$Deep Charcoal$q$, $q$M$q$, $q$CTO-CHR-M$q$, 6),
+  ($q$covenant-tailored-overcoat$q$, $q$Deep Charcoal$q$, $q$L$q$, $q$CTO-CHR-L$q$, 8)
+) AS v(product_slug, color, size, sku, stock)
+JOIN public.products p ON p.slug = v.product_slug
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.product_images (product_id, image_url, alt_text, sort_order)
+SELECT p.id, i.image_url, i.alt_text, i.sort_order
+FROM (VALUES
+  ($q$abba-signature-tee$q$, $q$https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1000&auto=format&fit=crop$q$, $q$ABBA Signature Tee - Front View$q$, 0),
+  ($q$abba-signature-tee$q$, $q$https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=1000&auto=format&fit=crop$q$, $q$ABBA Signature Tee - Back View$q$, 1),
+  ($q$abba-signature-tee$q$, $q$https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=1000&auto=format&fit=crop$q$, $q$ABBA Signature Tee - Detail View$q$, 2),
+  ($q$adoption-hoodie$q$, $q$https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=1000&auto=format&fit=crop$q$, $q$Adoption Hoodie - Front View$q$, 0),
+  ($q$adoption-hoodie$q$, $q$https://images.unsplash.com/photo-1578587018452-892bacefd3f2?q=80&w=1000&auto=format&fit=crop$q$, $q$Adoption Hoodie - Side View$q$, 1),
+  ($q$adoption-hoodie$q$, $q$https://images.unsplash.com/photo-1509967419530-da38b4704bc6?q=80&w=1000&auto=format&fit=crop$q$, $q$Adoption Hoodie - Detail View$q$, 2),
+  ($q$grace-crewneck$q$, $q$https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?q=80&w=1000&auto=format&fit=crop$q$, $q$Grace Crewneck - Front View$q$, 0),
+  ($q$grace-crewneck$q$, $q$https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1000&auto=format&fit=crop$q$, $q$Grace Crewneck - Lifestyle$q$, 1),
+  ($q$covenant-tailored-overcoat$q$, $q$https://images.unsplash.com/photo-1539533018447-63fcce2678e3?q=80&w=1000&auto=format&fit=crop$q$, $q$Covenant Tailored Overcoat - Front$q$, 0),
+  ($q$covenant-tailored-overcoat$q$, $q$https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?q=80&w=1000&auto=format&fit=crop$q$, $q$Covenant Tailored Overcoat - Back$q$, 1)
+) AS i(product_slug, image_url, alt_text, sort_order)
+JOIN public.products p ON p.slug = i.product_slug
+WHERE NOT EXISTS (SELECT 1 FROM public.product_images x WHERE x.product_id = p.id AND x.image_url = i.image_url);
 
 INSERT INTO public.site_settings (key, value) VALUES
   ('announcement', '{"active": true, "text": "Identity Received. Grace Revealed."}'),

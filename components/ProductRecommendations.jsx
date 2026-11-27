@@ -2,10 +2,12 @@
 
 import React from 'react';
 import ProductCard from './ProductCard';
-import { getRelatedProducts } from '@/lib/recommendations/recommendationEngine';
+import { getRelatedProducts } from '@/lib/catalog';
+import { useCatalog } from '@/lib/context/CatalogContext';
 
 export default function ProductRecommendations({ currentProduct }) {
-  const relatedProducts = getRelatedProducts(currentProduct, 4);
+  const { products } = useCatalog();
+  const relatedProducts = getRelatedProducts(products, currentProduct, 4);
 
   if (!relatedProducts || relatedProducts.length === 0) return null;
 

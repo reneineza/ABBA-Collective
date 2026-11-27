@@ -5,6 +5,7 @@ import CartDrawer from '@/components/CartDrawer';
 import { CartProvider } from '@/lib/context/CartContext';
 import { AuthProvider } from '@/lib/context/AuthContext';
 import { WishlistProvider } from '@/lib/context/WishlistContext';
+import { CatalogProvider } from '@/lib/context/CatalogContext';
 import { getOrganizationSchema } from '@/lib/seo/structuredData';
 import { SITE_URL } from '@/lib/config/site';
 
@@ -47,14 +48,16 @@ export default function RootLayout({ children }) {
       </head>
       <body className="bg-ivory text-charcoal font-sans flex flex-col min-h-screen antialiased selection:bg-gold selection:text-charcoal">
         <AuthProvider>
-          <WishlistProvider>
-            <CartProvider>
-              <Navbar />
-              <CartDrawer />
-              <main className="flex-grow">{children}</main>
-              <Footer />
-            </CartProvider>
-          </WishlistProvider>
+          <CatalogProvider>
+            <WishlistProvider>
+              <CartProvider>
+                <Navbar />
+                <CartDrawer />
+                <main className="flex-grow">{children}</main>
+                <Footer />
+              </CartProvider>
+            </WishlistProvider>
+          </CatalogProvider>
         </AuthProvider>
       </body>
     </html>

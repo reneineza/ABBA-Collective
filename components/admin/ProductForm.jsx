@@ -2,30 +2,31 @@
 
 import React, { useState } from 'react';
 import ImageUploader from './ImageUploader';
-import { SAMPLE_CATEGORIES, SAMPLE_COLLECTIONS } from '@/lib/data/sampleData';
+import { useCatalog } from '@/lib/context/CatalogContext';
+import { slugify } from '@/lib/adminCatalog';
 import { formatPrice } from '@/lib/utils/formatCurrency';
 import { Plus, Trash2, Check, X } from 'lucide-react';
 
-export default function ProductForm({ initialProduct, onSave, onCancel }) {
+export default function ProductForm({ initialProduct, onSave, onCancel, saving = false }) {
+  const { categories, collections } = useCatalog();
   const [name, setName] = useState(initialProduct?.name || '');
   const [slug, setSlug] = useState(initialProduct?.slug || '');
-  const [price, setPrice] = useState(initialProduct?.price || 120000);
+  const [price, setPrice] = useState(initialProduct?.price || '');
+  const [tagline, setTagline] = useState(initialProduct?.tagline || '');
+  const [active, setActive] = useState(initialProduct?.active ?? true);
+  const [formError, setFormError] = useState('');
   const [description, setDescription] = useState(initialProduct?.description || '');
   const [story, setStory] = useState(initialProduct?.story || '');
   const [details, setDetails] = useState(initialProduct?.details || '');
   const [reflection, setReflection] = useState(initialProduct?.reflection || '');
-  const [categoryId, setCategoryId] = useState(initialProduct?.category_id || 'cat-2');
-  const [collectionId, setCollectionId] = useState(initialProduct?.collection_id || 'col-001');
+  const [categoryId, setCategoryId] = useState(initialProduct?.category_id || '');
+  const [collectionId, setCollectionId] = useState(initialProduct?.collection_id || '');
   const [featured, setFeatured] = useState(initialProduct?.featured || false);
-  const [images, setImages] = useState(initialProduct?.images || [
-    { id: '1', image_url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1000', alt_text: name }
-  ]);
+  const [images, setImages] = useState(initialProduct?.images || []);
 
   // Variant State
-  const [variants, setVariants] = useState(initialProduct?.variants || [
-    { id: 'v-1', color: 'Charcoal', size: 'M', sku: 'ABBA-HOOD-CHR-M', stock_quantity: 20 },
-    { id: 'v-2', color: 'Ivory', size: 'L', sku: 'ABBA-HOOD-IVR-L', stock_quantity: 15 },
-  ]);
+  // Copies, so editing in the form doesn't change the shared catalogue before saving
+  const [variants, setVariants] = useState(() => (initialProduct?.variants || []).map((v) => ({ ...v })));
 
   const handleAddVariant = () => {
     const newVariant = {
@@ -33,15 +34,13 @@ export default function ProductForm({ initialProduct, onSave, onCancel }) {
       color: 'Charcoal',
       size: 'L',
       sku: `ABBA-${name ? name.substring(0, 4).toUpperCase() : 'PROD'}-${Date.now().toString().slice(-4)}`,
-      stock_quantity: 10,
+      stock_quantity: 0,
     };
     setVariants([...variants, newVariant]);
   };
 
   const handleUpdateVariant = (index, field, value) => {
-    const updated = [...variants];
-    updated[index][field] = value;
-    setVariants(updated);
+    setVariants(variants.map((v, idx) => (idx === index ? { ...v, [field]: value } : v)));
   };
 
   const handleRemoveVariant = (index) => {
@@ -50,10 +49,26 @@ export default function ProductForm({ initialProduct, onSave, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setFormError('');
+
+    if (variants.length === 0) {
+      setFormError('Add at least one stock variant (colour, size, SKU and quantity).');
+      return;
+    }
+    if (variants.some((v) => !v.color.trim() || !v.sku.trim())) {
+      setFormError('Every variant needs a colour and a SKU.');
+      return;
+    }
+    const combos = variants.map((v) => `${v.color.trim().toLowerCase()}|${v.size}`);
+    if (new Set(combos).size !== combos.length) {
+      setFormError('Two variants have the same colour and size. Each combination should appear once.');
+      return;
+    }
+
     const productData = {
-      id: initialProduct?.id || 'prod_' + Date.now(),
       name,
-      slug: slug || name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
+      slug: slugify(slug || name),
+      tagline,
       price: Number(price),
       description,
       story,
@@ -62,6 +77,7 @@ export default function ProductForm({ initialProduct, onSave, onCancel }) {
       category_id: categoryId,
       collection_id: collectionId,
       featured,
+      active,
       images,
       variants,
     };
@@ -90,7 +106,7 @@ export default function ProductForm({ initialProduct, onSave, onCancel }) {
             value={name}
             onChange={(e) => {
               setName(e.target.value);
-              if (!initialProduct) setSlug(e.target.value.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''));
+              if (!initialProduct) setSlug(slugify(e.target.value));
             }}
             placeholder="ABBA Heir Hoodie"
             className="w-full p-3 text-xs bg-charcoal-dark border border-gold/30 focus:border-gold focus:outline-none"
@@ -132,7 +148,8 @@ export default function ProductForm({ initialProduct, onSave, onCancel }) {
               onChange={(e) => setCategoryId(e.target.value)}
               className="w-full p-3 text-xs bg-charcoal-dark border border-gold/30 focus:border-gold focus:outline-none"
             >
-              {SAMPLE_CATEGORIES.map((c) => (
+              <option value="">None</option>
+              {categories.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
@@ -145,12 +162,38 @@ export default function ProductForm({ initialProduct, onSave, onCancel }) {
               onChange={(e) => setCollectionId(e.target.value)}
               className="w-full p-3 text-xs bg-charcoal-dark border border-gold/30 focus:border-gold focus:outline-none"
             >
-              {SAMPLE_COLLECTIONS.map((c) => (
+              <option value="">None</option>
+              {collections.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
         </div>
+      </div>
+
+      <div>
+        <label className="text-[10px] uppercase tracking-widest text-gold font-semibold block mb-1">Tagline</label>
+        <input
+          type="text"
+          value={tagline}
+          onChange={(e) => setTagline(e.target.value)}
+          placeholder="Identity received, not achieved."
+          className="w-full p-3 text-xs bg-charcoal-dark border border-gold/30 focus:border-gold focus:outline-none"
+        />
+      </div>
+
+      {/* Visibility */}
+      <div className="flex items-center space-x-2 pt-2">
+        <input
+          type="checkbox"
+          id="active"
+          checked={active}
+          onChange={(e) => setActive(e.target.checked)}
+          className="w-4 h-4 accent-gold"
+        />
+        <label htmlFor="active" className="text-xs uppercase tracking-widest font-semibold text-ivory">
+          Visible in the shop (untick to hide without deleting)
+        </label>
       </div>
 
       {/* Checkbox Featured */}
@@ -185,6 +228,26 @@ export default function ProductForm({ initialProduct, onSave, onCancel }) {
             rows={3}
             value={story}
             onChange={(e) => setStory(e.target.value)}
+            className="w-full p-3 text-xs bg-charcoal-dark border border-gold/30 focus:border-gold focus:outline-none resize-none"
+          />
+        </div>
+
+        <div>
+          <label className="text-[10px] uppercase tracking-widest text-gold font-semibold block mb-1">Materials, Craftsmanship & Fit</label>
+          <textarea
+            rows={3}
+            value={details}
+            onChange={(e) => setDetails(e.target.value)}
+            className="w-full p-3 text-xs bg-charcoal-dark border border-gold/30 focus:border-gold focus:outline-none resize-none"
+          />
+        </div>
+
+        <div>
+          <label className="text-[10px] uppercase tracking-widest text-gold font-semibold block mb-1">Scripture Reflection</label>
+          <textarea
+            rows={2}
+            value={reflection}
+            onChange={(e) => setReflection(e.target.value)}
             className="w-full p-3 text-xs bg-charcoal-dark border border-gold/30 focus:border-gold focus:outline-none resize-none"
           />
         </div>
@@ -247,6 +310,7 @@ export default function ProductForm({ initialProduct, onSave, onCancel }) {
               <div className="col-span-2">
                 <input
                   type="number"
+                  min="0"
                   value={varItem.stock_quantity}
                   onChange={(e) => handleUpdateVariant(idx, 'stock_quantity', Number(e.target.value))}
                   placeholder="Stock"
@@ -267,6 +331,10 @@ export default function ProductForm({ initialProduct, onSave, onCancel }) {
         </div>
       </div>
 
+      {formError && (
+        <div className="p-3 bg-red-900/20 border border-red-500/30 text-red-300 text-xs rounded-sm">{formError}</div>
+      )}
+
       {/* Action Buttons */}
       <div className="pt-6 border-t border-gold/20 flex justify-end gap-4">
         {onCancel && (
@@ -280,9 +348,10 @@ export default function ProductForm({ initialProduct, onSave, onCancel }) {
         )}
         <button
           type="submit"
-          className="px-8 py-3 bg-gold text-charcoal hover:bg-gold-light transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2"
+          disabled={saving}
+          className="px-8 py-3 bg-gold text-charcoal hover:bg-gold-light transition-colors text-xs uppercase tracking-widest font-bold flex items-center gap-2 disabled:opacity-50"
         >
-          <Check size={16} /> Save Product & Inventory
+          <Check size={16} /> {saving ? 'Saving…' : 'Save Product & Inventory'}
         </button>
       </div>
     </form>

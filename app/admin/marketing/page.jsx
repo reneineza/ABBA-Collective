@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getSettings, saveSettings, DEFAULT_SETTINGS } from '@/lib/siteSettings';
-import { SAMPLE_COLLECTIONS } from '@/lib/data/sampleData';
+import { useCatalog } from '@/lib/context/CatalogContext';
 import { Megaphone, Save, Check, Sparkles, Image as ImageIcon } from 'lucide-react';
 
 export default function AdminMarketingPage() {
@@ -10,6 +10,7 @@ export default function AdminMarketingPage() {
   const [announcementActive, setAnnouncementActive] = useState(DEFAULT_SETTINGS.announcement.active);
   const [featuredCollection, setFeaturedCollection] = useState(DEFAULT_SETTINGS.featured_collection);
   const [saved, setSaved] = useState(false);
+  const { collections } = useCatalog();
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -103,7 +104,7 @@ export default function AdminMarketingPage() {
               onChange={(e) => setFeaturedCollection(e.target.value)}
               className="w-full p-3 text-xs bg-charcoal-light border border-gold/20 text-ivory focus:border-gold focus:outline-none rounded-sm"
             >
-              {SAMPLE_COLLECTIONS.map((collection) => (
+              {collections.map((collection) => (
                 <option key={collection.slug} value={collection.slug}>
                   {collection.name}
                 </option>

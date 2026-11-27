@@ -4,22 +4,29 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
-import { SAMPLE_COLLECTIONS, SAMPLE_PRODUCTS } from '@/lib/data/sampleData';
+import { useCatalog } from '@/lib/context/CatalogContext';
 import { ArrowLeft } from 'lucide-react';
 
 export default function CollectionDetailPage({ params }) {
   const resolvedParams = params && typeof params.then === 'function' ? React.use(params) : params;
   const slug = resolvedParams?.slug || '';
   
-  // Find collection by slug or fallback to Collection 001: ADOPTION
-  const collection = SAMPLE_COLLECTIONS.find(
-    (c) => c.slug.toLowerCase() === slug.toLowerCase() || slug.toLowerCase().includes(c.slug.toLowerCase())
-  ) || SAMPLE_COLLECTIONS[0];
+  const { products, collections, loading } = useCatalog();
+  const collection = collections.find((c) => c.slug.toLowerCase() === slug.toLowerCase());
+  const collectionProducts = collection ? products.filter((p) => p.collection_id === collection.id) : [];
 
-  // Filter garments matching this collection
-  const collectionProducts = SAMPLE_PRODUCTS.filter(
-    (p) => p.collection_id === collection.id || p.collection.toLowerCase().includes(collection.slug.toLowerCase()) || collection.slug.includes('adoption')
-  );
+  if (loading) return <div className="bg-ivory min-h-screen" />;
+
+  if (!collection) {
+    return (
+      <div className="bg-ivory text-charcoal min-h-screen py-20 text-center space-y-4">
+        <h1 className="font-serif-luxury text-3xl font-bold">Collection Not Found</h1>
+        <Link href="/collections" className="text-gold uppercase tracking-widest text-xs font-semibold">
+          View All Collections
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-ivory text-charcoal py-16 sm:py-24 space-y-16">

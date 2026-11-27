@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { SAMPLE_PRODUCTS } from '@/lib/data/sampleData';
+import { fetchProductsByIds, stockFor } from '@/lib/catalog';
 import { getDeliveryFee } from '@/lib/utils/delivery';
 import { getProvinceForDistrict, isValidRwandaPhone, isPhoneOnNetwork, formatRwandaPhone } from '@/lib/utils/rwanda';
 import { createPayment } from '@/lib/payments/paymentService';
@@ -11,6 +11,7 @@ import { orderNumber, pointsForPurchase } from '@/lib/utils/orders';
 
 const PAYMENT_PROVIDERS = ['MTN MoMo', 'Airtel Money', 'Card'];
 const MAX_QUANTITY = 20;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function fail(message, status = 400) {
   return NextResponse.json({ error: message }, { status });
@@ -27,16 +28,38 @@ export async function POST(request) {
   }
   const { items, contact, shippingAddress, paymentProvider, momoNumber } = body || {};
 
-  // Validate and price the items
   if (!Array.isArray(items) || items.length === 0) return fail('Your bag is empty.');
+
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch (err) {
+    console.error(err.message);
+    return fail('Checkout is temporarily unavailable. Please try again shortly.', 503);
+  }
+
+  // Validate and price the items from the catalogue in the database
+  const productIds = [...new Set(items.map((item) => item.productId))].filter((id) => UUID.test(id || ''));
+  let products = [];
+  try {
+    products = productIds.length ? await fetchProductsByIds(admin, productIds) : [];
+  } catch (err) {
+    console.error('Catalogue lookup failed:', err.message);
+    return fail('Checkout is temporarily unavailable. Please try again shortly.', 503);
+  }
+
   const lineItems = [];
   for (const item of items) {
-    const product = SAMPLE_PRODUCTS.find((p) => p.id === item.productId);
+    const product = products.find((p) => p.id === item.productId && p.active);
     const quantity = Number(item.quantity);
     if (!product) return fail('One of the items in your bag is no longer available. Please remove it and try again.');
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_QUANTITY) return fail('Invalid quantity in your bag.');
-    if (product.sizes && !product.sizes.includes(item.size)) return fail(`Size ${item.size} is not available for ${product.name}.`);
-    if (product.colors && !product.colors.includes(item.color)) return fail(`${item.color} is not available for ${product.name}.`);
+    if (!product.variants.some((v) => v.color === item.color && v.size === item.size)) {
+      return fail(`${product.name} is not available in ${item.color}, size ${item.size}.`);
+    }
+    if (stockFor(product, item.color, item.size) < quantity) {
+      return fail(`Sorry, ${product.name} (${item.color}, ${item.size}) is sold out or has fewer items left than you selected.`, 409);
+    }
     lineItems.push({
       product_id: product.id,
       name: product.name,
@@ -69,13 +92,20 @@ export async function POST(request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  let admin;
-  try {
-    admin = createAdminClient();
-  } catch (err) {
-    console.error(err.message);
+  // Reserve stock before payment; the call takes all items or none
+  const { error: stockError } = await admin.rpc('reserve_stock', { items: lineItems });
+  if (stockError) {
+    if (/OUT_OF_STOCK/.test(stockError.message)) {
+      const what = stockError.message.split('OUT_OF_STOCK:')[1] || 'an item in your bag';
+      return fail(`Sorry, ${what} just sold out. Please update your bag and try again.`, 409);
+    }
+    console.error('Stock reservation failed:', stockError.message);
     return fail('Checkout is temporarily unavailable. Please try again shortly.', 503);
   }
+  const releaseStock = () =>
+    admin.rpc('release_stock', { items: lineItems }).then(({ error }) => {
+      if (error) console.error('Stock release failed:', error.message);
+    });
 
   const orderId = randomUUID();
   const payment = await createPayment({
@@ -85,7 +115,10 @@ export async function POST(request) {
     customerEmail: email,
     phoneNumber: paymentProvider !== 'Card' ? formatRwandaPhone(momoNumber) : undefined,
   });
-  if (!payment.success) return fail(payment.message || 'Payment was not completed. Please try again.', 402);
+  if (!payment.success) {
+    await releaseStock();
+    return fail(payment.message || 'Payment was not completed. Please try again.', 402);
+  }
 
   const receiptToken = randomUUID().replace(/-/g, '');
   const order = {
@@ -119,6 +152,7 @@ export async function POST(request) {
   const { error } = await admin.from('orders').insert(order);
   if (error) {
     console.error('Order insert failed:', error.message);
+    await releaseStock();
     return fail(
       `Your payment went through but we could not save your order. Please contact us with reference ${orderNumber(orderId)} and we will sort it out.`,
       500

@@ -3,36 +3,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ProductCard from '@/components/ProductCard';
 import BrandDropdown from '@/components/BrandDropdown';
-import { SAMPLE_PRODUCTS, SAMPLE_COLLECTIONS, SAMPLE_CATEGORIES } from '@/lib/data/sampleData';
-import { safeJsonParse } from '@/lib/utils/json';
+import { useCatalog } from '@/lib/context/CatalogContext';
 import { Filter, SlidersHorizontal, Search, RotateCcw } from 'lucide-react';
 
 export default function ShopPage() {
-  const [products, setProducts] = useState(SAMPLE_PRODUCTS);
+  const { products, collections, categories, loading } = useCatalog();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedCollection, setSelectedCollection] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('featured');
 
-  useEffect(() => {
-    try {
-      const stored = safeJsonParse(localStorage.getItem('abba_products'), []);
-      if (Array.isArray(stored) && stored.length > 0) {
-        setProducts(stored);
-      }
-    } catch (e) {
-      // fallback to SAMPLE_PRODUCTS
-    }
-  }, []);
-
   const categoryOptions = [
     { label: 'All Categories', value: 'all' },
-    ...SAMPLE_CATEGORIES.map((cat) => ({ label: cat.name, value: cat.id })),
+    ...categories.map((cat) => ({ label: cat.name, value: cat.id })),
   ];
 
   const collectionOptions = [
     { label: 'All Collections', value: 'all' },
-    ...SAMPLE_COLLECTIONS.map((col) => ({ label: col.name, value: col.id })),
+    ...collections.map((col) => ({ label: col.name, value: col.id })),
   ];
 
   const sortOptions = [
@@ -44,16 +32,10 @@ export default function ShopPage() {
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       // Category Filter
-      const matchCategory =
-        selectedCategory === 'all' ||
-        product.category_id === selectedCategory ||
-        product.category.toLowerCase().includes(selectedCategory.toLowerCase());
+      const matchCategory = selectedCategory === 'all' || product.category_id === selectedCategory;
 
       // Collection Filter
-      const matchCollection =
-        selectedCollection === 'all' ||
-        product.collection_id === selectedCollection ||
-        product.collection.toLowerCase().includes(selectedCollection.toLowerCase());
+      const matchCollection = selectedCollection === 'all' || product.collection_id === selectedCollection;
 
       // Search Query
       const matchSearch =
@@ -162,12 +144,12 @@ export default function ShopPage() {
                 <span className="text-[10px] uppercase tracking-widest text-gold font-semibold">Active Filters:</span>
                 {selectedCategory !== 'all' && (
                   <span className="bg-olive/10 text-olive px-2 py-0.5 rounded-sm text-[10px] font-semibold">
-                    Category: {SAMPLE_CATEGORIES.find((c) => c.id === selectedCategory)?.name || selectedCategory}
+                    Category: {categories.find((c) => c.id === selectedCategory)?.name || selectedCategory}
                   </span>
                 )}
                 {selectedCollection !== 'all' && (
                   <span className="bg-olive/10 text-olive px-2 py-0.5 rounded-sm text-[10px] font-semibold">
-                    Collection: {SAMPLE_COLLECTIONS.find((c) => c.id === selectedCollection)?.name || selectedCollection}
+                    Collection: {collections.find((c) => c.id === selectedCollection)?.name || selectedCollection}
                   </span>
                 )}
               </div>
