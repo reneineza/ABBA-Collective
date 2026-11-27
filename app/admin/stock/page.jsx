@@ -7,6 +7,7 @@ import { useCatalog } from '@/lib/context/CatalogContext';
 import { useAuth } from '@/lib/context/AuthContext';
 import { canSeeFinance } from '@/lib/roles';
 import { adjustStock, listMovements, listVariantCosts, STOCK_REASONS } from '@/lib/stock';
+import { setVariantCost } from '@/lib/storeSales';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { orderNumber } from '@/lib/utils/orders';
 import { PackagePlus, SlidersHorizontal, X } from 'lucide-react';
@@ -27,6 +28,7 @@ export default function AdminStockPage() {
   const [costs, setCosts] = useState({});
   const [movements, setMovements] = useState([]);
   const [adjusting, setAdjusting] = useState(null); // variant row being adjusted
+  const [costing, setCosting] = useState(null); // variant row whose cost is being set
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
@@ -81,10 +83,19 @@ export default function AdminStockPage() {
             header: 'Avg. Cost / Stock Value',
             cell: (row) =>
               row.avg_cost == null ? (
-                <span className="text-[10px] text-ivory/40 italic">No cost yet</span>
+                <button onClick={() => setCosting(row)} className="text-[10px] text-yellow-300 hover:text-gold underline">
+                  No cost yet · Set cost
+                </button>
               ) : (
                 <div className="text-xs">
-                  <p className="text-ivory/80">{formatCurrency(row.avg_cost)}</p>
+                  <p className="text-ivory/80">
+                    {formatCurrency(row.avg_cost)}
+                    {profile?.role === 'admin' && (
+                      <button onClick={() => setCosting(row)} className="ml-2 text-[10px] text-ivory/40 hover:text-gold underline">
+                        change
+                      </button>
+                    )}
+                  </p>
                   <p className="text-[10px] text-gold">{formatCurrency(row.avg_cost * Math.max(row.stock_quantity, 0))}</p>
                 </div>
               ),
@@ -132,6 +143,11 @@ export default function AdminStockPage() {
         <div className="text-xs">
           <p className="text-ivory/80">{STOCK_REASONS[row.reason] || row.reason}</p>
           {row.note && <p className="text-[10px] text-ivory/50 italic">{row.note}</p>}
+          {row.reference_id && row.reason === 'store_sale' && (
+            <Link href={`/admin/sales/${row.reference_id}`} className="text-[10px] text-gold hover:underline">
+              Receipt #{orderNumber(row.reference_id)}
+            </Link>
+          )}
           {row.reference_id && ['online_order', 'order_cancelled'].includes(row.reason) && (
             <Link href={`/orders/${row.reference_id}`} target="_blank" className="text-[10px] text-gold hover:underline">
               Order #{orderNumber(row.reference_id)}
@@ -185,6 +201,17 @@ export default function AdminStockPage() {
         <DataTable columns={levelColumns} data={rows} searchPlaceholder="Search by product, colour, size or SKU..." />
       ) : (
         <DataTable columns={historyColumns} data={movements} searchPlaceholder="Search stock history..." />
+      )}
+
+      {costing && (
+        <CostDialog
+          variant={costing}
+          onClose={() => setCosting(null)}
+          onDone={async () => {
+            setCosting(null);
+            setCosts(await listVariantCosts());
+          }}
+        />
       )}
 
       {adjusting && (
@@ -285,6 +312,64 @@ function AdjustDialog({ variant, onClose, onDone }) {
             className="px-5 py-2 bg-gold text-charcoal text-xs font-bold uppercase disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save Adjustment'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function CostDialog({ variant, onClose, onDone }) {
+  const [cost, setCost] = useState(variant.avg_cost ?? '');
+  const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setErrorMsg('');
+    try {
+      await setVariantCost(variant.id, cost);
+      await onDone();
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+      <form onSubmit={handleSubmit} className="bg-charcoal border border-gold/30 p-6 rounded-sm space-y-4 w-full max-w-md">
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="font-serif-luxury text-xl font-bold text-ivory">Cost per Unit</h3>
+            <p className="text-xs text-ivory/60">
+              {variant.product} · {variant.color} {variant.size}
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="text-ivory/60 hover:text-gold">
+            <X size={18} />
+          </button>
+        </div>
+        <p className="text-[11px] text-ivory/50">
+          What one unit cost the business (buying or making it). Used to calculate profit on every sale from now on.
+          New deliveries with a cost update this automatically.
+        </p>
+        <input
+          type="number"
+          min="0"
+          required
+          value={cost}
+          onChange={(e) => setCost(e.target.value)}
+          placeholder="RWF"
+          className="w-full p-2.5 text-xs bg-charcoal-dark border border-gold/30 text-ivory focus:outline-none"
+        />
+        {errorMsg && <p className="text-xs text-red-300">{errorMsg}</p>}
+        <div className="flex justify-end gap-3">
+          <button type="button" onClick={onClose} className="text-xs uppercase text-ivory/60">Cancel</button>
+          <button type="submit" disabled={saving} className="px-5 py-2 bg-gold text-charcoal text-xs font-bold uppercase disabled:opacity-50">
+            {saving ? 'Saving…' : 'Save Cost'}
           </button>
         </div>
       </form>

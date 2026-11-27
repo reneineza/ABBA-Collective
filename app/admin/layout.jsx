@@ -49,6 +49,8 @@ export default function AdminLayout({ children }) {
     '/admin/stock': 'Stock Levels & History',
     '/admin/stock/receive': 'Receive a Supplier Delivery',
     '/admin/purchases': 'Supplier Deliveries & Costs',
+    '/admin/sales': 'In-Store Sales',
+    '/admin/sales/new': 'Record an In-Store Sale',
   };
 
   // If the user is on the admin login page, don't show the sidebar or header

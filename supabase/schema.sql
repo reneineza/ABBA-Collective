@@ -311,6 +311,34 @@ CREATE TABLE IF NOT EXISTS public.sale_costs (
 );
 CREATE INDEX IF NOT EXISTS sale_costs_reference_idx ON public.sale_costs (reference_id);
 
+-- 21. IN-STORE SALES (sales made outside the website)
+CREATE TABLE IF NOT EXISTS public.store_sales (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  sold_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  customer_name TEXT,
+  customer_phone TEXT,
+  payment_method TEXT NOT NULL CHECK (payment_method IN ('Cash', 'MTN MoMo', 'Airtel Money', 'Card', 'Bank Transfer')),
+  subtotal NUMERIC(12, 2) NOT NULL,
+  discount NUMERIC(12, 2) DEFAULT 0 NOT NULL CHECK (discount >= 0),
+  total NUMERIC(12, 2) NOT NULL CHECK (total >= 0),
+  notes TEXT,
+  created_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS store_sales_sold_at_idx ON public.store_sales (sold_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.store_sale_items (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  sale_id UUID REFERENCES public.store_sales(id) ON DELETE CASCADE NOT NULL,
+  variant_id UUID REFERENCES public.product_variants(id) ON DELETE SET NULL,
+  product_id UUID REFERENCES public.products(id) ON DELETE SET NULL,
+  product_name TEXT NOT NULL,
+  color TEXT NOT NULL,
+  size TEXT NOT NULL,
+  quantity INTEGER NOT NULL CHECK (quantity > 0),
+  unit_price NUMERIC(12, 2) NOT NULL CHECK (unit_price >= 0)
+);
+
 -- ACCOUNT HELPERS & TRIGGERS
 
 -- True when the signed-in user has the admin role. SECURITY DEFINER so policies on
@@ -713,6 +741,140 @@ GRANT EXECUTE ON FUNCTION public.set_purchase_item_cost(UUID, NUMERIC) TO authen
 GRANT EXECUTE ON FUNCTION public.adjust_stock(UUID, INTEGER, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.delete_stock_purchase(UUID) TO authenticated;
 
+-- IN-STORE SALES: prices come from the catalogue (staff can only give a recorded discount
+-- on the whole sale); stock is taken and the cost of each item recorded in one step.
+-- items: [{variant_id, quantity}, ...]
+CREATE OR REPLACE FUNCTION public.record_store_sale(
+  payment_method TEXT, customer_name TEXT, customer_phone TEXT, discount NUMERIC, notes TEXT, items JSONB
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  new_sale UUID := gen_random_uuid();
+  item JSONB;
+  qty INTEGER;
+  running_total NUMERIC := 0;
+  sale_discount NUMERIC := COALESCE(discount, 0);
+  v_id UUID;
+  v_product UUID;
+  v_color TEXT;
+  v_size TEXT;
+  v_stock INTEGER;
+  v_name TEXT;
+  v_price NUMERIC;
+BEGIN
+  IF NOT public.has_role('admin', 'accountant', 'sales') THEN
+    RAISE EXCEPTION 'Not allowed to record sales';
+  END IF;
+  IF items IS NULL OR jsonb_array_length(items) = 0 THEN
+    RAISE EXCEPTION 'Add at least one item';
+  END IF;
+  IF sale_discount < 0 THEN
+    RAISE EXCEPTION 'Discount cannot be negative';
+  END IF;
+
+  -- Insert the sale first (totals filled in below) so items can reference it
+  INSERT INTO public.store_sales (id, customer_name, customer_phone, payment_method, subtotal, discount, total, notes, created_by)
+  VALUES (new_sale, NULLIF(TRIM(customer_name), ''), NULLIF(TRIM(customer_phone), ''), payment_method, 0, 0, 0,
+          NULLIF(TRIM(notes), ''), auth.uid());
+
+  PERFORM public.set_stock_context('store_sale', new_sale, NULL);
+  FOR item IN SELECT * FROM jsonb_array_elements(items) LOOP
+    qty := (item ->> 'quantity')::INTEGER;
+    IF qty IS NULL OR qty <= 0 THEN
+      RAISE EXCEPTION 'Quantities must be at least 1';
+    END IF;
+    SELECT pv.id, pv.product_id, pv.color, pv.size, pv.stock_quantity, p.name, p.price
+      INTO v_id, v_product, v_color, v_size, v_stock, v_name, v_price
+      FROM public.product_variants pv JOIN public.products p ON p.id = pv.product_id
+     WHERE pv.id = (item ->> 'variant_id')::UUID
+       FOR UPDATE OF pv;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'Unknown product variant';
+    END IF;
+    IF v_stock < qty THEN
+      RAISE EXCEPTION 'OUT_OF_STOCK:% (%, %) has only % left', v_name, v_color, v_size, GREATEST(v_stock, 0);
+    END IF;
+
+    INSERT INTO public.store_sale_items (sale_id, variant_id, product_id, product_name, color, size, quantity, unit_price)
+    VALUES (new_sale, v_id, v_product, v_name, v_color, v_size, qty, v_price);
+    INSERT INTO public.sale_costs (source, reference_id, variant_id, product_name, quantity, unit_cost)
+    VALUES ('store', new_sale, v_id, v_name, qty, (SELECT avg_cost FROM public.variant_costs WHERE variant_id = v_id));
+    UPDATE public.product_variants SET stock_quantity = stock_quantity - qty WHERE id = v_id;
+    running_total := running_total + v_price * qty;
+  END LOOP;
+
+  IF sale_discount > running_total THEN
+    RAISE EXCEPTION 'Discount cannot be more than the sale total';
+  END IF;
+  UPDATE public.store_sales
+     SET subtotal = running_total, discount = sale_discount, total = running_total - sale_discount
+   WHERE id = new_sale;
+  RETURN new_sale;
+END;
+$$;
+
+-- Owner only: delete an in-store sale recorded by mistake; its items go back into stock
+CREATE OR REPLACE FUNCTION public.delete_store_sale(sale UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  line RECORD;
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Only the owner can delete a sale';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.store_sales WHERE id = sale) THEN
+    RAISE EXCEPTION 'Sale not found';
+  END IF;
+  PERFORM public.set_stock_context('store_sale_deleted', sale, NULL);
+  FOR line IN SELECT variant_id, quantity FROM public.store_sale_items WHERE sale_id = sale AND variant_id IS NOT NULL LOOP
+    UPDATE public.product_variants SET stock_quantity = stock_quantity + line.quantity WHERE id = line.variant_id;
+  END LOOP;
+  DELETE FROM public.sale_costs WHERE reference_id = sale AND source = 'store';
+  DELETE FROM public.store_sales WHERE id = sale;
+END;
+$$;
+
+-- Set the average cost of an item directly (e.g. stock that existed before costs were
+-- tracked). The accountant can only fill in a missing cost; the owner can change any cost.
+CREATE OR REPLACE FUNCTION public.set_variant_cost(variant UUID, cost NUMERIC)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF NOT public.has_role('admin', 'accountant') THEN
+    RAISE EXCEPTION 'Not allowed to enter costs';
+  END IF;
+  IF cost IS NULL OR cost < 0 THEN
+    RAISE EXCEPTION 'Enter a cost of 0 or more';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.product_variants WHERE id = variant) THEN
+    RAISE EXCEPTION 'Unknown product variant';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.variant_costs WHERE variant_id = variant) AND NOT public.is_admin() THEN
+    RAISE EXCEPTION 'This item already has a cost. Ask the owner to change it.';
+  END IF;
+  INSERT INTO public.variant_costs (variant_id, avg_cost) VALUES (variant, cost)
+  ON CONFLICT (variant_id) DO UPDATE SET avg_cost = EXCLUDED.avg_cost, updated_at = NOW();
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.record_store_sale(TEXT, TEXT, TEXT, NUMERIC, TEXT, JSONB) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.delete_store_sale(UUID) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.set_variant_cost(UUID, NUMERIC) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.record_store_sale(TEXT, TEXT, TEXT, NUMERIC, TEXT, JSONB) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.delete_store_sale(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.set_variant_cost(UUID, NUMERIC) TO authenticated;
+
 -- Cancelling an order returns its items to stock; a cancelled order can't be reopened
 -- (its stock may already have been sold again).
 CREATE OR REPLACE FUNCTION public.handle_order_status_change()
@@ -820,6 +982,8 @@ ALTER TABLE public.stock_purchases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stock_purchase_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stock_movements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sale_costs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.store_sales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.store_sale_items ENABLE ROW LEVEL SECURITY;
 
 -- Policies from earlier versions of this schema
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
@@ -963,6 +1127,12 @@ DROP POLICY IF EXISTS "Finance views delivery items" ON public.stock_purchase_it
 CREATE POLICY "Finance views delivery items" ON public.stock_purchase_items FOR SELECT USING (public.has_role('admin', 'accountant'));
 DROP POLICY IF EXISTS "Finance views cost of sales" ON public.sale_costs;
 CREATE POLICY "Finance views cost of sales" ON public.sale_costs FOR SELECT USING (public.has_role('admin', 'accountant'));
+
+-- In-store sales: all staff can see them (to issue receipts); written only by record_store_sale
+DROP POLICY IF EXISTS "Staff view store sales" ON public.store_sales;
+CREATE POLICY "Staff view store sales" ON public.store_sales FOR SELECT USING (public.has_role('admin', 'accountant', 'sales'));
+DROP POLICY IF EXISTS "Staff view store sale items" ON public.store_sale_items;
+CREATE POLICY "Staff view store sale items" ON public.store_sale_items FOR SELECT USING (public.has_role('admin', 'accountant', 'sales'));
 
 -- Newsletter: anyone can subscribe; only admins can read or manage the list
 DROP POLICY IF EXISTS "Anyone can subscribe" ON public.newsletter_subscribers;

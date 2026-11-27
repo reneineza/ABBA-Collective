@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, Layers, Tag, ShoppingBag, Users, FileText, Mail, Star, Megaphone, ExternalLink, LogOut, UserCog, Boxes, Truck } from 'lucide-react';
+import { LayoutDashboard, Package, Layers, Tag, ShoppingBag, Users, FileText, Mail, Star, Megaphone, ExternalLink, LogOut, UserCog, Boxes, Truck, Store } from 'lucide-react';
 import { canAccessPage, ROLE_LABELS } from '@/lib/roles';
 import { useAuth } from '@/lib/context/AuthContext';
 import BrandLogo from '@/components/BrandLogo';
@@ -24,6 +24,7 @@ export default function AdminSidebar() {
     { name: 'Collections', href: '/admin/collections', icon: Layers },
     { name: 'Categories', href: '/admin/categories', icon: Tag },
     { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+    { name: 'In-Store Sales', href: '/admin/sales', icon: Store },
     { name: 'Stock', href: '/admin/stock', icon: Boxes },
     { name: 'Deliveries & Costs', href: '/admin/purchases', icon: Truck },
     { name: 'Customers', href: '/admin/customers', icon: Users },
@@ -35,7 +36,7 @@ export default function AdminSidebar() {
   ].filter((item) => canAccessPage(profile?.role, item.href));
 
   return (
-    <aside className="w-64 bg-charcoal-dark border-r border-gold/20 flex flex-col justify-between min-h-screen text-ivory flex-shrink-0">
+    <aside className="no-print w-64 bg-charcoal-dark border-r border-gold/20 flex flex-col justify-between min-h-screen text-ivory flex-shrink-0">
       <div>
         {/* Admin Brand Header */}
         <div className="p-6 border-b border-gold/20">
