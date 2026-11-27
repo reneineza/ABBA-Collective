@@ -50,6 +50,8 @@ export default function AdminLayout({ children }) {
     '/admin/stock/receive': 'Receive a Supplier Delivery',
     '/admin/purchases': 'Supplier Deliveries & Costs',
     '/admin/sales': 'In-Store Sales',
+    '/admin/expenses': 'Operating Expenses',
+    '/admin/reports': 'Financial Reports',
     '/admin/sales/new': 'Record an In-Store Sale',
   };
 

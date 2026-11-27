@@ -339,6 +339,25 @@ CREATE TABLE IF NOT EXISTS public.store_sale_items (
   unit_price NUMERIC(12, 2) NOT NULL CHECK (unit_price >= 0)
 );
 
+-- 22. EXPENSES (operating costs: rent, salaries, transport...)
+CREATE TABLE IF NOT EXISTS public.expenses (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  spent_on DATE DEFAULT CURRENT_DATE NOT NULL,
+  category TEXT NOT NULL CHECK (category IN (
+    'Rent', 'Salaries & Wages', 'Transport & Delivery', 'Marketing & Advertising', 'Packaging',
+    'Utilities & Internet', 'Fees, Taxes & Licences', 'Equipment & Supplies', 'Production & Tailoring', 'Other'
+  )),
+  description TEXT NOT NULL,
+  amount NUMERIC(12, 2) NOT NULL CHECK (amount > 0),
+  payment_method TEXT CHECK (payment_method IN ('Cash', 'MTN MoMo', 'Airtel Money', 'Card', 'Bank Transfer')),
+  payee TEXT,
+  created_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  updated_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS expenses_spent_on_idx ON public.expenses (spent_on DESC);
+
 -- ACCOUNT HELPERS & TRIGGERS
 
 -- True when the signed-in user has the admin role. SECURITY DEFINER so policies on
@@ -875,6 +894,26 @@ GRANT EXECUTE ON FUNCTION public.record_store_sale(TEXT, TEXT, TEXT, NUMERIC, TE
 GRANT EXECUTE ON FUNCTION public.delete_store_sale(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.set_variant_cost(UUID, NUMERIC) TO authenticated;
 
+-- Expenses: record who last edited an entry and when (only the owner can edit)
+CREATE OR REPLACE FUNCTION public.stamp_expense_edit()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+BEGIN
+  NEW.updated_by := auth.uid();
+  NEW.updated_at := NOW();
+  NEW.created_by := OLD.created_by;
+  NEW.created_at := OLD.created_at;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS expenses_stamp_edit ON public.expenses;
+CREATE TRIGGER expenses_stamp_edit
+  BEFORE UPDATE ON public.expenses
+  FOR EACH ROW EXECUTE FUNCTION public.stamp_expense_edit();
+
 -- Cancelling an order returns its items to stock; a cancelled order can't be reopened
 -- (its stock may already have been sold again).
 CREATE OR REPLACE FUNCTION public.handle_order_status_change()
@@ -984,6 +1023,7 @@ ALTER TABLE public.stock_movements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sale_costs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.store_sales ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.store_sale_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
 
 -- Policies from earlier versions of this schema
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
@@ -1133,6 +1173,17 @@ DROP POLICY IF EXISTS "Staff view store sales" ON public.store_sales;
 CREATE POLICY "Staff view store sales" ON public.store_sales FOR SELECT USING (public.has_role('admin', 'accountant', 'sales'));
 DROP POLICY IF EXISTS "Staff view store sale items" ON public.store_sale_items;
 CREATE POLICY "Staff view store sale items" ON public.store_sale_items FOR SELECT USING (public.has_role('admin', 'accountant', 'sales'));
+
+-- Expenses: owner and accountant record and read them (as themselves); only the owner edits or deletes
+DROP POLICY IF EXISTS "Finance views expenses" ON public.expenses;
+CREATE POLICY "Finance views expenses" ON public.expenses FOR SELECT USING (public.has_role('admin', 'accountant'));
+DROP POLICY IF EXISTS "Finance records expenses" ON public.expenses;
+CREATE POLICY "Finance records expenses" ON public.expenses FOR INSERT
+  WITH CHECK (public.has_role('admin', 'accountant') AND created_by = auth.uid());
+DROP POLICY IF EXISTS "Owner edits expenses" ON public.expenses;
+CREATE POLICY "Owner edits expenses" ON public.expenses FOR UPDATE USING (public.is_admin()) WITH CHECK (public.is_admin());
+DROP POLICY IF EXISTS "Owner deletes expenses" ON public.expenses;
+CREATE POLICY "Owner deletes expenses" ON public.expenses FOR DELETE USING (public.is_admin());
 
 -- Newsletter: anyone can subscribe; only admins can read or manage the list
 DROP POLICY IF EXISTS "Anyone can subscribe" ON public.newsletter_subscribers;
