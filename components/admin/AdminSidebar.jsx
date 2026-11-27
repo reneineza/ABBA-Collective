@@ -3,13 +3,14 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, Layers, Tag, ShoppingBag, Users, FileText, Mail, Star, Megaphone, ExternalLink, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, Layers, Tag, ShoppingBag, Users, FileText, Mail, Star, Megaphone, ExternalLink, LogOut, UserCog } from 'lucide-react';
+import { canAccessPage, ROLE_LABELS } from '@/lib/roles';
 import { useAuth } from '@/lib/context/AuthContext';
 import BrandLogo from '@/components/BrandLogo';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const { signOut } = useAuth();
+  const { signOut, profile } = useAuth();
 
   const handleSignOut = async (e) => {
     if (e) e.preventDefault();
@@ -28,7 +29,8 @@ export default function AdminSidebar() {
     { name: 'Marketing', href: '/admin/marketing', icon: Megaphone },
     { name: 'Journal CMS', href: '/admin/blog', icon: FileText },
     { name: 'Newsletter', href: '/admin/newsletter', icon: Mail },
-  ];
+    { name: 'Staff', href: '/admin/staff', icon: UserCog },
+  ].filter((item) => canAccessPage(profile?.role, item.href));
 
   return (
     <aside className="w-64 bg-charcoal-dark border-r border-gold/20 flex flex-col justify-between min-h-screen text-ivory flex-shrink-0">
@@ -38,7 +40,7 @@ export default function AdminSidebar() {
           <Link href="/admin" className="block">
             <BrandLogo className="h-9 w-auto" markClassName="text-gold" wordmarkClassName="text-ivory" />
             <span className="text-[9px] tracking-[0.35em] text-gold uppercase block mt-3 font-semibold">
-              ATELIER ADMIN
+              {profile?.role === 'admin' ? 'Atelier Admin' : `${ROLE_LABELS[profile?.role] || 'Staff'} Portal`}
             </span>
           </Link>
         </div>

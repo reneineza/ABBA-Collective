@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import DataTable from '@/components/admin/DataTable';
 import ProductForm from '@/components/admin/ProductForm';
 import { useCatalog } from '@/lib/context/CatalogContext';
+import { useAuth } from '@/lib/context/AuthContext';
 import { saveProduct, deleteProduct, setProductActive } from '@/lib/adminCatalog';
 import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
@@ -12,6 +13,7 @@ import { formatCurrency } from '@/lib/utils/formatCurrency';
 export default function AdminProductsPage() {
   // allProducts includes hidden products (admins only)
   const { allProducts: products, reload } = useCatalog();
+  const { profile } = useAuth();
   const [editingProduct, setEditingProduct] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -142,9 +144,11 @@ export default function AdminProductsPage() {
           >
             {row.active ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
-          <button onClick={() => handleDeleteProduct(row)} className="p-1.5 text-red-400 hover:text-red-300" title="Delete Product">
-            <Trash2 size={15} />
-          </button>
+          {profile?.role === 'admin' && (
+            <button onClick={() => handleDeleteProduct(row)} className="p-1.5 text-red-400 hover:text-red-300" title="Delete Product">
+              <Trash2 size={15} />
+            </button>
+          )}
         </div>
       ),
     },

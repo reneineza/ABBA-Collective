@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { useAuth } from '@/lib/context/AuthContext';
+import { isStaffRole, canAccessPage } from '@/lib/roles';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 
 export default function AdminLayout({ children }) {
@@ -23,8 +24,10 @@ export default function AdminLayout({ children }) {
     // Wait until the session and profile have loaded; the database's role is the only source of truth
     if (loading) return;
 
-    if (!user || profile?.role !== 'admin') {
+    if (!user || !isStaffRole(profile?.role)) {
       window.location.href = '/admin/login';
+    } else if (!canAccessPage(profile.role, pathname)) {
+      window.location.href = '/admin';
     } else {
       setIsAdminAuthorized(true);
       setCheckingAuth(false);
@@ -42,6 +45,7 @@ export default function AdminLayout({ children }) {
     '/admin/newsletter': 'Newsletter Roster & Subscriber Export',
     '/admin/reviews': 'Product Review Moderation',
     '/admin/marketing': 'Marketing & Brand Campaign Tools',
+    '/admin/staff': 'Staff Accounts & Roles',
   };
 
   // If the user is on the admin login page, don't show the sidebar or header

@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { Lock, Mail, Loader2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import BrandLogo from '@/components/BrandLogo';
+import { isStaffRole } from '@/lib/roles';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -39,13 +40,13 @@ export default function AdminLoginPage() {
       if (!result.success) {
         setError(result.error);
         setCanResend(Boolean(result.needsConfirmation));
-      } else if (result.role === 'admin') {
+      } else if (isStaffRole(result.role)) {
         // Use hard redirect to force full page reload with new auth state
         window.location.href = '/admin';
       } else {
         // Don't leave a customer signed in from the admin login page
         await signOut();
-        setError('Access denied. This account does not have admin access.');
+        setError('Access denied. This account does not have staff access. Ask the owner to add you on the Staff page.');
       }
     } catch (err) {
       setError(err.message || 'Failed to authenticate. Please check your credentials.');

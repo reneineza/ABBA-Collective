@@ -10,9 +10,13 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   email TEXT NOT NULL,
   phone TEXT,
   avatar_url TEXT,
-  role TEXT DEFAULT 'customer' CHECK (role IN ('customer', 'admin')),
+  role TEXT DEFAULT 'customer' CHECK (role IN ('customer', 'admin', 'accountant', 'sales')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Staff roles: admin (owner), accountant, sales
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check CHECK (role IN ('customer', 'admin', 'accountant', 'sales'));
 
 -- 2. ADDRESSES TABLE
 CREATE TABLE IF NOT EXISTS public.addresses (
@@ -259,6 +263,17 @@ AS $$
   SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin');
 $$;
 
+-- True when the signed-in user has one of the given roles, e.g. public.has_role('admin', 'sales')
+CREATE OR REPLACE FUNCTION public.has_role(VARIADIC roles TEXT[])
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = ANY (roles));
+$$;
+
 -- Create a profile row for every new auth user.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
@@ -498,7 +513,9 @@ DROP POLICY IF EXISTS "Admins can manage newsletter subscribers" ON public.newsl
 
 -- Profiles: private to their owner; created only by the signup trigger
 DROP POLICY IF EXISTS "Users view own profile" ON public.profiles;
-CREATE POLICY "Users view own profile" ON public.profiles FOR SELECT USING (auth.uid() = id OR public.is_admin());
+CREATE POLICY "Users view own profile" ON public.profiles FOR SELECT USING (
+  auth.uid() = id OR public.is_admin() OR (role <> 'customer' AND public.has_role('admin', 'accountant', 'sales'))
+);
 DROP POLICY IF EXISTS "Users update own profile" ON public.profiles;
 CREATE POLICY "Users update own profile" ON public.profiles FOR UPDATE
   USING (auth.uid() = id OR public.is_admin()) WITH CHECK (auth.uid() = id OR public.is_admin());
@@ -519,27 +536,33 @@ CREATE POLICY "Admins manage catalogue" ON public.shipping_methods FOR ALL USING
 DROP POLICY IF EXISTS "Catalogue is public" ON public.categories;
 CREATE POLICY "Catalogue is public" ON public.categories FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins manage catalogue" ON public.categories;
-CREATE POLICY "Admins manage catalogue" ON public.categories FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Admins manage catalogue" ON public.categories FOR ALL USING (public.has_role('admin', 'accountant', 'sales')) WITH CHECK (public.has_role('admin', 'accountant', 'sales'));
 
 DROP POLICY IF EXISTS "Catalogue is public" ON public.collections;
 CREATE POLICY "Catalogue is public" ON public.collections FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins manage catalogue" ON public.collections;
-CREATE POLICY "Admins manage catalogue" ON public.collections FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Admins manage catalogue" ON public.collections FOR ALL USING (public.has_role('admin', 'accountant', 'sales')) WITH CHECK (public.has_role('admin', 'accountant', 'sales'));
 
 DROP POLICY IF EXISTS "Catalogue is public" ON public.products;
-CREATE POLICY "Catalogue is public" ON public.products FOR SELECT USING (active = true OR public.is_admin());
+CREATE POLICY "Catalogue is public" ON public.products FOR SELECT USING (active = true OR public.has_role('admin', 'accountant', 'sales'));
 DROP POLICY IF EXISTS "Admins manage catalogue" ON public.products;
 CREATE POLICY "Admins manage catalogue" ON public.products FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+-- Staff create and edit products (and can hide them); only the owner deletes
+DROP POLICY IF EXISTS "Staff add products" ON public.products;
+CREATE POLICY "Staff add products" ON public.products FOR INSERT WITH CHECK (public.has_role('admin', 'accountant', 'sales'));
+DROP POLICY IF EXISTS "Staff edit products" ON public.products;
+CREATE POLICY "Staff edit products" ON public.products FOR UPDATE
+  USING (public.has_role('admin', 'accountant', 'sales')) WITH CHECK (public.has_role('admin', 'accountant', 'sales'));
 
 DROP POLICY IF EXISTS "Catalogue is public" ON public.product_variants;
 CREATE POLICY "Catalogue is public" ON public.product_variants FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins manage catalogue" ON public.product_variants;
-CREATE POLICY "Admins manage catalogue" ON public.product_variants FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Admins manage catalogue" ON public.product_variants FOR ALL USING (public.has_role('admin', 'accountant', 'sales')) WITH CHECK (public.has_role('admin', 'accountant', 'sales'));
 
 DROP POLICY IF EXISTS "Catalogue is public" ON public.product_images;
 CREATE POLICY "Catalogue is public" ON public.product_images FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins manage catalogue" ON public.product_images;
-CREATE POLICY "Admins manage catalogue" ON public.product_images FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Admins manage catalogue" ON public.product_images FOR ALL USING (public.has_role('admin', 'accountant', 'sales')) WITH CHECK (public.has_role('admin', 'accountant', 'sales'));
 
 -- Orders: customers read their own; orders are created server-side (service role),
 -- never directly from the browser, so totals and status can't be forged.
@@ -547,6 +570,10 @@ DROP POLICY IF EXISTS "Users view own orders" ON public.orders;
 CREATE POLICY "Users view own orders" ON public.orders FOR SELECT USING (auth.uid() = user_id);
 DROP POLICY IF EXISTS "Admins manage orders" ON public.orders;
 CREATE POLICY "Admins manage orders" ON public.orders FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+DROP POLICY IF EXISTS "Staff view orders" ON public.orders;
+CREATE POLICY "Staff view orders" ON public.orders FOR SELECT USING (public.has_role('admin', 'accountant', 'sales'));
+DROP POLICY IF EXISTS "Staff update orders" ON public.orders;
+CREATE POLICY "Staff update orders" ON public.orders FOR UPDATE USING (public.has_role('admin', 'accountant', 'sales')) WITH CHECK (public.has_role('admin', 'accountant', 'sales'));
 
 -- Reviews: approved reviews are public; customers submit unapproved reviews only
 DROP POLICY IF EXISTS "Approved reviews are public" ON public.reviews;
@@ -722,6 +749,10 @@ DROP POLICY IF EXISTS "Admins manage site images" ON storage.objects;
 CREATE POLICY "Admins manage site images" ON storage.objects FOR ALL
   USING (bucket_id IN ('product-images', 'blog-images') AND public.is_admin())
   WITH CHECK (bucket_id IN ('product-images', 'blog-images') AND public.is_admin());
+DROP POLICY IF EXISTS "Staff manage product images" ON storage.objects;
+CREATE POLICY "Staff manage product images" ON storage.objects FOR ALL
+  USING (bucket_id = 'product-images' AND public.has_role('admin', 'accountant', 'sales'))
+  WITH CHECK (bucket_id = 'product-images' AND public.has_role('admin', 'accountant', 'sales'));
 DROP POLICY IF EXISTS "Users manage own avatar" ON storage.objects;
 CREATE POLICY "Users manage own avatar" ON storage.objects FOR ALL
   USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text)

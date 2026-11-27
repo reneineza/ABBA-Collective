@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { isStaffRole, canAccessPage } from '@/lib/roles';
 
 // Server-side access control: runs before protected pages render, so signed-out
 // visitors and non-admins never receive their content. It also refreshes the
@@ -45,8 +46,10 @@ export async function middleware(request) {
     if (pathname === '/admin/login') return response;
     if (!user) return redirectTo('/admin/login');
 
+    // Staff may only open the back-office pages their role allows (see lib/roles.js)
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-    if (profile?.role !== 'admin') return redirectTo('/admin/login');
+    if (!isStaffRole(profile?.role)) return redirectTo('/admin/login');
+    if (!canAccessPage(profile.role, pathname)) return redirectTo('/admin');
     return response;
   }
 

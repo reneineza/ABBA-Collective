@@ -7,13 +7,20 @@ import { getBrowserClient } from '@/lib/supabase';
 import { useCatalog } from '@/lib/context/CatalogContext';
 import { orderNumber } from '@/lib/utils/orders';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
-import { DollarSign, ShoppingBag, Package, Users, ArrowUpRight } from 'lucide-react';
+import { DollarSign, ShoppingBag, Package, Users, ArrowUpRight, AlertTriangle, Truck } from 'lucide-react';
+import { useAuth } from '@/lib/context/AuthContext';
+import { canSeeFinance } from '@/lib/roles';
 import Link from 'next/link';
 
+const LOW_STOCK = 5;
+
 export default function AdminDashboardPage() {
+  const { profile } = useAuth();
+  const role = profile?.role;
+  const showFinance = canSeeFinance(role);
   const [orders, setOrders] = useState([]);
 
-  // Admins can read every order (database policy "Admins manage orders")
+  // Staff can read every order (database policies "Admins manage orders" / "Staff view orders")
   useEffect(() => {
     getBrowserClient()
       .from('orders')
@@ -28,6 +35,7 @@ export default function AdminDashboardPage() {
   const [counts, setCounts] = useState({ customers: null, subscribers: null });
 
   useEffect(() => {
+    if (role !== 'admin') return; // customer and subscriber lists are owner-only
     const supabase = getBrowserClient();
     Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'customer'),
@@ -35,7 +43,7 @@ export default function AdminDashboardPage() {
     ]).then(([customersRes, subscribersRes]) => {
       setCounts({ customers: customersRes.count ?? 0, subscribers: subscribersRes.count ?? 0 });
     });
-  }, []);
+  }, [role]);
 
   const countedOrders = orders.filter((o) => o.status !== 'Cancelled');
 
@@ -54,35 +62,72 @@ export default function AdminDashboardPage() {
   const collectionCount = collections.length;
   const totalSales = countedOrders.reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
   const avgOrderValue = countedOrders.length > 0 ? totalSales / countedOrders.length : 0;
+  const toFulfil = orders.filter((o) => o.status === 'Confirmed' || o.status === 'Processing' || o.status === 'Pending');
+  const inTransit = orders.filter((o) => o.status === 'Shipped');
+
+  // Variants running low or sold out (visible products only)
+  const lowStock = allProducts
+    .filter((p) => p.active)
+    .flatMap((p) => p.variants.map((v) => ({ ...v, name: p.name })))
+    .filter((v) => v.stock_quantity <= LOW_STOCK)
+    .sort((a, b) => a.stock_quantity - b.stock_quantity);
 
   return (
     <div className="space-y-8">
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Gross Revenue"
-          value={totalSales > 0 ? formatCurrency(totalSales) : '—'}
-          change={totalSales > 0 ? 'Based on all tracked orders' : 'No orders yet'}
-          icon={DollarSign}
-        />
-        <StatCard
-          title="Total Orders Executed"
-          value={`${countedOrders.length} Orders`}
-          change={countedOrders.length > 0 ? `Avg. Value: ${formatCurrency(avgOrderValue)}` : 'No orders yet'}
-          icon={ShoppingBag}
-        />
+        {showFinance ? (
+          <>
+            <StatCard
+              title="Total Gross Revenue"
+              value={totalSales > 0 ? formatCurrency(totalSales) : '—'}
+              change={totalSales > 0 ? 'Website orders' : 'No orders yet'}
+              icon={DollarSign}
+            />
+            <StatCard
+              title="Total Orders Executed"
+              value={`${countedOrders.length} Orders`}
+              change={countedOrders.length > 0 ? `Avg. Value: ${formatCurrency(avgOrderValue)}` : 'No orders yet'}
+              icon={ShoppingBag}
+            />
+          </>
+        ) : (
+          <>
+            <StatCard
+              title="Orders to Pack"
+              value={`${toFulfil.length} Orders`}
+              change="Confirmed, not yet shipped"
+              icon={ShoppingBag}
+            />
+            <StatCard
+              title="Out for Delivery"
+              value={`${inTransit.length} Orders`}
+              change="Shipped, awaiting delivery"
+              icon={Truck}
+            />
+          </>
+        )}
         <StatCard
           title="Catalogue"
           value={`${allProducts.filter((p) => p.active).length} Products`}
           change={`${collectionCount} Collections`}
           icon={Package}
         />
-        <StatCard
-          title="Total Client Directory"
-          value={counts.customers === null ? '…' : `${counts.customers} Clients`}
-          change={counts.subscribers === null ? '' : `${counts.subscribers} Newsletter Subscribers`}
-          icon={Users}
-        />
+        {role === 'admin' ? (
+          <StatCard
+            title="Total Client Directory"
+            value={counts.customers === null ? '…' : `${counts.customers} Clients`}
+            change={counts.subscribers === null ? '' : `${counts.subscribers} Newsletter Subscribers`}
+            icon={Users}
+          />
+        ) : (
+          <StatCard
+            title="Low Stock Alerts"
+            value={`${lowStock.length} Variants`}
+            change={`${lowStock.filter((v) => v.stock_quantity <= 0).length} sold out, ${LOW_STOCK} or fewer left`}
+            icon={AlertTriangle}
+          />
+        )}
       </div>
 
       {/* Analytics Main Grid */}
@@ -145,12 +190,30 @@ export default function AdminDashboardPage() {
               <div key={product.name} className="flex justify-between items-center border-b border-gold/10 pb-2">
                 <div>
                   <p className="font-bold text-ivory">{product.name}</p>
-                  <p className="text-[10px] text-gold">{formatCurrency(product.revenue)}</p>
+                  {showFinance && <p className="text-[10px] text-gold">{formatCurrency(product.revenue)}</p>}
                 </div>
                 <span className="font-semibold text-ivory">{product.units} Units Sold</span>
               </div>
             ))}
           </div>
+
+          {lowStock.length > 0 && (
+            <div className="pt-2 space-y-2">
+              <span className="text-[10px] uppercase tracking-luxurious text-gold font-semibold block">
+                ✦ Restock Soon ✦
+              </span>
+              {lowStock.slice(0, 6).map((v) => (
+                <div key={v.id} className="flex justify-between text-xs">
+                  <span className="text-ivory/80">
+                    {v.name} · {v.color} {v.size}
+                  </span>
+                  <span className={v.stock_quantity <= 0 ? 'text-red-300 font-semibold' : 'text-yellow-300'}>
+                    {v.stock_quantity <= 0 ? 'Sold out' : `${v.stock_quantity} left`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
       </div>
